@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chitin — Complete Product Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090b; --surface: #18181b; --border: #27272a;
+    --text: #fafafa; --muted: #a1a1aa; --dim: #71717a;
+    --primary: #e4572e; --secondary: #06b6d4; --green: #22c55e;
+    --amber: #f59e0b; --purple: #a78bfa; --blue: #3b82f6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Header */
+  .header { border-bottom: 1px solid var(--border); padding: 32px 36px 0; }
+  .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .logo { width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), #ff8a5c); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: var(--bg); font-family: 'JetBrains Mono', monospace; }
+  .title { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .tag { background: rgba(34,197,94,0.08); color: var(--green); font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 700; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.8px; }
+  .tagline { color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; margin: 8px 0 4px; }
+  .subtitle { color: var(--dim); font-size: 13px; margin: 4px 0 24px; max-width: 650px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; overflow-x: auto; }
+  .tab { background: transparent; border: 1px solid transparent; border-bottom: 1px solid var(--border); border-radius: 8px 8px 0 0; padding: 9px 16px; cursor: pointer; color: var(--dim); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 400; letter-spacing: 0.3px; margin-bottom: -1px; white-space: nowrap; }
+  .tab.active { background: var(--surface); border-color: var(--border); border-bottom-color: var(--surface); color: var(--primary); font-weight: 700; }
+
+  /* Content */
+  .content { padding: 28px 36px; max-width: 860px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Section */
+  .section { margin-bottom: 36px; }
+  .section-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .card-title { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; }
+  .card-tag { font-size: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 700; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.8px; }
+  .card-body { color: var(--muted); font-size: 13px; line-height: 1.8; }
+
+  /* Callout */
+  .callout { border-left: 3px solid var(--secondary); border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0; font-size: 13px; color: var(--muted); line-height: 1.75; }
+  .callout.primary { border-color: var(--primary); background: rgba(228,87,46,0.03); }
+  .callout.green { border-color: var(--green); background: rgba(34,197,94,0.03); }
+  .callout.amber { border-color: var(--amber); background: rgba(245,158,11,0.03); }
+
+  /* Code */
+  pre.code { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--muted); line-height: 1.7; overflow-x: auto; margin: 12px 0; white-space: pre-wrap; word-break: break-word; }
+
+  /* Tier blocks */
+  .tier { background: var(--surface); border: 1px solid var(--border); border-radius: 0 10px 10px 0; padding: 14px 20px; margin-bottom: 8px; }
+  .tier-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .tier-badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: var(--bg); padding: 2px 8px; border-radius: 4px; }
+  .tier-name { font-weight: 700; font-size: 14px; }
+  .tier-desc { color: var(--muted); font-size: 12px; line-height: 1.6; }
+  .tier-default { font-size: 11px; margin-top: 4px; }
+
+  /* Week blocks */
+  .week { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 10px; }
+  .week-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .week-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: var(--bg); padding: 3px 9px; border-radius: 5px; }
+  .week-title { font-weight: 700; font-size: 14px; margin-left: 10px; }
+  .week-task { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; background: var(--bg); border-radius: 6px; font-size: 12px; border: 1px solid var(--border); margin-bottom: 6px; }
+  .week-dot { font-size: 8px; margin-top: 5px; }
+  .task-name { font-weight: 600; }
+  .task-detail { color: var(--dim); margin-left: 8px; }
+
+  /* Risk cards */
+  .risk { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 10px; }
+  .risk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .risk-title { font-weight: 700; font-size: 14px; }
+  .risk-labels { display: flex; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+  .risk-body { color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  th { background: #27272a; color: #fff; text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 600; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  td:first-child { color: var(--text); font-weight: 500; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+  /* Mode box */
+  .mode-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+  .mode-label { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+
+  /* Principle row */
+  .principle { display: flex; gap: 14px; padding: 11px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+  .principle-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: var(--primary); min-width: 24px; flex-shrink: 0; }
+  .principle-title { font-weight: 700; font-size: 13px; }
+  .principle-desc { color: var(--dim); font-size: 12px; margin-top: 2px; }
+
+  /* Onboarding steps */
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: 0 10px 10px 0; padding: 14px 20px; max-width: 500px; margin: 0 auto; }
+  .step-connector { width: 2px; height: 16px; background: var(--border); margin: 0 auto; }
+
+  /* Compare table */
+  .compare-edge { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; }
+  .edge-us { color: var(--green); }
+  .edge-them { color: var(--primary); }
+
+  /* Preflight */
+  .preflight { display: flex; gap: 12px; align-items: center; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+  .preflight-pri { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 800; color: var(--bg); padding: 2px 7px; border-radius: 3px; }
+  .preflight-task { font-size: 13px; flex: 1; }
+  .preflight-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--dim); }
+
+  /* GTM channel */
+  .gtm { padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+  .gtm-title { font-weight: 700; font-size: 13px; }
+  .gtm-detail { color: var(--dim); font-size: 12px; margin-top: 4px; }
+
+  /* Final CTA box */
+  .cta-box { background: rgba(34,197,94,0.025); border: 1px solid rgba(34,197,94,0.13); border-radius: 12px; padding: 24px; margin-top: 24px; }
+  .cta-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--green); letter-spacing: 2px; font-weight: 700; }
+  .cta-body { color: var(--muted); font-size: 14px; line-height: 1.9; margin-top: 14px; }
+
+  /* Accent box */
+  .accent-box { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--primary); padding: 12px 18px; background: rgba(228,87,46,0.03); border-radius: 8px; margin: 12px 0; }
+
+  /* Capability compare */
+  .cap-table td:nth-child(2) { color: var(--green); }
+  .cap-table td:nth-child(3) { color: var(--dim); }
+
+  /* Phase label */
+  .phase-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 2px; font-weight: 700; margin: 28px 0 12px; }
+
+  /* Layer block */
+  .layer { border-radius: 12px; padding: 18px 22px; margin-bottom: 14px; border: 1px solid; }
+  .layer-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .layer-title { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+  .layer-item { background: var(--bg); border-radius: 6px; padding: 8px 14px; font-size: 12px; color: var(--muted); border: 1px solid var(--border); margin-bottom: 6px; }
+
+  strong { color: var(--text); }
+  a { color: var(--secondary); }
+  .text-primary { color: var(--primary); }
+  .text-green { color: var(--green); }
+  .text-amber { color: var(--amber); }
+  .text-purple { color: var(--purple); }
+  .text-blue { color: var(--blue); }
+  .text-secondary { color: var(--secondary); }
+  .text-dim { color: var(--dim); }
+  .text-muted { color: var(--muted); }
+  .mb-0 { margin-bottom: 0; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="header">
+  <div class="logo-row">
+    <div class="logo">Ch</div>
+    <span class="title">Chitin</span>
+    <span class="tag">FINAL PLAN</span>
+  </div>
+  <p class="tagline">Your agent decides. Chitin enforces.</p>
+  <p class="subtitle">Runtime security for AI agents and coding tools. One binary. Two modes. Every framework.</p>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="0">Overview</button>
+    <button class="tab" data-tab="1">Architecture</button>
+    <button class="tab" data-tab="2">Integration Modes</button>
+    <button class="tab" data-tab="3">Competitors</button>
+    <button class="tab" data-tab="4">Tech Stack</button>
+    <button class="tab" data-tab="5">Roadmap</button>
+    <button class="tab" data-tab="6">Post-Launch</button>
+    <button class="tab" data-tab="7">Risks &amp; Preflight</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════
+     TAB 0: OVERVIEW
+═══════════════════════════════════ -->
+<div class="tab-panel active" id="panel-0">
+
+<div class="section">
+  <div class="section-title">What Chitin Is</div>
+  <p class="card-body mb-20">Chitin is a security enforcement layer for AI agents and coding tools. It intercepts every tool call — shell commands, file edits, API requests, emails — classifies each by blast radius, and enforces your rules deterministically. It runs <strong>outside</strong> the agent, so it can't be prompt-injected, reasoned with, or turned off by a confused model.</p>
+  <p class="card-body mb-16">It ships as a single Go binary with two modes:</p>
+  <div class="grid-2">
+    <div class="mode-box">
+      <div class="mode-label text-blue">Proxy Mode</div>
+      <div class="card-body">Sits between any MCP-based agent and its tool servers. Intercepts all JSON-RPC traffic. For OpenClaw, NanoClaw, and any custom MCP agent.</div>
+    </div>
+    <div class="mode-box">
+      <div class="mode-label text-purple">Check Mode</div>
+      <div class="card-body">Reads a tool call on stdin, returns allow/block. Plugs into Claude Code hooks, Cursor hooks, Copilot hooks, or any tool with pre-execution checks.</div>
+    </div>
+  </div>
+  <div class="accent-box">Same policy engine. Same scanner. Same rules. Different entry points.</div>
+</div>
+
+<div class="section">
+  <div class="section-title">What It Protects</div>
+  <table>
+    <tr><th>Tool</th><th>Mode</th><th>How It Works</th></tr>
+    <tr><td>OpenClaw / NanoClaw / ZeroClaw</td><td class="text-blue">Proxy</td><td>Full MCP interception — every tool call routes through Chitin</td></tr>
+    <tr><td>Claude Code</td><td class="text-purple">Check</td><td>PreToolUse hook — approves/blocks Bash, file edits, MCP calls</td></tr>
+    <tr><td>Cursor AI</td><td class="text-purple">Check</td><td>beforeShellExecution / beforeMCPExecution hooks</td></tr>
+    <tr><td>GitHub Copilot</td><td class="text-purple">Check</td><td>.github/hooks preToolUse integration</td></tr>
+    <tr><td>Custom MCP agents</td><td class="text-blue">Proxy</td><td>Any agent built on the MCP SDK</td></tr>
+    <tr><td>Any tool with pre-exec hooks</td><td class="text-purple">Check</td><td>Pipe JSON to stdin, read exit codes</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Why It Matters</div>
+  <p class="card-body mb-16">AI agents and coding tools can run shell commands, send emails, edit files, and make API calls on your behalf. When they go wrong — through prompt injection, context drift, or misconfiguration — consequences are real. A Meta researcher's agent mass-deleted her emails. Check Point found Claude Code configs could execute arbitrary commands before the trust dialog appeared. Cisco found 26% of agent skills contained vulnerabilities.</p>
+  <p class="card-body mb-16">Most existing security tools run <em>inside</em> the agent as natural-language instructions. A prompt injection can override those. Your security skill gets talked out of protecting you.</p>
+  <div class="callout primary"><strong class="text-primary">Chitin runs out-of-process.</strong> It enforces deterministic rules. The agent doesn't know it's there. It can't be persuaded, overridden, or ignored.</div>
+</div>
+
+<div class="section">
+  <div class="section-title">Design Principles</div>
+  <div class="principle"><span class="principle-num">01</span><div><div class="principle-title">ML signals, rules enforce</div><div class="principle-desc">The ONNX scanner provides probabilities. The policy engine makes binary decisions. No LLM ever sits in the enforcement path.</div></div></div>
+  <div class="principle"><span class="principle-num">02</span><div><div class="principle-title">Observe before enforce</div><div class="principle-desc">New installs run in observe mode for 7 days. Build trust with data, not promises. Switch to enforcement when the user is ready.</div></div></div>
+  <div class="principle"><span class="principle-num">03</span><div><div class="principle-title">Classify by consequence, not verb</div><div class="principle-desc">The blast-radius taxonomy (T1–T5) classifies actions by what happens if they go wrong, not what they're called.</div></div></div>
+  <div class="principle"><span class="principle-num">04</span><div><div class="principle-title">External enforcement</div><div class="principle-desc">Chitin runs out-of-process. The agent cannot override, ignore, or reason around Chitin's decisions.</div></div></div>
+  <div class="principle"><span class="principle-num">05</span><div><div class="principle-title">Local-first, always</div><div class="principle-desc">All data, models, and enforcement stay on the user's machine. Nothing leaves. Non-negotiable.</div></div></div>
+  <div class="principle"><span class="principle-num">06</span><div><div class="principle-title">Protocol-native, tool-agnostic</div><div class="principle-desc">Proxy mode secures MCP. Check mode secures anything with pre-exec hooks. Same engine, universal reach.</div></div></div>
+  <div class="principle"><span class="principle-num">07</span><div><div class="principle-title">Fail closed</div><div class="principle-desc">If Chitin crashes, all tool calls are blocked. Silent failure is not an option for a security tool.</div></div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Target Users</div>
+  <p class="card-body mb-8"><strong>Primary:</strong> Developers using AI coding tools (Claude Code, Cursor) and personal AI agents (OpenClaw, NanoClaw). Comfortable with the terminal. Want guardrails without giving up autonomy.</p>
+  <p class="card-body mb-8"><strong>Secondary:</strong> Small engineering teams using agents for internal workflows who need basic governance without an enterprise platform.</p>
+  <p class="card-body"><strong>Not targeting yet:</strong> Large enterprises with dedicated security teams. That's Arcade + Lakera territory.</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Launch Wedge</div>
+  <p class="card-body"><strong>Stop your email agent from going rogue.</strong> Email/messaging agents are the most common use case and the scariest failure mode. The proxy works for all tools, but v1 marketing focuses here. Expand to coding tools (Claude Code, Cursor) as the second wedge.</p>
+</div>
+
+</div><!-- end panel-0 -->
+
+
+<!-- ═══════════════════════════════════
+     TAB 1: ARCHITECTURE
+═══════════════════════════════════ -->
+<div class="tab-panel" id="panel-1">
+
+<div class="section">
+  <div class="section-title">Blast-Radius Taxonomy (T1–T5)</div>
+
+  <div class="tier" style="border-left: 3px solid var(--green);">
+    <div class="tier-header"><span class="tier-badge" style="background:var(--green)">T1</span><span class="tier-name">Observe</span></div>
+    <div class="tier-desc">Read-only. No state changes. <span class="text-dim">Ex:</span> <span class="mono text-secondary" style="font-size:11px">gmail.read, file.list, git.status</span></div>
+    <div class="tier-default text-green">Default: Always allow. Log silently.</div>
+  </div>
+  <div class="tier" style="border-left: 3px solid var(--blue);">
+    <div class="tier-header"><span class="tier-badge" style="background:var(--blue)">T2</span><span class="tier-name">Reversible Write</span></div>
+    <div class="tier-desc">State changes that can be undone. <span class="text-dim">Ex:</span> <span class="mono text-secondary" style="font-size:11px">gmail.draft, file.write (new), git.branch</span></div>
+    <div class="tier-default text-blue">Default: Allow. Log. Rate limit.</div>
+  </div>
+  <div class="tier" style="border-left: 3px solid var(--amber);">
+    <div class="tier-header"><span class="tier-badge" style="background:var(--amber)">T3</span><span class="tier-name">Destructive</span></div>
+    <div class="tier-desc">Irreversible changes. High blast radius. <span class="text-dim">Ex:</span> <span class="mono text-secondary" style="font-size:11px">gmail.delete, file.delete, rm -rf</span></div>
+    <div class="tier-default text-amber">Default: Confirm above threshold. Block if rate exceeded.</div>
+  </div>
+  <div class="tier" style="border-left: 3px solid var(--purple);">
+    <div class="tier-header"><span class="tier-badge" style="background:var(--purple)">T4</span><span class="tier-name">External Communication</span></div>
+    <div class="tier-desc">Sends data to humans or external systems. <span class="text-dim">Ex:</span> <span class="mono text-secondary" style="font-size:11px">gmail.send, slack.post, curl POST</span></div>
+    <div class="tier-default text-purple">Default: Confirm if external domain or bulk recipients.</div>
+  </div>
+  <div class="tier" style="border-left: 3px solid var(--primary);">
+    <div class="tier-header"><span class="tier-badge" style="background:var(--primary)">T5</span><span class="tier-name">Credential / Financial / System</span></div>
+    <div class="tier-desc">Auth, money, or system permissions. <span class="text-dim">Ex:</span> <span class="mono text-secondary" style="font-size:11px">sudo, oauth.token, payment, ssh</span></div>
+    <div class="tier-default text-primary">Default: Always confirm. Block by default. Require sandbox.</div>
+  </div>
+  <p class="text-dim" style="font-size:12px; margin-top:8px;">Unknown tools default to T3. Users override in YAML. The ONNX scanner runs independently of tier classification.</p>
+</div>
+
+<div class="section">
+  <div class="section-title">System Layers</div>
+
+  <div class="layer" style="border-color: rgba(59,130,246,0.13); background: linear-gradient(135deg, rgba(59,130,246,0.03) 0%, var(--surface) 100%);">
+    <div class="layer-header"><span style="font-size:18px">🔌</span><span class="layer-title text-blue">Interception</span></div>
+    <div class="layer-item">Proxy mode: MCP stdio/HTTP man-in-the-middle — wraps real tool servers</div>
+    <div class="layer-item">Check mode: reads tool call JSON on stdin, returns exit code</div>
+    <div class="layer-item">All actions logged to SQLite before any forwarding</div>
+  </div>
+  <div class="layer" style="border-color: rgba(245,158,11,0.13); background: linear-gradient(135deg, rgba(245,158,11,0.03) 0%, var(--surface) 100%);">
+    <div class="layer-header"><span style="font-size:18px">🧠</span><span class="layer-title text-amber">Classification</span></div>
+    <div class="layer-item">Map tool name + args to T1–T5 blast-radius tier</div>
+    <div class="layer-item">Track action velocity per tool and per scope (sliding window)</div>
+    <div class="layer-item">ONNX scanner: prompt injection classifier (DeBERTa-v3-small, ~5ms/inference)</div>
+    <div class="layer-item">Works identically for MCP tool calls AND Claude Code/Cursor tool calls</div>
+  </div>
+  <div class="layer" style="border-color: rgba(228,87,46,0.13); background: linear-gradient(135deg, rgba(228,87,46,0.03) 0%, var(--surface) 100%);">
+    <div class="layer-header"><span style="font-size:18px">🛡️</span><span class="layer-title text-primary">Enforcement</span></div>
+    <div class="layer-item">YAML policy engine: allow / block / confirm per tool per tier</div>
+    <div class="layer-item">Telegram gate: push to phone, approve/deny with one tap, configurable timeout</div>
+    <div class="layer-item">Rate limiter: per-tool, per-scope, block + alert on exceed</div>
+    <div class="layer-item">Kill switch: halt everything from phone or dashboard</div>
+    <div class="layer-item">Sandbox enforcement: require_sandbox policy for T5 tools</div>
+  </div>
+  <div class="layer" style="border-color: rgba(34,197,94,0.13); background: linear-gradient(135deg, rgba(34,197,94,0.03) 0%, var(--surface) 100%);">
+    <div class="layer-header"><span style="font-size:18px">📊</span><span class="layer-title text-green">Observability</span></div>
+    <div class="layer-item">Action timeline with risk color coding</div>
+    <div class="layer-item">Daily digest via Telegram: actions, blocks, flags</div>
+    <div class="layer-item">7-day observe mode report: "here's what would have been blocked"</div>
+    <div class="layer-item">Immutable audit log (SQLite), exportable JSON/CSV</div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Onboarding: Observe → Report → Enforce</div>
+  <div style="display:flex; flex-direction:column; align-items:center;">
+    <div class="step" style="border-left: 3px solid var(--blue);"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="tier-badge" style="background:var(--blue);margin-right:10px">STEP 1</span><strong>Install + Observe</strong></div><span class="text-dim mono" style="font-size:10px">Days 1–7</span></div><div class="text-muted" style="font-size:12px;margin-top:6px">chitin init → runs in observe mode. Logs everything, blocks nothing.</div></div>
+    <div class="step-connector"></div>
+    <div class="step" style="border-left: 3px solid var(--amber);"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="tier-badge" style="background:var(--amber);margin-right:10px">STEP 2</span><strong>Review Report</strong></div><span class="text-dim mono" style="font-size:10px">Day 7</span></div><div class="text-muted" style="font-size:12px;margin-top:6px">chitin report → shows what would have been blocked. Suggests tuning.</div></div>
+    <div class="step-connector"></div>
+    <div class="step" style="border-left: 3px solid var(--purple);"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="tier-badge" style="background:var(--purple);margin-right:10px">STEP 3</span><strong>Tune Policy</strong></div><span class="text-dim mono" style="font-size:10px">Day 7–8</span></div><div class="text-muted" style="font-size:12px;margin-top:6px">Adjust thresholds, add allow-lists, change tier assignments.</div></div>
+    <div class="step-connector"></div>
+    <div class="step" style="border-left: 3px solid var(--green);"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span class="tier-badge" style="background:var(--green);margin-right:10px">STEP 4</span><strong>Enforce</strong></div><span class="text-dim mono" style="font-size:10px">Day 8+</span></div><div class="text-muted" style="font-size:12px;margin-top:6px">Set mode: enforce → Chitin actively protects.</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Policy Format</div>
+  <pre class="code"># ~/.chitin/policy.yaml
+version: 1
+mode: observe       # observe | enforce
+
+tiers:
+  T1_observe:     allow
+  T2_reversible:  allow
+  T3_destructive: confirm
+  T4_external:    confirm
+  T5_credential:  block
+
+rules:
+  gmail.delete:   { tier: T3, confirm_when: { count: "> 5" }, block_when: { count: "> 100" } }
+  gmail.send:     { tier: T4, confirm_when: { recipients_count: "> 3" } }
+  Bash:           { tier: T3, allow_list: ["git *", "npm *", "ls *", "cat *"],
+                    block_list: ["rm -rf *", "sudo *", "curl * | sh"] }
+  Edit:           { tier: T2, block_when: { path_matches: ["/etc/*", "~/.ssh/*"] } }
+  shell.exec:     { tier: T5, require_sandbox: true }
+
+rate_limits:
+  - { scope: "gmail.*",  max: 50, window: "5m",  on_exceed: block_and_alert }
+  - { scope: "Bash",     max: 10, window: "1m",  on_exceed: block_and_alert }
+
+scanner:
+  enabled: true
+  model: deberta-v3-small
+  threshold: 0.85
+
+notifications:
+  telegram: { enabled: true, confirmation_timeout: "5m", daily_digest: "09:00" }</pre>
+  <div class="callout amber"><strong class="text-amber">Tool name normalization:</strong> MCP tools use server names (e.g. <code>gmail.delete</code>). Claude Code/Cursor tools use native names (e.g. <code>Bash</code>, <code>Edit</code>, <code>Read</code>). One policy covers both.</div>
+</div>
+
+</div><!-- end panel-1 -->
+
+
+<!-- ═══════════════════════════════════
+     TAB 2: INTEGRATION MODES
+═══════════════════════════════════ -->
+<div class="tab-panel" id="panel-2">
+
+<div class="section">
+  <div class="section-title">Mode 1: MCP Proxy</div>
+  <p class="card-body mb-16">For any agent that uses MCP servers for tool access. Chitin acts as a man-in-the-middle: it presents itself as an MCP server to the agent and as a client to the real tool servers. The agent never knows Chitin is there.</p>
+  <div class="card"><div class="card-header"><span class="card-title">Stdio Wrapper</span><span class="card-tag" style="background:rgba(34,197,94,0.08);color:var(--green)">PRIMARY</span></div><pre class="code"># Wrap any MCP server
+chitin wrap npx @gmail/mcp-server
+
+# In OpenClaw/NanoClaw config, point to Chitin instead of the real server
+command: "chitin"
+args: ["wrap", "npx", "@gmail/mcp-server"]</pre></div>
+  <div class="card"><div class="card-header"><span class="card-title">HTTP Reverse Proxy</span><span class="card-tag" style="background:rgba(59,130,246,0.08);color:var(--blue)">REMOTE SERVERS</span></div><pre class="code">chitin wrap --mode http --listen :9091 --upstream https://mcp.service.com/sse</pre></div>
+  <p class="text-dim" style="font-size:12px">Works with: OpenClaw, NanoClaw, ZeroClaw, PicoClaw, IronClaw, any custom MCP agent, Claude Code's external MCP connections.</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Mode 2: CLI Check</div>
+  <p class="card-body mb-16">For AI coding tools and any system with pre-execution hooks. <code>chitin check</code> reads a tool call as JSON on stdin, evaluates it against your policy, and exits with code 0 (allow) or 2 (block). Same policy engine, same scanner, no proxy needed.</p>
+
+  <div class="card"><div class="card-header"><span class="card-title">Claude Code</span><span class="card-tag" style="background:rgba(167,139,250,0.08);color:var(--purple)">PreToolUse HOOK</span></div><div class="card-body mb-8">Claude Code fires PreToolUse before every Bash command, file edit, and MCP call. Chitin plugs in with one config change.</div><pre class="code">// .claude/settings.json (global or per-project)
+{
+  "hooks": {
+    "PreToolUse": [{
+      "matcher": "",
+      "hooks": [{
+        "type": "command",
+        "command": "chitin check"
+      }]
+    }]
+  }
+}</pre><div class="card-body">Every tool call Claude Code attempts goes through <code>chitin check</code> first. Exit code 2 stops the tool call before execution.</div></div>
+
+  <div class="card"><div class="card-header"><span class="card-title">Cursor AI</span><span class="card-tag" style="background:rgba(167,139,250,0.08);color:var(--purple)">beforeShellExecution HOOK</span></div><pre class="code">{
+  "hooks": {
+    "beforeShellExecution": { "command": "chitin check" },
+    "beforeMCPExecution": { "command": "chitin check" }
+  }
+}</pre></div>
+
+  <div class="card"><div class="card-header"><span class="card-title">GitHub Copilot</span><span class="card-tag" style="background:rgba(167,139,250,0.08);color:var(--purple)">preToolUse HOOK</span></div><pre class="code">// .github/hooks/security.json
+{ "preToolUse": { "command": "chitin check" } }</pre></div>
+
+  <div class="card"><div class="card-header"><span class="card-title">Any tool with pre-exec hooks</span><span class="card-tag" style="background:rgba(113,113,122,0.08);color:var(--dim)">GENERIC</span></div><pre class="code">echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | chitin check
+echo $?  # → 2 (blocked)</pre></div>
+
+  <div class="callout green"><strong class="text-green">Why this matters strategically:</strong> Check mode means Chitin isn't dependent on any single agent framework. If OpenClaw fades, Chitin still protects Claude Code. If Claude Code changes, Chitin still protects Cursor. The policy engine is the product — the integration mode is just a plug.</div>
+</div>
+
+<div class="section">
+  <div class="section-title">What Each Mode Covers</div>
+  <table class="cap-table">
+    <tr><th>Capability</th><th>Proxy Mode</th><th>Check Mode</th></tr>
+    <tr><td>Intercept tool calls</td><td>✓ All MCP tool_call</td><td>✓ All hooked events</td></tr>
+    <tr><td>Policy enforcement</td><td>✓ Same engine</td><td>✓ Same engine</td></tr>
+    <tr><td>Blast-radius classification</td><td>✓ T1–T5</td><td>✓ T1–T5</td></tr>
+    <tr><td>Rate limiting</td><td>✓ Full sliding window</td><td>✓ Stateful via SQLite</td></tr>
+    <tr><td>ONNX content scanning</td><td>✓ Scan tool results</td><td>✓ Scan tool inputs</td></tr>
+    <tr><td>Telegram confirmations</td><td>✓ Pause + approve/deny</td><td>✗ Block or allow only</td></tr>
+    <tr><td>Kill switch</td><td>✓ Halt all forwarding</td><td>✗ Per-call only</td></tr>
+    <tr><td>Audit log</td><td>✓ Full timeline</td><td>✓ Full timeline</td></tr>
+    <tr><td>Observe mode</td><td>✓ Log without blocking</td><td>✓ Log without blocking</td></tr>
+  </table>
+</div>
+
+</div><!-- end panel-2 -->
+
+
+<!-- ═══════════════════════════════════
+     TAB 3: COMPETITORS
+═══════════════════════════════════ -->
+<div class="tab-panel" id="panel-3">
+
+<div class="section">
+  <div class="section-title">Agent Security Landscape</div>
+  <div class="card"><div class="card-header"><span class="card-title">OpenGuardrails</span><span class="card-tag" style="background:rgba(228,87,46,0.08);color:var(--primary)">CLOSEST COMPETITOR</span></div><div class="card-body">Open source, Node.js, OpenClaw-specific. SaaS dashboard + cloud scanning. 10 threat detectors. In-agent skill sits inside the trust boundary.<br><br><strong>Weaknesses:</strong> Cloud scanning (data leaves machine). Node.js dependency. Agent-side plugin can be overridden by prompt injection. OpenClaw-only — no Claude Code, no Cursor.</div></div>
+  <div class="card"><div class="card-header"><span class="card-title">SecureClaw</span><span class="card-tag" style="background:rgba(245,158,11,0.08);color:var(--amber)">ADVERSA AI</span></div><div class="card-body">Two-layer defense: code plugin + behavioral skill. 55 audit checks. Their founder publicly said skill-only security "can be overridden by prompt injection."<br><br><strong>Weaknesses:</strong> Still partially skill-based. Enterprise messaging. OpenClaw-only.</div></div>
+  <div class="card"><div class="card-header"><span class="card-title">Claude Code built-in permissions</span><span class="card-tag" style="background:rgba(113,113,122,0.08);color:var(--dim)">NATIVE</span></div><div class="card-body">Has a permission system and trust dialogs. But Check Point found three CVEs where malicious configs bypassed these protections. No policy engine, no blast-radius classification, no rate limiting, no cross-tool observability.</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Comparison</div>
+  <table>
+    <tr><th>Feature</th><th style="color:var(--green)">Chitin</th><th>Others</th><th>Edge</th></tr>
+    <tr><td>Architecture</td><td>External — outside trust boundary</td><td>In-agent skill or plugin</td><td class="compare-edge edge-us">✓ OURS</td></tr>
+    <tr><td>Tool coverage</td><td>MCP + Claude Code + Cursor + Copilot</td><td>OpenClaw only</td><td class="compare-edge edge-us">✓ OURS</td></tr>
+    <tr><td>Data residency</td><td>100% local</td><td>OpenGuardrails: cloud scanning</td><td class="compare-edge edge-us">✓ OURS</td></tr>
+    <tr><td>Distribution</td><td>Go single binary, no deps</td><td>Node.js (npm install)</td><td class="compare-edge edge-us">✓ OURS</td></tr>
+    <tr><td>Injection detection</td><td>Local ONNX (DeBERTa)</td><td>Regex patterns or cloud API</td><td class="compare-edge edge-us">✓ OURS</td></tr>
+    <tr><td>Injection resistance</td><td>Out-of-process, can't be overridden</td><td>Can be prompt-injected away</td><td class="compare-edge edge-us">✓ OURS</td></tr>
+    <tr><td>Ecosystem maturity</td><td>New entrant</td><td>OpenGuardrails on ClawHub</td><td class="compare-edge edge-them">✗ THEIRS</td></tr>
+  </table>
+  <div class="callout primary"><strong class="text-primary">Core argument:</strong> "If a prompt injection can make your agent ignore its own security skill, your security skill is theater. Chitin runs outside the agent — it can't be talked out of protecting you."</div>
+</div>
+
+<div class="section">
+  <div class="section-title">Enterprise Landscape (Not Competing)</div>
+  <p class="card-body"><strong>Arcade.dev</strong> ($12M seed) — MCP runtime with OAuth, identity, and Contextual Access hooks. Enterprise-only.<br><strong>Lakera Guard</strong> — Prompt injection firewall via API. Enterprise SaaS. Used by Dropbox.<br><strong>NVIDIA NeMo Guardrails</strong> — Open source, LangChain integration. Complex setup.<br><br>None of these serve personal agent users or individual developers. That's the gap.</p>
+</div>
+
+</div><!-- end panel-3 -->
+
+
+<!-- ═══════════════════════════════════
+     TAB 4: TECH STACK
+═══════════════════════════════════ -->
+<div class="tab-panel" id="panel-4">
+
+<div class="section">
+  <div class="section-title">Core Dependencies</div>
+  <table>
+    <tr><th>Package</th><th>Purpose</th></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">Go 1.23+</td><td>Single binary, cross-compile, ~15MB runtime</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">mark3labs/mcp-go</td><td>MCP SDK for proxy mode — 400+ downstream imports</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">modernc.org/sqlite</td><td>Audit log + action history — pure Go, no CGO</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">gopkg.in/yaml.v3</td><td>Policy YAML parsing</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">spf13/cobra</td><td>CLI framework</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">yalue/onnxruntime_go</td><td>ONNX Runtime wrapper — ~5ms inference (Phase 3)</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">eliben/go-sentencepiece</td><td>Tokenizer — validate against Python reference</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">ProtectAI/deberta-v3-small-*-v2</td><td>Prompt injection model — ~180MB, downloaded on init</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">go-telegram/bot</td><td>Confirmations + daily digests</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">embed + net/http (stdlib)</td><td>React dashboard embedded in binary</td></tr>
+    <tr><td style="font-family:'JetBrains Mono';color:var(--secondary)">fsnotify/fsnotify</td><td>Hot-reload policy YAML on change</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">Project Structure</div>
+  <pre class="code">chitin/
+├── cmd/chitin/main.go            # CLI: wrap, check, log, report, scan, dashboard
+├── internal/
+│   ├── proxy/                    # MCP proxy (stdio + http)
+│   ├── check/                    # Check mode: stdin JSON → policy → exit code
+│   ├── policy/                   # YAML parser, T1-T5 classifier, rule engine, rate limiter
+│   ├── scanner/                  # ONNX runtime, tokenizer, injection detection
+│   ├── notify/                   # Telegram bot, digest builder
+│   ├── store/                    # SQLite, migrations, queries
+│   └── dashboard/                # HTTP server, REST API, embedded React
+├── web/                          # React dashboard (Vite + Recharts)
+├── configs/default-policy.yaml
+├── Dockerfile · Makefile · go.mod · README.md</pre>
+</div>
+
+<div class="section">
+  <div class="section-title">Distribution</div>
+  <p class="card-body">
+    <code>curl -sSL https://chitin.dev/install | sh</code> — install script<br>
+    <code>brew install chitin</code> — Homebrew<br>
+    <code>docker run ghcr.io/chitin-dev/chitin</code> — Docker<br><br>
+    macOS (ARM + Intel) + Linux (AMD64 + ARM64). Windows via WSL2 untested.
+  </p>
+</div>
+
+</div><!-- end panel-4 -->
+
+
+<!-- ═══════════════════════════════════
+     TAB 5: ROADMAP
+═══════════════════════════════════ -->
+<div class="tab-panel" id="panel-5">
+
+<div class="callout green"><strong class="text-green">Philosophy:</strong> Ship something useful every 2 weeks. The proxy + check mode + policy engine alone is more architecturally sound than every competitor. Don't wait for the scanner.</div>
+
+<div class="phase-label text-blue">PHASE 1 — "THE WALL" (WEEKS 1–4)</div>
+<p class="card-body mb-16">Proxy mode + check mode + policy engine. Ship v0.1 alpha.</p>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--blue)">WK 1</span><span class="week-title">Core proxy + check mode</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Go project scaffold</span><span class="task-detail">— cobra CLI, CI, test harness with mock MCP server</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">MCP stdio proxy</span><span class="task-detail">— wrap child MCP server, forward JSON-RPC, log to SQLite</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name"><code>chitin check</code> command</span><span class="task-detail">— read tool call JSON on stdin, evaluate policy, return exit code</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Version policy YAML + SQLite schema with migrations</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--blue)">WK 2</span><span class="week-title">Policy engine</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">YAML parser + hot-reload</span><span class="task-detail">— fsnotify watch</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">T1–T5 blast-radius classifier</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Allow / Block / Confirm rule engine</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Default policy</span><span class="task-detail">— email, shell, filesystem rules out of box</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--blue)">WK 3</span><span class="week-title">Rate limiter + observe mode</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Sliding window rate limiter</span><span class="task-detail">— per-tool, per-scope</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Observe mode + <code>chitin report</code></span><span class="task-detail">— 7-day summary of hypothetical blocks</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name"><code>chitin wrap</code> command</span><span class="task-detail">— one-command proxy setup</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Claude Code integration guide</span><span class="task-detail">— exact .claude/settings.json for chitin check</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--blue)">WK 4</span><span class="week-title">Public alpha</span></div><span class="tag">v0.1 ALPHA</span></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">README + quickstart docs</span><span class="task-detail">— separate guides for proxy mode + Claude Code</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">48-hour real-world test</span><span class="task-detail">— run against real OpenClaw + real Claude Code</span></div></div><div class="week-task"><span class="week-dot text-blue">●</span><div><span class="task-name">Ship to GitHub + communities</span></div></div></div>
+
+<div class="phase-label text-amber">PHASE 2 — "THE EYES" (WEEKS 5–8)</div>
+<p class="card-body mb-16">Observability + human-in-the-loop. Approve from your phone.</p>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--amber)">WK 5</span><span class="week-title">Telegram bot</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name"><code>chitin telegram setup</code></span><span class="task-detail">— guided BotFather setup</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">Confirmation flow</span><span class="task-detail">— pause → Telegram → approve/deny</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">Kill switch</span><span class="task-detail">— /stop halts all agent activity</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--amber)">WK 6</span><span class="week-title">Web dashboard</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">React dashboard embedded in binary</span><span class="task-detail">— timeline, stats, policy status</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">REST API for dashboard + external tools</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--amber)">WK 7</span><span class="week-title">Digests + multi-server</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">Daily digest via Telegram</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">Multi-MCP-server support</span><span class="task-detail">— wrap multiple servers through one Chitin</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">HTTP proxy mode for remote MCP servers</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--amber)">WK 8</span><span class="week-title">Beta release</span></div><span class="tag">v0.2 BETA</span></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">Homebrew + Docker + install script</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">Tokenizer validation</span><span class="task-detail">— go-sentencepiece vs Python reference</span></div></div><div class="week-task"><span class="week-dot text-amber">●</span><div><span class="task-name">Cursor integration guide</span></div></div></div>
+
+<div class="phase-label text-primary">PHASE 3 — "THE BRAIN" (WEEKS 9–12)</div>
+<p class="card-body mb-16">ML-powered detection. The differentiator.</p>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--primary)">WK 9</span><span class="week-title">ONNX scanner</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Tokenizer integration</span><span class="task-detail">— pure Go or Python shim</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">ONNX runtime wrapper</span><span class="task-detail">— load model, inference, probability</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name"><code>chitin scan</code></span><span class="task-detail">— scan string, file, or skill folder</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--primary)">WK 10</span><span class="week-title">Runtime scanning</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Scan MCP tool results for embedded injections</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Scan Claude Code/Cursor tool inputs</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Configurable threshold</span><span class="task-detail">— strict / normal / relaxed</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--primary)">WK 11</span><span class="week-title">Skill scanner + red team</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name"><code>chitin audit</code></span><span class="task-detail">— scan installed skills, produce risk report</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Red-team your own product</span><span class="task-detail">— prompt-inject an agent, verify Chitin blocks it</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Cross-platform testing</span><span class="task-detail">— macOS ARM, Intel, Linux AMD64, ARM64</span></div></div></div>
+
+<div class="week"><div class="week-header"><div><span class="week-label" style="background:var(--primary)">WK 12</span><span class="week-title">Stable release</span></div><span class="tag">v1.0 STABLE</span></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Anomaly baseline</span><span class="task-detail">— learn normal behavior, alert on deviations</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Blog post: "Why in-agent security is broken by design"</span></div></div><div class="week-task"><span class="week-dot text-primary">●</span><div><span class="task-name">Launch: HN, Product Hunt, OpenClaw, Claude Code community</span></div></div></div>
+
+</div><!-- end panel-5 -->
+
+
+<!-- ═══════════════════════════════════
+     TAB 6: POST-LAUNCH
+═══════════════════════════════════ -->
+<div class="tab-panel" id="panel-6">
+
+<div class="section">
+  <div class="section-title">Months 4–6: Growth</div>
+  <div class="card"><div class="card-header"><span class="card-title">Chitin Trust Registry</span></div><div class="card-body">Community-driven trust scores for MCP servers and agent skills. Opt-in: Chitin instances submit anonymized scan results. <code>chitin trust check @some-skill</code>. The npm audit of the agent world.</div></div>
+  <div class="card"><div class="card-header"><span class="card-title">Chitin Challenge</span></div><div class="card-body">Gamified CTF where people try to bypass Chitin. Every attempt feeds threat intelligence. Security cred + content marketing.</div></div>
+  <div class="card"><div class="card-header"><span class="card-title">Framework Adapters</span></div><div class="card-body">Deeper integrations with new coding tools and agent frameworks as they emerge. Check mode makes this cheap — any tool that can pipe JSON to stdin works.</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Monetization</div>
+  <p class="card-body mb-8"><strong class="text-green">Chitin Core — Free forever (Apache 2.0)</strong><br>Proxy mode, check mode, policy engine, rate limiter, CLI, observe mode, logging, skill scanner, ONNX inference.</p>
+  <p class="card-body mb-8"><strong class="text-amber">Chitin Pro — $12/month</strong><br>Web dashboard, Telegram confirmations, daily digests, anomaly detection, priority Trust Registry access.</p>
+  <p class="card-body mb-8"><strong class="text-purple">Chitin for Teams — $39/month per seat</strong><br>Shared policies, centralized logs, multi-agent dashboard, SIEM export.</p>
+  <p class="card-body mb-16"><strong class="text-secondary">Trust API — $0.001/query</strong><br>Programmatic trust scores. Agent frameworks and marketplaces integrate via API.</p>
+  <div class="callout amber"><strong class="text-amber">Timing:</strong> Ship everything as free through v1.0. Start charging after 200+ active installs and clear signal that people would pay.</div>
+</div>
+
+<div class="section">
+  <div class="section-title">Long-Term Vision</div>
+  <div style="background:rgba(228,87,46,0.025); border:1px solid rgba(228,87,46,0.13); border-radius:12px; padding:22px;">
+    <p class="card-body" style="font-size:14px">Chitin becomes the universal security layer for AI tool use — the way Cloudflare became the security layer for HTTP. Every agent framework, every coding tool, every MCP connection routes enforcement through Chitin.<br><br>The bet isn't on any single agent framework surviving. The bet is that <strong class="text-primary">AI tools will keep calling other tools, and someone needs to enforce the rules at that boundary.</strong> That's Chitin.</p>
+  </div>
+</div>
+
+</div><!-- end panel-6 -->
+
+
+<!-- ═══════════════════════════════════
+     TAB 7: RISKS & PREFLIGHT
+═══════════════════════════════════ -->
+<div class="tab-panel" id="panel-7">
+
+<div class="section">
+  <div class="section-title">Risks</div>
+
+  <div class="risk"><div class="risk-header"><span class="risk-title">OpenClaw hype fades</span><div class="risk-labels"><span class="text-amber">L:MED</span><span class="text-green">I:LOW</span></div></div><div class="risk-body"><strong class="text-secondary">Mitigation:</strong> Chitin isn't an OpenClaw product. Check mode works with Claude Code, Cursor, Copilot. OpenClaw is the launch community, not the product.</div></div>
+
+  <div class="risk"><div class="risk-header"><span class="risk-title">OpenGuardrails gets entrenched</span><div class="risk-labels"><span class="text-amber">L:MED</span><span class="text-amber">I:MED</span></div></div><div class="risk-body"><strong class="text-secondary">Mitigation:</strong> They're OpenClaw-only and cloud-dependent. Chitin covers more tools, keeps data local, and can't be prompt-injected. Ship fast.</div></div>
+
+  <div class="risk"><div class="risk-header"><span class="risk-title">Claude Code / Cursor build better native security</span><div class="risk-labels"><span class="text-amber">L:MED</span><span class="text-amber">I:MED</span></div></div><div class="risk-body"><strong class="text-secondary">Mitigation:</strong> Native security won't give unified policy across all tools. Chitin adds cross-tool enforcement, observability, and the Trust Registry.</div></div>
+
+  <div class="risk"><div class="risk-header"><span class="risk-title">Go tokenizer doesn't match DeBERTa reference</span><div class="risk-labels"><span class="text-amber">L:MED</span><span class="text-amber">I:MED</span></div></div><div class="risk-body"><strong class="text-secondary">Mitigation:</strong> Test in week 8. If it fails, ship Python shim for v1, replace with pure Go in v1.1.</div></div>
+
+  <div class="risk"><div class="risk-header"><span class="risk-title">False positives kill adoption</span><div class="risk-labels"><span class="text-amber">L:MED</span><span class="text-amber">I:MED</span></div></div><div class="risk-body"><strong class="text-secondary">Mitigation:</strong> Observe mode. 7 days of "here's what would have been blocked" before enforcement. Conservative defaults.</div></div>
+
+  <div class="risk"><div class="risk-header"><span class="risk-title">12-week timeline too tight solo</span><div class="risk-labels"><span class="text-primary">L:HIGH</span><span class="text-amber">I:MED</span></div></div><div class="risk-body"><strong class="text-secondary">Mitigation:</strong> Part-time: double estimates. Full-time: cut phase 1 scope — stdio proxy + check mode only. Get it public fast.</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Decision Framework</div>
+  <p class="card-body"><strong>1. Does it ship faster?</strong> Speed beats perfection.<br><strong>2. Does it stay local-first?</strong> Data leaving the machine weakens positioning.<br><strong>3. Does it work beyond one tool?</strong> Multi-tool decisions are good. Lock-in is risky.<br><strong>4. Does it build the trust network?</strong> More users = stronger moat.</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Preflight Checklist</div>
+  <div class="preflight"><span class="preflight-pri" style="background:var(--primary)">P0</span><span class="preflight-task">Check domain: chitin.dev, chitin.sh, getchitin.dev. Check GitHub org.</span><span class="preflight-time">30 min</span></div>
+  <div class="preflight"><span class="preflight-pri" style="background:var(--primary)">P0</span><span class="preflight-task">Decide full-time or part-time. Adjust all timelines.</span><span class="preflight-time">5 min</span></div>
+  <div class="preflight"><span class="preflight-pri" style="background:var(--primary)">P0</span><span class="preflight-task">Create GitHub repo, Apache 2.0, push scaffold.</span><span class="preflight-time">30 min</span></div>
+  <div class="preflight"><span class="preflight-pri" style="background:var(--primary)">P0</span><span class="preflight-task">Design decision: fail-closed. If Chitin crashes, block everything.</span><span class="preflight-time">15 min</span></div>
+  <div class="preflight"><span class="preflight-pri" style="background:var(--amber)">P1</span><span class="preflight-task">Set up CI: lint + test on push.</span><span class="preflight-time">30 min</span></div>
+  <div class="preflight"><span class="preflight-pri" style="background:var(--amber)">P1</span><span class="preflight-task">Install Claude Code, verify PreToolUse hooks work with a test script.</span><span class="preflight-time">30 min</span></div>
+  <div class="preflight"><span class="preflight-pri" style="background:var(--amber)">P1</span><span class="preflight-task">Choose modernc.org/sqlite (pure Go, no CGO).</span><span class="preflight-time">5 min</span></div>
+</div>
+
+<div class="section">
+  <div class="section-title">Go-to-Market</div>
+  <div class="gtm"><div class="gtm-title">OpenClaw Discord + ClawHub</div><div class="gtm-detail">Launch wedge community. "Protect your email agent." Post on v0.1.</div></div>
+  <div class="gtm"><div class="gtm-title">Claude Code community</div><div class="gtm-detail">Security hook story is fresh — Check Point CVEs are recent. "Chitin adds policy enforcement on top of hooks."</div></div>
+  <div class="gtm"><div class="gtm-title">X/Twitter build-in-public</div><div class="gtm-detail">Weekly demos. "Here's what happened when I prompt-injected my own agent with/without Chitin."</div></div>
+  <div class="gtm"><div class="gtm-title">Hacker News</div><div class="gtm-detail">Blog post: "Why in-agent security is broken by design." The argument stands on its own.</div></div>
+  <div class="gtm"><div class="gtm-title">Direct outreach</div><div class="gtm-detail">DM 10 people who've posted about agent security fears. Help them set up Chitin.</div></div>
+</div>
+
+<div class="cta-box">
+  <div class="cta-label">GO BUILD IT</div>
+  <div class="cta-body">This plan covers two integration modes (proxy + check), six agent tools (OpenClaw, NanoClaw, Claude Code, Cursor, Copilot, custom MCP agents), a 12-week roadmap, monetization, competition, and risks. It doesn't depend on any single framework surviving.<br><br><strong>Check the domain. Push the repo. Start the proxy. Ship in 4 weeks.</strong></div>
+</div>
+
+</div><!-- end panel-7 -->
+
+</div><!-- end content -->
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>
