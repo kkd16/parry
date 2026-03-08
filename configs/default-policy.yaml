@@ -1,0 +1,129 @@
+# Parry default policy
+# See docs/plan/ARCHITECTURE.md for tier definitions and tool name reference.
+
+version: 1
+mode: observe
+
+check_mode_confirm: block
+default_tier: 3
+
+tiers:
+  1: allow
+  2: allow
+  3: confirm
+  4: confirm
+  5: block
+
+# Paths that are off limits to all tools. Any tool call that references
+# a protected path is blocked regardless of tier or binary classification.
+protected_paths:
+  - "~/.ssh/*"
+  - "~/.aws/*"
+  - "~/.gnupg/*"
+  - "~/.parry/*"
+  - "~/.claude/*"
+  - "~/.cursor/*"
+  - "/etc/shadow"
+  - "/etc/passwd"
+  - ".env"
+  - ".env.*"
+  - "*credentials*"
+
+rules:
+  shell:
+    default_tier: 3
+    tier_1:
+      - ls
+      - cat
+      - head
+      - tail
+      - less
+      - more
+      - grep
+      - rg
+      - find
+      - wc
+      - echo
+      - pwd
+      - which
+      - whoami
+      - env
+      - printenv
+      - date
+      - file
+      - stat
+      - du
+      - df
+      - tree
+      - diff
+      - "git status"
+      - "git log"
+      - "git diff"
+      - "git show"
+      - "git branch"
+    tier_2:
+      - cp
+      - mv
+      - mkdir
+      - touch
+      - tee
+      - sed
+      - awk
+      - "git add"
+      - "git commit"
+      - "git checkout"
+      - "git switch"
+      - "git merge"
+      - "git rebase"
+      - "git stash"
+      - "git reset"
+      - "npm install"
+      - "npm run"
+      - "npm test"
+      - "go build"
+      - "go test"
+      - "go mod"
+      - "go get"
+      - "pip install"
+      - make
+      - "cargo build"
+      - "cargo test"
+    tier_3:
+      - rm
+      - rmdir
+      - chmod
+      - chown
+      - kill
+      - killall
+      - pkill
+      - truncate
+      - shred
+      - "git clean"
+    tier_4:
+      - curl
+      - wget
+      - ssh
+      - scp
+      - rsync
+      - "git push"
+      - "git fetch"
+      - "git pull"
+      - "git clone"
+      - "npm publish"
+      - "docker push"
+      - ping
+      - nc
+    tier_5:
+      - sudo
+      - su
+      - doas
+
+  file_edit:
+    default_tier: 2
+
+  file_read:
+    default_tier: 1
+
+rate_limit:
+  window: 3m
+  max: 50
