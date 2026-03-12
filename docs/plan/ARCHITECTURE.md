@@ -151,18 +151,20 @@ Enforce
 
 ```
 parry/
-├── cmd/parry/main.go             # CLI: wrap, check, log, report, scan, dashboard
+├── cmd/parry/
+│   ├── main.go                   # CLI: check, init, nuke, validate, report, version
+│   └── default-policy.yaml       # Embedded default policy (copied by parry init)
 ├── internal/
-│   ├── proxy/                    # MCP proxy (stdio + HTTP)
 │   ├── check/                    # Check mode: stdin JSON → policy → exit code
 │   ├── policy/                   # YAML parser, T1–T5 classifier, rule engine, rate limiter
-│   ├── scanner/                  # ONNX runtime, tokenizer, injection detection
-│   ├── notify/                   # Telegram bot, digest builder
 │   ├── store/                    # SQLite, migrations, queries
-│   └── dashboard/                # HTTP server, REST API, embedded React
-├── web/                          # React dashboard (Vite + Recharts)
-├── configs/default-policy.yaml
-├── Dockerfile
+│   ├── proxy/                    # (Phase 2) MCP proxy — stdio + HTTP
+│   ├── scanner/                  # (Phase 4) ONNX runtime, tokenizer, injection detection
+│   ├── notify/                   # (Phase 3) Telegram bot, digest builder
+│   └── dashboard/                # (Phase 3) HTTP server, REST API, embedded React
+├── web/                          # (Phase 3) React dashboard (Vite + Recharts)
+├── configs/default-policy.yaml   # Source default policy
+├── .github/workflows/ci.yml
 ├── Makefile
 └── go.mod
 ```

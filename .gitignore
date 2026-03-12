@@ -33,6 +33,7 @@ parry
 # Editor/IDE
 # .idea/
 # .vscode/
+.cursor/
 
 # Parry data
 .parry/
