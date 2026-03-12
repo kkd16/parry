@@ -4,12 +4,11 @@
 
 ## Phase 1 — "The Wall"
 
-**Goal:** Check mode + policy engine. Parry protects Claude Code, Cursor, and Copilot via pre-execution hooks.
+**Goal:** Check mode + policy engine. Parry protects Cursor via `beforeShellExecution` hooks.
 
 ### Core check mode
 - [ ] Go project scaffold — kong CLI, CI, test harness
-- [ ] `parry check` command — read tool call JSON on stdin, evaluate policy, return exit code
-- [ ] Input normalization — auto-detect Claude Code, Cursor, Copilot, and generic formats
+- [ ] `parry check` command — read Cursor hook JSON on stdin, evaluate policy, respond with JSON on stdout
 - [ ] Version policy YAML + SQLite schema with migrations
 
 ### Policy engine
@@ -24,15 +23,28 @@
 - [ ] Sliding window rate limiter — per-tool, per-scope, stateful via SQLite
 - [ ] Session isolation — derived from cwd, overridable via `PARRY_SESSION`
 - [ ] Observe mode + `parry report` — summary of hypothetical blocks
-- [ ] Claude Code integration guide — exact `.claude/settings.json` for `parry check`
 
 ### Alpha release
-- [ ] README + quickstart docs — guide for Claude Code + Cursor hooks
+- [ ] Cursor integration guide — exact `.cursor/hooks.json` for `parry check`
 - [ ] Demo GIF/recording — 30-second clip showing Parry blocking a rogue tool call
-- [ ] Real-world test — run against real Claude Code / Cursor sessions
+- [ ] Real-world test — run against real Cursor sessions
 - [ ] CI badge, `go test ./...` passes clean
 
 **Milestone: v0.1 ALPHA**
+
+---
+
+## Phase 1.5 — "More Hooks"
+
+**Goal:** Expand check mode to other tools and Cursor hook events.
+
+- [ ] Claude Code support — `PreToolUse` hook in `.claude/settings.json`
+- [ ] GitHub Copilot support
+- [ ] Cursor `beforeMCPExecution` / `preToolUse` / `afterFileEdit` hooks
+- [ ] Input normalization — auto-detect format from each tool
+- [ ] Integration guides for each tool
+
+**Milestone: v0.1.5**
 
 ---
 
