@@ -1,0 +1,35 @@
+version: 1
+mode: observe
+
+check_mode_confirm: block
+default_tier: T3_destructive
+
+tiers:
+  T1_observe: allow
+  T2_local_write: allow
+  T3_destructive: confirm
+  T4_external: confirm
+  T5_credential: block
+
+rules:
+  Bash:
+    tier: T3_destructive
+    allow_list:
+      - "git *"
+      - "npm *"
+      - "ls *"
+      - "cat *"
+    block_list:
+      - "rm -rf *"
+      - "sudo *"
+      - "curl * | sh"
+  Edit:
+    tier: T2_local_write
+    block_when:
+      path_matches: "/etc/*,~/.ssh/*"
+
+rate_limits:
+  - scope: "Bash"
+    max: 10
+    window: "1m"
+    on_exceed: block

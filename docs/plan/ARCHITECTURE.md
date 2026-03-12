@@ -171,11 +171,11 @@ parry/
 
 | Package | Purpose |
 |---------|---------|
-| Go 1.24+ | Single binary, cross-compile |
-| `mark3labs/mcp-go` | MCP SDK for proxy mode (alt: `modelcontextprotocol/go-sdk`) |
+| Go 1.26+ | Single binary, cross-compile |
+| `modelcontextprotocol/go-sdk` | Official MCP SDK for proxy mode |
 | `modernc.org/sqlite` | Audit log + action history — pure Go, no CGO |
 | `go.yaml.in/yaml/v4` | Policy YAML parsing |
-| `spf13/cobra` | CLI framework |
+| `alecthomas/kong` | CLI framework (struct-based, minimal boilerplate) |
 | `yalue/onnxruntime_go` | ONNX Runtime wrapper — ~5ms inference (Phase 3). **Requires ONNX Runtime shared library at runtime** (not pure Go — the `.so`/`.dylib` ships alongside the binary or is downloaded by `parry init`). No CGO at build time if using purego variant. |
 | `eliben/go-sentencepiece` | Tokenizer for DeBERTa |
 | `ProtectAI/deberta-v3-base-prompt-injection-v2` | Prompt injection model — ~400MB, downloaded on `parry init` |

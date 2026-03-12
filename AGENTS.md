@@ -14,7 +14,7 @@ Parry is a runtime security enforcement layer for AI agents and coding tools. Si
 
 ## Code Standards
 
-- **Go 1.24+**, `spf13/cobra` CLI, `modernc.org/sqlite` (pure Go, no CGO), `go.yaml.in/yaml/v4`, `mark3labs/mcp-go` (or `modelcontextprotocol/go-sdk`)
+- **Go 1.26+**, `alecthomas/kong` CLI, `modernc.org/sqlite` (pure Go, no CGO), `go.yaml.in/yaml/v4`, `modelcontextprotocol/go-sdk`
 - Table-driven tests. Wrap errors with context: `fmt.Errorf("doing X: %w", err)`
 - Binary is `parry`. Config dir is `~/.parry/`. Policy file is `~/.parry/policy.yaml`.
 - Always use up-to-date practices. Never assume existing code is correct — verify before extending a pattern.
@@ -48,7 +48,8 @@ Parry is a runtime security enforcement layer for AI agents and coding tools. Si
 - Go fix failing CI tests without being told how
 
 ### Self-Improvement
-- After ANY correction from the user: update `docs/plan/LESSONS.md` with the pattern
+- After ANY correction from the user: **immediately** update `docs/plan/LESSONS.md` with the pattern — do this in the same response as the fix, not later
+- Do not wait to be reminded. The correction itself is the trigger.
 - Write rules for yourself that prevent the same mistake
 - Ruthlessly iterate on these lessons until mistake rate drops
 - Review `LESSONS.md` at session start for the relevant project

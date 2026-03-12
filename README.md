@@ -128,11 +128,11 @@ rate_limits:
 
 | Component | Choice |
 |-----------|--------|
-| Language | Go 1.24+, single binary, ~15MB core |
-| MCP SDK | `mark3labs/mcp-go` (or `modelcontextprotocol/go-sdk`) |
+| Language | Go 1.26+, single binary, ~15MB core |
+| MCP SDK | `modelcontextprotocol/go-sdk` |
 | Database | `modernc.org/sqlite`, pure Go, no CGO |
 | Policy | YAML (`go.yaml.in/yaml/v4`) + `fsnotify` hot-reload |
-| CLI | `spf13/cobra` |
+| CLI | `alecthomas/kong` |
 | Scanner | `yalue/onnxruntime_go` + DeBERTa-v3-base (~5ms inference). ONNX Runtime + model downloaded by `parry init`. |
 | Notifications | Telegram via `go-telegram/bot` |
 | Dashboard | React (Vite) embedded in binary via `embed` |

@@ -1,41 +1,60 @@
 # Roadmap
 
-> Phase 1 is the core. Phase 2 adds observability. Phase 3 adds ML detection. Each phase is independently useful.
+> Each phase is independently useful. Ship and validate each one before moving on.
 
 ## Phase 1 — "The Wall"
 
-**Goal:** Proxy mode + check mode + policy engine.
+**Goal:** Check mode + policy engine. Parry protects Claude Code, Cursor, and Copilot via pre-execution hooks.
 
-### Core proxy + check mode
-- [ ] Go project scaffold — cobra CLI, CI, test harness with mock MCP server
-- [ ] MCP stdio proxy — wrap child MCP server, forward JSON-RPC, log to SQLite
+### Core check mode
+- [ ] Go project scaffold — kong CLI, CI, test harness
 - [ ] `parry check` command — read tool call JSON on stdin, evaluate policy, return exit code
+- [ ] Input normalization — auto-detect Claude Code, Cursor, Copilot, and generic formats
 - [ ] Version policy YAML + SQLite schema with migrations
 
 ### Policy engine
 - [ ] YAML parser + hot-reload (fsnotify watch, atomic swap — no partial policy states)
 - [ ] T1–T5 blast-radius classifier
-- [ ] Allow / Block / Confirm rule engine
+- [ ] Allow / Block / Confirm rule engine (confirm falls back to `check_mode_confirm`)
+- [ ] Allow-list / block-list glob matching for shell commands
 - [ ] `parry validate` — check policy YAML for syntax errors, unknown fields, invalid tier refs
-- [ ] Default policy — email, shell, filesystem rules out of box
+- [ ] Default policy — shell, filesystem rules out of box
 
 ### Rate limiter + observe mode
-- [ ] Sliding window rate limiter — per-tool, per-scope
+- [ ] Sliding window rate limiter — per-tool, per-scope, stateful via SQLite
+- [ ] Session isolation — derived from cwd, overridable via `PARRY_SESSION`
 - [ ] Observe mode + `parry report` — summary of hypothetical blocks
-- [ ] `parry wrap` command — one-command proxy setup
 - [ ] Claude Code integration guide — exact `.claude/settings.json` for `parry check`
 
 ### Alpha release
-- [ ] README + quickstart docs — separate guides for proxy mode + Claude Code
+- [ ] README + quickstart docs — guide for Claude Code + Cursor hooks
 - [ ] Demo GIF/recording — 30-second clip showing Parry blocking a rogue tool call
-- [ ] Real-world test — run against real MCP agents + real Claude Code
+- [ ] Real-world test — run against real Claude Code / Cursor sessions
 - [ ] CI badge, `go test ./...` passes clean
 
 **Milestone: v0.1 ALPHA**
 
 ---
 
-## Phase 2 — "The Eyes"
+## Phase 2 — "The Proxy"
+
+**Goal:** MCP proxy mode. Parry intercepts any MCP server via stdio or HTTP.
+
+### MCP proxy
+- [ ] MCP stdio proxy — wrap child MCP server, forward JSON-RPC, intercept tools/call
+- [ ] `parry wrap` command — one-command proxy setup
+- [ ] HTTP reverse proxy for remote MCP servers
+- [ ] Multi-MCP-server support — wrap multiple servers through one Parry instance
+
+### Release
+- [ ] Cursor integration guide
+- [ ] Real-world test — run against real MCP agents
+
+**Milestone: v0.2**
+
+---
+
+## Phase 3 — "The Eyes"
 
 **Goal:** Observability + human-in-the-loop. Approve from your phone.
 
@@ -43,26 +62,20 @@
 - [ ] `parry telegram setup` — guided BotFather setup
 - [ ] Confirmation flow — pause → Telegram → approve/deny
 - [ ] Kill switch — `/stop` halts all agent activity
+- [ ] Daily digest via Telegram
 
 ### Web dashboard
 - [ ] React dashboard embedded in binary — timeline, stats, policy status
 - [ ] REST API for dashboard + external tools
 
-### Digests + multi-server
-- [ ] Daily digest via Telegram
-- [ ] Multi-MCP-server support — wrap multiple servers through one Parry instance
-- [ ] HTTP proxy mode for remote MCP servers
-
-### Beta release
+### Release
 - [ ] Homebrew + Docker + install script
-- [ ] Tokenizer validation — go-sentencepiece vs Python reference
-- [ ] Cursor integration guide
 
-**Milestone: v0.2 BETA**
+**Milestone: v0.3 BETA**
 
 ---
 
-## Phase 3 — "The Brain"
+## Phase 4 — "The Brain"
 
 **Goal:** ML-powered prompt injection detection.
 

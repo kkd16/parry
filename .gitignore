@@ -24,9 +24,15 @@ profile.cov
 go.work
 go.work.sum
 
+# Built binary
+parry
+
 # env file
 .env
 
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Parry data
+.parry/
