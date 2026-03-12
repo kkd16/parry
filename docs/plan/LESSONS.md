@@ -17,7 +17,7 @@ When the user corrects you, update this file in the same response as the fix. Do
 Don't pad documentation with info that belongs elsewhere (like exit code behavior or general protocol details). Stick to the purpose of the file — if it's a payload reference, just show payloads and responses.
 
 ### 5. Keep docs in sync with code changes
-When adding, removing, or renaming CLI commands, packages, or project structure, update the planning docs (ARCHITECTURE.md, ROADMAP.md, etc.) in the same change. Don't let docs drift from reality.
+When adding, removing, or renaming CLI commands, packages, or project structure, update the planning docs (ARCHITECTURE.md, ROADMAP.md, INTEGRATION.md, etc.) in the same change. Don't let docs drift from reality. This includes updating setup instructions, response formats, and integration guides when the actual behavior changes. Treat docs as part of the PR, not an afterthought.
 
 ## Open Concerns
 
