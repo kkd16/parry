@@ -43,25 +43,29 @@ type CLI struct {
 	Version  VersionCmd  `cmd:"" help:"Print version."`
 }
 
+// fatal logs an error to stderr and exits with the block code.
+// Used in check mode to ensure fail-closed behavior on any error.
+func fatal(err error) {
+	fmt.Fprintf(os.Stderr, "parry: %v\n", err)
+	os.Exit(check.ExitBlock)
+}
+
 type CheckCmd struct{}
 
 func (c *CheckCmd) Run() error {
 	tc, err := check.ParseInput(os.Stdin)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "parry: %v\n", err)
-		os.Exit(check.ExitBlock)
+		fatal(err)
 	}
 
 	engine, err := loadPolicy()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "parry: %v\n", err)
-		os.Exit(check.ExitBlock)
+		fatal(err)
 	}
 
 	action, _, err := engine.Evaluate(tc.ToolName, tc.ToolInput)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "parry: %v\n", err)
-		os.Exit(check.ExitBlock)
+		fatal(err)
 	}
 
 	p := engine.Policy()

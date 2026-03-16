@@ -3,13 +3,16 @@ package policy
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	"github.com/kkd16/parry/internal/shellparse"
 )
 
+const blockedTier = Tier(5)
+
 func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Tier, error) {
 	if e.policy == nil {
-		return Block, Tier(3), fmt.Errorf("no policy loaded")
+		return Block, blockedTier, fmt.Errorf("no policy loaded")
 	}
 
 	rule, hasRule := e.policy.Rules[toolName]
@@ -31,14 +34,14 @@ func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Ti
 		if hasRule {
 			for _, c := range cmds {
 				if isBlocked(c.Binary, rule.Block) {
-					return Block, Tier(5), nil
+					return Block, blockedTier, nil
 				}
 			}
 		}
 
 		args := shellparse.ExtractArgs(cmds)
 		if e.anyPathProtected(args) {
-			return Block, Tier(5), nil
+			return Block, blockedTier, nil
 		}
 
 		highest := Tier(0)
@@ -57,7 +60,7 @@ func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Ti
 	case "file_edit", "file_read":
 		path, _ := toolInput["path"].(string)
 		if path != "" && e.anyPathProtected([]string{path}) {
-			return Block, Tier(5), nil
+			return Block, blockedTier, nil
 		}
 	}
 
@@ -98,10 +101,5 @@ func lookupBinaryTier(cmd shellparse.Command, binaries map[string]Tier, fallback
 }
 
 func isBlocked(binary string, blockList []string) bool {
-	for _, b := range blockList {
-		if b == binary {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(blockList, binary)
 }

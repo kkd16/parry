@@ -31,11 +31,21 @@ type Rule struct {
 
 func (r *Rule) buildBinaries() {
 	r.Binaries = make(map[string]Tier)
-	for _, b := range r.Tier1 { r.Binaries[b] = 1 }
-	for _, b := range r.Tier2 { r.Binaries[b] = 2 }
-	for _, b := range r.Tier3 { r.Binaries[b] = 3 }
-	for _, b := range r.Tier4 { r.Binaries[b] = 4 }
-	for _, b := range r.Tier5 { r.Binaries[b] = 5 }
+	for _, b := range r.Tier1 {
+		r.Binaries[b] = 1
+	}
+	for _, b := range r.Tier2 {
+		r.Binaries[b] = 2
+	}
+	for _, b := range r.Tier3 {
+		r.Binaries[b] = 3
+	}
+	for _, b := range r.Tier4 {
+		r.Binaries[b] = 4
+	}
+	for _, b := range r.Tier5 {
+		r.Binaries[b] = 5
+	}
 }
 
 type RateLimit struct {
