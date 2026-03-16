@@ -8,9 +8,31 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/internal/check"
+	"github.com/kkd16/parry/internal/policy"
 )
 
 var version = "dev"
+
+func parryDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("finding home directory: %w", err)
+	}
+	return filepath.Join(home, ".parry"), nil
+}
+
+func loadPolicy() (*policy.Engine, error) {
+	engine := policy.NewEngine()
+	dir, err := parryDir()
+	if err != nil {
+		return nil, err
+	}
+	path := filepath.Join(dir, "policy.yaml")
+	if _, err := os.Stat(path); err == nil {
+		return engine, engine.Load(path)
+	}
+	return engine, engine.LoadBytes(configs.DefaultPolicy)
+}
 
 type CLI struct {
 	Check    CheckCmd    `cmd:"" help:"Evaluate a tool call from stdin against policy."`
@@ -19,9 +41,6 @@ type CLI struct {
 	Validate ValidateCmd `cmd:"" help:"Validate policy YAML for errors."`
 	Nuke     NukeCmd     `cmd:"" help:"Remove all Parry config, data, and policy."`
 	Version  VersionCmd  `cmd:"" help:"Print version."`
-
-	PolicyPath string `name:"policy" short:"p" default:"~/.parry/policy.yaml" help:"Path to policy file."`
-	DBPath     string `name:"db" default:"~/.parry/parry.db" help:"Path to SQLite database."`
 }
 
 type CheckCmd struct{}
@@ -32,20 +51,49 @@ func (c *CheckCmd) Run() error {
 		fmt.Fprintf(os.Stderr, "parry: %v\n", err)
 		os.Exit(check.ExitBlock)
 	}
-	_ = tc
-	check.Respond("allow", "", "")
+
+	engine, err := loadPolicy()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parry: %v\n", err)
+		os.Exit(check.ExitBlock)
+	}
+
+	action, _, err := engine.Evaluate(tc.ToolName, tc.ToolInput)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parry: %v\n", err)
+		os.Exit(check.ExitBlock)
+	}
+
+	p := engine.Policy()
+	if p.Mode == "observe" {
+		check.Respond("allow", "", "")
+		return nil
+	}
+
+	switch action {
+	case policy.Allow:
+		check.Respond("allow", "", "")
+	case policy.Confirm:
+		if p.CheckModeConfirm == policy.Block {
+			check.Respond("block", "Blocked by Parry: requires confirmation", "")
+		} else {
+			check.Respond("allow", "", "")
+		}
+	case policy.Block:
+		check.Respond("block", "Blocked by Parry", "")
+	default:
+		check.Respond("block", "Blocked by Parry: unknown action", "")
+	}
 	return nil
 }
 
 type InitCmd struct{}
 
 func (i *InitCmd) Run() error {
-	home, err := os.UserHomeDir()
+	dir, err := parryDir()
 	if err != nil {
-		return fmt.Errorf("finding home directory: %w", err)
+		return err
 	}
-
-	dir := filepath.Join(home, ".parry")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return fmt.Errorf("creating config dir: %w", err)
 	}
@@ -68,19 +116,18 @@ type NukeCmd struct {
 	Force bool `name:"force" short:"f" help:"Skip confirmation prompt."`
 }
 
-func (r *NukeCmd) Run() error {
-	home, err := os.UserHomeDir()
+func (n *NukeCmd) Run() error {
+	dir, err := parryDir()
 	if err != nil {
-		return fmt.Errorf("finding home directory: %w", err)
+		return err
 	}
 
-	dir := filepath.Join(home, ".parry")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		fmt.Println("Nothing to reset — no config found at", dir)
 		return nil
 	}
 
-	if !r.Force {
+	if !n.Force {
 		fmt.Printf("This will permanently delete %s and all its contents. Continue? [y/N] ", dir)
 		var answer string
 		fmt.Scanln(&answer)

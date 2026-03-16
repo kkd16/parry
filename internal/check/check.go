@@ -33,7 +33,7 @@ func ParseInput(r io.Reader) (*ToolCall, error) {
 	if _, ok := raw["hook_event_name"]; ok {
 		cmd, _ := raw["command"].(string)
 		return &ToolCall{
-			ToolName:  "Shell",
+			ToolName:  "shell",
 			ToolInput: map[string]any{"command": cmd},
 		}, nil
 	}
@@ -41,10 +41,13 @@ func ParseInput(r io.Reader) (*ToolCall, error) {
 	return nil, fmt.Errorf("unrecognized tool call format")
 }
 
-func Respond(permission string, userMsg string, agentMsg string) {
-	json.NewEncoder(os.Stdout).Encode(Response{
+func Respond(permission, userMsg, agentMsg string) {
+	if err := json.NewEncoder(os.Stdout).Encode(Response{
 		Permission:   permission,
 		UserMessage:  userMsg,
 		AgentMessage: agentMsg,
-	})
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "parry: encoding response: %v\n", err)
+		os.Exit(ExitBlock)
+	}
 }
