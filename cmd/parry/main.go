@@ -1,0 +1,131 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/alecthomas/kong"
+	"github.com/kkd16/parry/configs"
+	"github.com/kkd16/parry/internal/check"
+)
+
+var version = "dev"
+
+type CLI struct {
+	Check    CheckCmd    `cmd:"" help:"Evaluate a tool call from stdin against policy."`
+	Init     InitCmd     `cmd:"" help:"Initialize Parry configuration."`
+	Report   ReportCmd   `cmd:"" help:"Show observe mode report."`
+	Validate ValidateCmd `cmd:"" help:"Validate policy YAML for errors."`
+	Nuke     NukeCmd     `cmd:"" help:"Remove all Parry config, data, and policy."`
+	Version  VersionCmd  `cmd:"" help:"Print version."`
+
+	PolicyPath string `name:"policy" short:"p" default:"~/.parry/policy.yaml" help:"Path to policy file."`
+	DBPath     string `name:"db" default:"~/.parry/parry.db" help:"Path to SQLite database."`
+}
+
+type CheckCmd struct{}
+
+func (c *CheckCmd) Run() error {
+	tc, err := check.ParseInput(os.Stdin)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parry: %v\n", err)
+		os.Exit(check.ExitBlock)
+	}
+	_ = tc
+	check.Respond("allow", "", "")
+	return nil
+}
+
+type InitCmd struct{}
+
+func (i *InitCmd) Run() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("finding home directory: %w", err)
+	}
+
+	dir := filepath.Join(home, ".parry")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("creating config dir: %w", err)
+	}
+
+	policyPath := filepath.Join(dir, "policy.yaml")
+	if _, err := os.Stat(policyPath); err == nil {
+		fmt.Println("Policy already exists at", policyPath)
+		return nil
+	}
+
+	if err := os.WriteFile(policyPath, configs.DefaultPolicy, 0o644); err != nil {
+		return fmt.Errorf("writing default policy: %w", err)
+	}
+
+	fmt.Println("Initialized Parry config at", dir)
+	return nil
+}
+
+type NukeCmd struct {
+	Force bool `name:"force" short:"f" help:"Skip confirmation prompt."`
+}
+
+func (r *NukeCmd) Run() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("finding home directory: %w", err)
+	}
+
+	dir := filepath.Join(home, ".parry")
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		fmt.Println("Nothing to reset — no config found at", dir)
+		return nil
+	}
+
+	if !r.Force {
+		fmt.Printf("This will permanently delete %s and all its contents. Continue? [y/N] ", dir)
+		var answer string
+		fmt.Scanln(&answer)
+		if answer != "y" && answer != "Y" {
+			fmt.Println("Aborted.")
+			return nil
+		}
+	}
+
+	if err := os.RemoveAll(dir); err != nil {
+		return fmt.Errorf("removing config dir: %w", err)
+	}
+
+	fmt.Println("Removed", dir)
+	return nil
+}
+
+type ReportCmd struct{}
+
+func (r *ReportCmd) Run() error {
+	fmt.Println("report: not yet implemented")
+	return nil
+}
+
+type ValidateCmd struct{}
+
+func (v *ValidateCmd) Run() error {
+	fmt.Println("validate: not yet implemented")
+	return nil
+}
+
+type VersionCmd struct{}
+
+func (v *VersionCmd) Run() error {
+	fmt.Println("parry", version)
+	return nil
+}
+
+func main() {
+	var cli CLI
+	ctx := kong.Parse(&cli,
+		kong.Name("parry"),
+		kong.Description("Runtime security enforcement for AI agents."),
+		kong.UsageOnError(),
+	)
+	err := ctx.Run()
+	ctx.FatalIfErrorf(err)
+}
