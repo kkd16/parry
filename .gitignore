@@ -31,8 +31,8 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.claude/
+.vscode/
 .cursor/
 
 # Parry data
