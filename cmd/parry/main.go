@@ -9,6 +9,7 @@ import (
 	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/policy"
+	"github.com/kkd16/parry/internal/ui"
 )
 
 var version = "dev"
@@ -43,10 +44,8 @@ type CLI struct {
 	Version  VersionCmd  `cmd:"" help:"Print version."`
 }
 
-// fatal logs an error to stderr and exits with the block code.
-// Used in check mode to ensure fail-closed behavior on any error.
 func fatal(err error) {
-	fmt.Fprintf(os.Stderr, "parry: %v\n", err)
+	ui.Error(err.Error())
 	os.Exit(check.ExitBlock)
 }
 
@@ -63,29 +62,37 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
-	action, _, err := engine.Evaluate(tc.ToolName, tc.ToolInput)
+	action, tier, err := engine.Evaluate(tc.ToolName, tc.ToolInput)
 	if err != nil {
 		fatal(err)
 	}
 
+	cmd, _ := tc.ToolInput["command"].(string)
 	p := engine.Policy()
+
 	if p.Mode == "observe" {
+		ui.LogCheck("observe", cmd, int(tier))
 		check.Respond("allow", "", "")
 		return nil
 	}
 
 	switch action {
 	case policy.Allow:
+		ui.LogCheck("allow", cmd, int(tier))
 		check.Respond("allow", "", "")
 	case policy.Confirm:
 		if p.CheckModeConfirm == policy.Block {
+			ui.LogCheck("block", cmd, int(tier))
 			check.Respond("block", "Blocked by Parry: requires confirmation", "")
 		} else {
+			ui.LogCheck("allow", cmd, int(tier))
 			check.Respond("allow", "", "")
 		}
 	case policy.Block:
+		ui.LogCheck("block", cmd, int(tier))
 		check.Respond("block", "Blocked by Parry", "")
 	default:
+		ui.LogCheck("block", cmd, int(tier))
 		check.Respond("block", "Blocked by Parry: unknown action", "")
 	}
 	return nil
@@ -104,7 +111,9 @@ func (i *InitCmd) Run() error {
 
 	policyPath := filepath.Join(dir, "policy.yaml")
 	if _, err := os.Stat(policyPath); err == nil {
-		fmt.Println("Policy already exists at", policyPath)
+		ui.Info("already set up")
+		ui.Detail("policy", policyPath)
+		ui.Break()
 		return nil
 	}
 
@@ -112,7 +121,11 @@ func (i *InitCmd) Run() error {
 		return fmt.Errorf("writing default policy: %w", err)
 	}
 
-	fmt.Println("Initialized Parry config at", dir)
+	ui.Success("parry is set up")
+	ui.Detail("config", dir)
+	ui.Detail("policy", policyPath)
+	ui.Detail("mode", "observe "+ui.Dimf("(edit policy, then parry validate)"))
+	ui.Break()
 	return nil
 }
 
@@ -127,16 +140,19 @@ func (n *NukeCmd) Run() error {
 	}
 
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		fmt.Println("Nothing to reset — no config found at", dir)
+		ui.Info("nothing to nuke — no config found")
+		ui.Break()
 		return nil
 	}
 
 	if !n.Force {
-		fmt.Printf("This will permanently delete %s and all its contents. Continue? [y/N] ", dir)
+		ui.Warn("this will permanently delete " + dir)
+		fmt.Print("   continue? [y/N] ")
 		var answer string
 		fmt.Scanln(&answer)
 		if answer != "y" && answer != "Y" {
-			fmt.Println("Aborted.")
+			ui.Info("aborted")
+			ui.Break()
 			return nil
 		}
 	}
@@ -145,28 +161,60 @@ func (n *NukeCmd) Run() error {
 		return fmt.Errorf("removing config dir: %w", err)
 	}
 
-	fmt.Println("Removed", dir)
+	ui.Success("nuked — clean slate")
+	ui.Detail("removed", dir)
+	ui.Break()
 	return nil
 }
 
 type ReportCmd struct{}
 
 func (r *ReportCmd) Run() error {
-	fmt.Println("report: not yet implemented")
+	ui.Info("report is not built yet — coming soon")
 	return nil
 }
 
 type ValidateCmd struct{}
 
 func (v *ValidateCmd) Run() error {
-	fmt.Println("validate: not yet implemented")
+	dir, err := parryDir()
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(dir, "policy.yaml")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		ui.Error("no policy found — run " + ui.Boldf("parry init") + " first")
+		ui.Break()
+		return fmt.Errorf("no policy file at %s", path)
+	}
+	engine := policy.NewEngine()
+	if err := engine.Load(path); err != nil {
+		ui.Error("policy is broken")
+		ui.Detail("error", err.Error())
+		ui.Break()
+		return err
+	}
+
+	p := engine.Policy()
+	ui.Success("policy looks good")
+	ui.Detail("file", path)
+	ui.Detail("mode", p.Mode)
+	ui.Detail("rules", fmt.Sprintf("%d", len(p.Rules)))
+
+	binaries := 0
+	for _, r := range p.Rules {
+		binaries += len(r.Binaries)
+	}
+	ui.Detail("binaries", fmt.Sprintf("%d classified", binaries))
+	ui.Detail("paths", fmt.Sprintf("%d protected", len(p.ProtectedPaths)))
+	ui.Break()
 	return nil
 }
 
 type VersionCmd struct{}
 
 func (v *VersionCmd) Run() error {
-	fmt.Println("parry", version)
+	fmt.Printf(" parry %s\n", ui.Boldf("%s", version))
 	return nil
 }
 

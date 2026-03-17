@@ -16,7 +16,7 @@
 - [ ] T1–T5 blast-radius classifier
 - [ ] Allow / Block / Confirm rule engine (confirm falls back to `check_mode_confirm`)
 - [ ] Allow-list / block-list glob matching for shell commands
-- [ ] `parry validate` — check policy YAML for syntax errors, unknown fields, invalid tier refs
+- [x] `parry validate` — check `~/.parry/policy.yaml` for syntax errors, unknown fields, invalid tier refs
 - [ ] Default policy — shell, filesystem rules out of box
 
 ### Rate limiter + observe mode

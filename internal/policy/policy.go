@@ -3,7 +3,7 @@ package policy
 type Tier int
 
 func validTier(t Tier) bool {
-	return t >= 1 && t <= 5
+	return t >= 1
 }
 
 type Action string
@@ -64,4 +64,14 @@ type Policy struct {
 	ProtectedPaths   []string        `yaml:"protected_paths,omitempty"`
 	Rules            map[string]Rule `yaml:"rules"`
 	RateLimits       []RateLimit     `yaml:"rate_limits"`
+}
+
+func (p *Policy) MaxTier() Tier {
+	var max Tier
+	for t := range p.Tiers {
+		if t > max {
+			max = t
+		}
+	}
+	return max
 }

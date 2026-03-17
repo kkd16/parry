@@ -195,6 +195,14 @@ Enforce
     → set mode: enforce → Parry actively protects
 ```
 
+## CLI Output
+
+All user-facing commands use colored, structured output via `internal/ui`. Colors auto-disable when stdout/stderr is not a TTY (piped, CI, redirected).
+
+- **Success** (`✓` green), **Error** (`✗` red), **Warn** (`⚠` yellow), **Info** (`→` blue) prefixes
+- Detail lines show key-value context (dimmed keys, indented)
+- `parry check` logs a one-liner to stderr (TTY only) showing the decision, command, and tier — silent in non-interactive contexts so it doesn't pollute hook JSON on stdout
+
 ## Project Structure
 
 ```
@@ -205,6 +213,7 @@ parry/
 │   ├── check/                    # Check mode: stdin JSON → policy → exit code
 │   ├── policy/                   # YAML parser, tier classifier, rule engine, rate limiter
 │   ├── shellparse/               # Shell command parser — AST extraction of binaries
+│   ├── ui/                       # Colored CLI output — TTY detection, styled logging
 │   ├── store/                    # SQLite, migrations, queries
 │   ├── proxy/                    # (Phase 2) MCP proxy — stdio + HTTP
 │   ├── scanner/                  # (Phase 4) ONNX runtime, tokenizer, injection detection

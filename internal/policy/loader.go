@@ -54,11 +54,11 @@ func (p *Policy) validate() error {
 		return fmt.Errorf("invalid check_mode_confirm %q", p.CheckModeConfirm)
 	}
 	if !validTier(p.DefaultTier) {
-		return fmt.Errorf("invalid default_tier %d: must be 1-5", p.DefaultTier)
+		return fmt.Errorf("invalid default_tier %d: must be >= 1", p.DefaultTier)
 	}
 	for tier, action := range p.Tiers {
 		if !validTier(tier) {
-			return fmt.Errorf("unknown tier %d: must be 1-5", tier)
+			return fmt.Errorf("invalid tier %d: must be >= 1", tier)
 		}
 		if !validActions[action] {
 			return fmt.Errorf("invalid action %q for tier %d", action, tier)

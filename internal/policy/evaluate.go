@@ -8,13 +8,12 @@ import (
 	"github.com/kkd16/parry/internal/shellparse"
 )
 
-const blockedTier = Tier(5)
-
 func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Tier, error) {
 	if e.policy == nil {
-		return Block, blockedTier, fmt.Errorf("no policy loaded")
+		return Block, 0, fmt.Errorf("no policy loaded")
 	}
 
+	maxTier := e.policy.MaxTier()
 	rule, hasRule := e.policy.Rules[toolName]
 
 	tier := e.policy.DefaultTier
@@ -34,14 +33,14 @@ func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Ti
 		if hasRule {
 			for _, c := range cmds {
 				if isBlocked(c.Binary, rule.Block) {
-					return Block, blockedTier, nil
+					return Block, maxTier, nil
 				}
 			}
 		}
 
 		args := shellparse.ExtractArgs(cmds)
 		if e.anyPathProtected(args) {
-			return Block, blockedTier, nil
+			return Block, maxTier, nil
 		}
 
 		highest := Tier(0)
@@ -60,7 +59,7 @@ func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Ti
 	case "file_edit", "file_read":
 		path, _ := toolInput["path"].(string)
 		if path != "" && e.anyPathProtected([]string{path}) {
-			return Block, blockedTier, nil
+			return Block, maxTier, nil
 		}
 	}
 
