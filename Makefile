@@ -1,4 +1,4 @@
-.PHONY: build test lint clean
+.PHONY: build test lint lint-fix clean
 
 BINARY := parry
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
@@ -12,6 +12,9 @@ test:
 
 lint:
 	golangci-lint run ./...
+
+lint-fix:
+	golangci-lint run --fix ./...
 
 clean:
 	rm -f $(BINARY)

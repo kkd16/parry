@@ -149,7 +149,7 @@ func (n *NukeCmd) Run() error {
 		ui.Warn("this will permanently delete " + dir)
 		fmt.Print("   continue? [y/N] ")
 		var answer string
-		fmt.Scanln(&answer)
+		_, _ = fmt.Scanln(&answer)
 		if answer != "y" && answer != "Y" {
 			ui.Info("aborted")
 			ui.Break()

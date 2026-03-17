@@ -27,9 +27,9 @@ var (
 
 func styled(w io.Writer, isTTY bool, color, symbol, msg string) {
 	if isTTY {
-		fmt.Fprintf(w, "\n %s%s%s %s\n", color, symbol, reset, msg)
+		_, _ = fmt.Fprintf(w, "\n %s%s%s %s\n", color, symbol, reset, msg)
 	} else {
-		fmt.Fprintf(w, "\n %s %s\n", symbol, msg)
+		_, _ = fmt.Fprintf(w, "\n %s %s\n", symbol, msg)
 	}
 }
 
@@ -51,14 +51,14 @@ func Info(msg string) {
 
 func Detail(key, value string) {
 	if outTTY {
-		fmt.Fprintf(outW, "   %s%-10s%s %s\n", dim, key, reset, value)
+		_, _ = fmt.Fprintf(outW, "   %s%-10s%s %s\n", dim, key, reset, value)
 	} else {
-		fmt.Fprintf(outW, "   %-10s %s\n", key, value)
+		_, _ = fmt.Fprintf(outW, "   %-10s %s\n", key, value)
 	}
 }
 
 func Break() {
-	fmt.Fprintln(outW)
+	_, _ = fmt.Fprintln(outW)
 }
 
 func Boldf(format string, a ...any) string {
@@ -101,7 +101,7 @@ func LogCheck(action, command string, tier int) {
 		cmd = cmd[:57] + "..."
 	}
 
-	fmt.Fprintf(errW, " %s%s%s %-8s %s%s%s  %s\n",
+	_, _ = fmt.Fprintf(errW, " %s%s%s %-8s %s%s%s  %s\n",
 		color, symbol, reset,
 		action,
 		dim, cmd, reset,
