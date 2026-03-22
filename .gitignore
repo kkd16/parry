@@ -37,3 +37,6 @@ go.work.sum
 
 # Parry data
 .parry/
+
+# goreleaser
+dist/
