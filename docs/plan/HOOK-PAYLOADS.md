@@ -4,9 +4,9 @@ Real payloads captured from tool hooks. Reference for building parsers.
 
 ## Cursor
 
-### beforeShellExecution
+### preToolUse
 
-Captured 2026-03-11, Cursor 2026.03.11-6dfa30c.
+Cursor fires `preToolUse` before any tool execution (shell, file read, file write, MCP, etc.).
 
 **Input (stdin):**
 
@@ -15,16 +15,22 @@ Captured 2026-03-11, Cursor 2026.03.11-6dfa30c.
   "conversation_id": "abc-123",
   "generation_id": "abc-123",
   "model": "claude-4.6-opus-high-thinking",
-  "command": "cat /tmp/cursor-hook-input.json",
-  "cwd": "",
-  "sandbox": false,
-  "hook_event_name": "beforeShellExecution",
+  "tool_name": "Shell",
+  "tool_input": {
+    "command": "npm test",
+    "working_directory": "/home/user/project"
+  },
+  "tool_use_id": "abc123",
+  "cwd": "/home/user/project",
+  "hook_event_name": "preToolUse",
   "cursor_version": "2026.03.11-6dfa30c",
   "workspace_roots": ["/home/user/project"],
   "user_email": "user@example.com",
   "transcript_path": "/home/user/.cursor/projects/project/agent-transcripts/abc-123/abc-123.jsonl"
 }
 ```
+
+Tool names: `Shell`, `Read`, `Write`, `Grep`, `Delete`, `Task`, and MCP tools.
 
 **Response (stdout):**
 
@@ -33,7 +39,7 @@ Captured 2026-03-11, Cursor 2026.03.11-6dfa30c.
 ```
 
 ```json
-{"permission": "deny", "user_message": "Blocked by Parry", "agent_message": "This command was blocked because ..."}
+{"permission": "deny", "user_message": "Blocked by Parry"}
 ```
 
 ## Claude Code
@@ -80,7 +86,7 @@ Tool input varies by tool:
 ```
 
 ```json
-{"decision": "deny", "reason": "Blocked by Parry: tier 5 command"}
+{"decision": "block", "reason": "Blocked by Parry: tier 5 command"}
 ```
 
 Exit codes: 0 = success (parse stdout JSON), 2 = blocking error (stderr becomes error message).

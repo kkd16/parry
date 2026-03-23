@@ -160,15 +160,16 @@ This prevents bypasses like using `cat ~/.ssh/id_rsa` (shell, tier 1) to read a 
 
 ### Canonical Tool Names
 
-Parry defines its own tool names so one policy works across all integrations. The interception layer normalizes each tool's native names to Parry canonical names.
+Parry defines its own tool names as a `CanonicalTool` type (`internal/check/check.go`) so one policy works across all integrations. Each agent provides a mapping table; unmapped tools become `ToolUnknown`.
 
-| Canonical | Cursor | Claude Code | Description |
-|-----------|--------|-------------|-------------|
-| `shell` | `Bash` | `Bash` | Run a shell command |
-| `file_edit` | `Edit` | `Write` | Modify a file |
-| `file_read` | `Read` | `Read` | Read a file |
+| Canonical (`CanonicalTool`) | Cursor | Claude Code | Description |
+|-----------------------------|--------|-------------|-------------|
+| `ToolShell` (`shell`)       | `Shell` | `Bash`     | Run a shell command |
+| `ToolFileEdit` (`file_edit`)| `Write`, `Delete` | `Write`, `Edit`, `NotebookEdit` | Modify a file |
+| `ToolFileRead` (`file_read`)| `Read`, `Grep` | `Read`, `Glob`, `Grep` | Read a file |
+| `ToolUnknown` (`unknown`)   | everything else | everything else | Unmapped tools |
 
-MCP tools use server-scoped names (e.g. `gmail.delete`) and pass through as-is — no normalization needed.
+MCP tools are currently classified as `ToolUnknown`. The original tool name is preserved in `ToolCall.RawName` for audit logging.
 
 ### Session Isolation
 

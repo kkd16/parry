@@ -18,22 +18,30 @@ func init() {
 
 // --- Check (runtime hook handling) ---
 
-// CursorAgent handles Cursor's beforeShellExecution hook.
 type CursorAgent struct{}
+
+var cursorToolMapping = map[string]check.CanonicalTool{
+	"Shell":  check.ToolShell,
+	"Read":   check.ToolFileRead,
+	"Write":  check.ToolFileEdit,
+	"Grep":   check.ToolFileRead,
+	"Delete": check.ToolFileEdit,
+}
 
 func (c *CursorAgent) Name() string { return "cursor" }
 
 func (c *CursorAgent) Detect(raw map[string]any) bool {
 	event, _ := raw["hook_event_name"].(string)
-	return event == "beforeShellExecution"
+	return event == "preToolUse"
 }
 
 func (c *CursorAgent) Parse(raw map[string]any) (*check.ToolCall, error) {
-	cmd, _ := raw["command"].(string)
-	return &check.ToolCall{
-		ToolName:  "shell",
-		ToolInput: map[string]any{"command": cmd},
-	}, nil
+	toolName, _ := raw["tool_name"].(string)
+	if toolName == "" {
+		return nil, fmt.Errorf("missing tool_name")
+	}
+	rawInput, _ := raw["tool_input"].(map[string]any)
+	return check.NormalizeTool(toolName, rawInput, cursorToolMapping), nil
 }
 
 type cursorResponse struct {
@@ -72,8 +80,8 @@ func (c *CursorConfigurer) IsInstalled(data map[string]any) bool {
 	if hooks == nil {
 		return false
 	}
-	before, _ := hooks["beforeShellExecution"].([]any)
-	for _, entry := range before {
+	entries, _ := hooks["preToolUse"].([]any)
+	for _, entry := range entries {
 		m, _ := entry.(map[string]any)
 		if cmd, _ := m["command"].(string); cmd == "parry check" {
 			return true
@@ -90,12 +98,12 @@ func (c *CursorConfigurer) Inject(data map[string]any) map[string]any {
 	if hooks == nil {
 		hooks = make(map[string]any)
 	}
-	before, _ := hooks["beforeShellExecution"].([]any)
-	before = append(before, map[string]any{
+	entries, _ := hooks["preToolUse"].([]any)
+	entries = append(entries, map[string]any{
 		"command":    "parry check",
 		"failClosed": true,
 	})
-	hooks["beforeShellExecution"] = before
+	hooks["preToolUse"] = entries
 	data["hooks"] = hooks
 	return data
 }

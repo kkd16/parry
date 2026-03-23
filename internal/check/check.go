@@ -11,9 +11,19 @@ const (
 	ExitBlock = 2
 )
 
+type CanonicalTool string
+
+const (
+	ToolShell    CanonicalTool = "shell"
+	ToolFileEdit CanonicalTool = "file_edit"
+	ToolFileRead CanonicalTool = "file_read"
+	ToolUnknown  CanonicalTool = "unknown"
+)
+
 // ToolCall is the normalized representation of a tool invocation, regardless of which agent sent it.
 type ToolCall struct {
-	ToolName  string         `json:"tool_name"`
+	Tool      CanonicalTool  `json:"tool"`
+	RawName   string         `json:"raw_name"`
 	ToolInput map[string]any `json:"tool_input"`
 }
 
@@ -29,6 +39,42 @@ type Agent interface {
 	Detect(raw map[string]any) bool
 	Parse(raw map[string]any) (*ToolCall, error)
 	Respond(w io.Writer, result Result) error
+}
+
+// NormalizeTool maps an agent-specific tool name and input to a canonical ToolCall
+// using the provided mapping table. Unknown tools become ToolUnknown.
+func NormalizeTool(rawName string, rawInput map[string]any, mapping map[string]CanonicalTool) *ToolCall {
+	canonical, ok := mapping[rawName]
+	if !ok {
+		canonical = ToolUnknown
+	}
+	if rawInput == nil {
+		rawInput = make(map[string]any)
+	}
+	return &ToolCall{
+		Tool:      canonical,
+		RawName:   rawName,
+		ToolInput: normalizeInput(canonical, rawInput),
+	}
+}
+
+func normalizeInput(canonical CanonicalTool, raw map[string]any) map[string]any {
+	input := make(map[string]any)
+	switch canonical {
+	case ToolShell:
+		input["command"], _ = raw["command"].(string)
+	case ToolFileEdit, ToolFileRead:
+		if fp, ok := raw["file_path"].(string); ok {
+			input["path"] = fp
+		} else if fp, ok := raw["path"].(string); ok {
+			input["path"] = fp
+		}
+	default:
+		for k, v := range raw {
+			input[k] = v
+		}
+	}
+	return input
 }
 
 var agents []Agent

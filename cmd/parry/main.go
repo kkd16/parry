@@ -66,7 +66,7 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
-	action, tier, err := engine.Evaluate(tc.ToolName, tc.ToolInput)
+	action, tier, err := engine.Evaluate(tc.Tool, tc.ToolInput)
 	if err != nil {
 		fatal(err)
 	}
@@ -74,7 +74,7 @@ func (c *CheckCmd) Run() error {
 	// Resolve the decision.
 	cmd, _ := tc.ToolInput["command"].(string)
 	if cmd == "" {
-		cmd = tc.ToolName
+		cmd = tc.RawName
 	}
 	p := engine.Policy()
 
@@ -118,7 +118,7 @@ func recordEvent(tc *check.ToolCall, tier int, action, mode string) {
 	}
 	defer func() { _ = s.Close() }()
 	if err := s.RecordEvent(store.Event{
-		ToolName:  tc.ToolName,
+		ToolName:  tc.RawName,
 		ToolInput: tc.ToolInput,
 		Tier:      tier,
 		Action:    action,

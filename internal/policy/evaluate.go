@@ -5,24 +5,25 @@ import (
 	"path/filepath"
 	"slices"
 
+	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/shellparse"
 )
 
-func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Tier, error) {
+func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (Action, Tier, error) {
 	if e.policy == nil {
 		return Block, 0, fmt.Errorf("no policy loaded")
 	}
 
 	maxTier := e.policy.MaxTier()
-	rule, hasRule := e.policy.Rules[toolName]
+	rule, hasRule := e.policy.Rules[string(tool)]
 
 	tier := e.policy.DefaultTier
 	if hasRule && rule.DefaultTier != 0 {
 		tier = rule.DefaultTier
 	}
 
-	switch toolName {
-	case "shell":
+	switch tool {
+	case check.ToolShell:
 		cmd, _ := toolInput["command"].(string)
 		if cmd == "" {
 			return e.actionForTier(tier), tier, nil
@@ -56,7 +57,7 @@ func (e *Engine) Evaluate(toolName string, toolInput map[string]any) (Action, Ti
 			tier = highest
 		}
 
-	case "file_edit", "file_read":
+	case check.ToolFileEdit, check.ToolFileRead:
 		path, _ := toolInput["path"].(string)
 		if path != "" && e.anyPathProtected([]string{path}) {
 			return Block, maxTier, nil
