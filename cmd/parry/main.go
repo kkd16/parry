@@ -9,6 +9,7 @@ import (
 	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/policy"
+	"github.com/kkd16/parry/internal/setup"
 	"github.com/kkd16/parry/internal/store"
 	"github.com/kkd16/parry/internal/ui"
 )
@@ -39,6 +40,7 @@ func loadPolicy() (*policy.Engine, error) {
 type CLI struct {
 	Check    CheckCmd    `cmd:"" help:"Evaluate a tool call from stdin against policy."`
 	Init     InitCmd     `cmd:"" help:"Initialize Parry configuration."`
+	Setup    SetupCmd    `cmd:"" help:"Configure Parry hooks in your agent."`
 	Report   ReportCmd   `cmd:"" help:"Show observe mode report."`
 	Validate ValidateCmd `cmd:"" help:"Validate policy YAML for errors."`
 	Nuke     NukeCmd     `cmd:"" help:"Remove all Parry config, data, and policy."`
@@ -153,6 +155,58 @@ func (i *InitCmd) Run() error {
 	ui.Detail("config", dir)
 	ui.Detail("policy", policyPath)
 	ui.Detail("mode", "observe "+ui.Dimf("(edit policy, then parry validate)"))
+	ui.Break()
+	return nil
+}
+
+type SetupCmd struct {
+	Agent string `arg:"" help:"Agent to configure (claude or cursor)." enum:"claude,cursor"`
+}
+
+func (s *SetupCmd) Run() error {
+	// Auto-init if needed.
+	dir, err := parryDir()
+	if err != nil {
+		return err
+	}
+	policyPath := filepath.Join(dir, "policy.yaml")
+	if _, err := os.Stat(policyPath); os.IsNotExist(err) {
+		ui.Info("initializing parry first...")
+		init := &InitCmd{}
+		if err := init.Run(); err != nil {
+			return fmt.Errorf("auto-init: %w", err)
+		}
+	}
+
+	cfg, ok := setup.Get(s.Agent)
+	if !ok {
+		return fmt.Errorf("unknown agent: %s", s.Agent)
+	}
+
+	configPath, err := cfg.ConfigPath()
+	if err != nil {
+		return err
+	}
+
+	data, err := setup.ReadJSONFile(configPath)
+	if err != nil {
+		return err
+	}
+
+	if cfg.IsInstalled(data) {
+		ui.Info("parry hook already configured for " + s.Agent)
+		ui.Detail("config", configPath)
+		ui.Break()
+		return nil
+	}
+
+	data = cfg.Inject(data)
+	if err := setup.WriteJSONFile(configPath, data); err != nil {
+		return fmt.Errorf("writing config: %w", err)
+	}
+
+	ui.Success("parry hook installed for " + s.Agent)
+	ui.Detail("config", configPath)
 	ui.Break()
 	return nil
 }
