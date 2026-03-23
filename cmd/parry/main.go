@@ -116,7 +116,7 @@ func recordEvent(tc *check.ToolCall, tier int, action, mode string) {
 		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
 		return
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 	if err := s.RecordEvent(store.Event{
 		ToolName:  tc.ToolName,
 		ToolInput: tc.ToolInput,
@@ -268,7 +268,7 @@ func (r *ReportCmd) Run() error {
 	if err != nil {
 		return fmt.Errorf("opening database: %w", err)
 	}
-	defer s.Close()
+	defer func() { _ = s.Close() }()
 
 	sum, err := s.Report()
 	if err != nil {

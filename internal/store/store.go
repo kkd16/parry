@@ -56,13 +56,13 @@ func Open(dbPath string) (*Store, error) {
 		"PRAGMA busy_timeout=5000",
 	} {
 		if _, err := db.Exec(pragma); err != nil {
-			db.Close()
+			_ = db.Close()
 			return nil, fmt.Errorf("setting %s: %w", pragma, err)
 		}
 	}
 
 	if _, err := db.Exec(schema); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("initializing schema: %w", err)
 	}
 
@@ -124,7 +124,7 @@ func (s *Store) Report() (*Summary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("querying actions: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var action string
 		var count int
@@ -140,7 +140,7 @@ func (s *Store) Report() (*Summary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("querying tiers: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var tier, count int
 		if err := rows.Scan(&tier, &count); err != nil {
@@ -155,7 +155,7 @@ func (s *Store) Report() (*Summary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("querying top commands: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var inputJSON string
 		var count int

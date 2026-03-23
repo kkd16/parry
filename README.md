@@ -137,6 +137,17 @@ rate_limits:
 | Notifications | Telegram via `go-telegram/bot` |
 | Dashboard | React (Vite) embedded in binary via `embed` |
 
+## Development
+
+```bash
+make build        # build the binary
+make lint         # run golangci-lint
+make lint-fix     # run golangci-lint with auto-fix
+make test         # run tests with race detector
+```
+
+Requires [golangci-lint](https://golangci-lint.run/welcome/install/) to be installed.
+
 ## Distribution
 
 ```bash
