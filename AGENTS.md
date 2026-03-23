@@ -15,6 +15,7 @@ Parry is a runtime security enforcement layer for AI agents and coding tools. Si
 ## Code Standards
 
 - **Go 1.26+**, `alecthomas/kong` CLI, `modernc.org/sqlite` (pure Go, no CGO), `go.yaml.in/yaml/v4`, `modelcontextprotocol/go-sdk`
+- **No unit tests** — skip writing test files for now (temporary)
 - Table-driven tests. Wrap errors with context: `fmt.Errorf("doing X: %w", err)`
 - Binary is `parry`. Config dir is `~/.parry/`. Policy file is `~/.parry/policy.yaml`.
 - Always use up-to-date practices. Never assume existing code is correct — verify before extending a pattern.

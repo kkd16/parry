@@ -9,6 +9,7 @@ import (
 	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/policy"
+	"github.com/kkd16/parry/internal/store"
 	"github.com/kkd16/parry/internal/ui"
 )
 
@@ -52,7 +53,7 @@ func fatal(err error) {
 type CheckCmd struct{}
 
 func (c *CheckCmd) Run() error {
-	tc, err := check.ParseInput(os.Stdin)
+	tc, agent, err := check.ParseInput(os.Stdin)
 	if err != nil {
 		fatal(err)
 	}
@@ -67,35 +68,62 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
+	// Resolve the decision.
 	cmd, _ := tc.ToolInput["command"].(string)
+	if cmd == "" {
+		cmd = tc.ToolName
+	}
 	p := engine.Policy()
 
-	if p.Mode == "observe" {
-		ui.LogCheck("observe", cmd, int(tier))
-		check.Respond("allow", "", "")
-		return nil
+	var decision, perm, userMsg string
+	switch {
+	case p.Mode == "observe":
+		decision, perm = "observe", "allow"
+	case action == policy.Allow:
+		decision, perm = "allow", "allow"
+	case action == policy.Confirm && p.CheckModeConfirm == policy.Block:
+		decision, perm, userMsg = "block", "block", "Blocked by Parry: requires confirmation"
+	case action == policy.Confirm:
+		decision, perm = "allow", "allow"
+	case action == policy.Block:
+		decision, perm, userMsg = "block", "block", "Blocked by Parry"
+	default:
+		decision, perm, userMsg = "block", "block", "Blocked by Parry: unknown action"
 	}
 
-	switch action {
-	case policy.Allow:
-		ui.LogCheck("allow", cmd, int(tier))
-		check.Respond("allow", "", "")
-	case policy.Confirm:
-		if p.CheckModeConfirm == policy.Block {
-			ui.LogCheck("block", cmd, int(tier))
-			check.Respond("block", "Blocked by Parry: requires confirmation", "")
-		} else {
-			ui.LogCheck("allow", cmd, int(tier))
-			check.Respond("allow", "", "")
-		}
-	case policy.Block:
-		ui.LogCheck("block", cmd, int(tier))
-		check.Respond("block", "Blocked by Parry", "")
-	default:
-		ui.LogCheck("block", cmd, int(tier))
-		check.Respond("block", "Blocked by Parry: unknown action", "")
+	// Log + record + respond.
+	ui.LogCheck(decision, cmd, int(tier))
+	recordEvent(tc, int(tier), decision, engine.Policy().Mode)
+	if err := agent.Respond(os.Stdout, check.Result{Decision: perm, Message: userMsg}); err != nil {
+		fmt.Fprintf(os.Stderr, "parry: encoding response: %v\n", err)
+		os.Exit(check.ExitBlock)
 	}
 	return nil
+}
+
+// recordEvent writes to the audit log. DB errors go to stderr, never alter the policy decision.
+func recordEvent(tc *check.ToolCall, tier int, action, mode string) {
+	dir, err := parryDir()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
+		return
+	}
+	s, err := store.Open(filepath.Join(dir, "parry.db"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
+		return
+	}
+	defer s.Close()
+	if err := s.RecordEvent(store.Event{
+		ToolName:  tc.ToolName,
+		ToolInput: tc.ToolInput,
+		Tier:      tier,
+		Action:    action,
+		Session:   store.Session(),
+		Mode:      mode,
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
+	}
 }
 
 type InitCmd struct{}
@@ -170,7 +198,59 @@ func (n *NukeCmd) Run() error {
 type ReportCmd struct{}
 
 func (r *ReportCmd) Run() error {
-	ui.Info("report is not built yet — coming soon")
+	dir, err := parryDir()
+	if err != nil {
+		return err
+	}
+	dbPath := filepath.Join(dir, "parry.db")
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		ui.Info("no data yet — run some commands with " + ui.Boldf("parry check") + " first")
+		ui.Break()
+		return nil
+	}
+
+	s, err := store.Open(dbPath)
+	if err != nil {
+		return fmt.Errorf("opening database: %w", err)
+	}
+	defer s.Close()
+
+	sum, err := s.Report()
+	if err != nil {
+		return fmt.Errorf("generating report: %w", err)
+	}
+
+	ui.Info(fmt.Sprintf("report — %d events recorded", sum.Total))
+	ui.Break()
+
+	ui.Detail("action", "count")
+	for _, action := range []string{"observe", "allow", "block"} {
+		if c, ok := sum.ByAction[action]; ok {
+			ui.Detail("  "+action, fmt.Sprintf("%d", c))
+		}
+	}
+	ui.Break()
+
+	ui.Detail("tier", "count")
+	for tier := 1; tier <= 5; tier++ {
+		if c, ok := sum.ByTier[tier]; ok {
+			ui.Detail(fmt.Sprintf("  T%d", tier), fmt.Sprintf("%d", c))
+		}
+	}
+
+	if len(sum.TopCommands) > 0 {
+		ui.Break()
+		ui.Detail("top cmds", "")
+		for _, tc := range sum.TopCommands {
+			cmd := tc.Command
+			if len(cmd) > 50 {
+				cmd = cmd[:47] + "..."
+			}
+			ui.Detail("  "+cmd, fmt.Sprintf("×%d", tc.Count))
+		}
+	}
+
+	ui.Break()
 	return nil
 }
 
