@@ -7,6 +7,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/kkd16/parry/configs"
+	_ "github.com/kkd16/parry/internal/agents"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/setup"
