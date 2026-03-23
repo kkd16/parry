@@ -7,22 +7,22 @@
 **Goal:** Check mode + policy engine. Parry protects Cursor via `beforeShellExecution` hooks.
 
 ### Core check mode
-- [ ] Go project scaffold — kong CLI, CI, test harness
-- [ ] `parry check` command — read Cursor hook JSON on stdin, evaluate policy, respond with JSON on stdout
+- [x] Go project scaffold — kong CLI, CI, test harness
+- [x] `parry check` command — read hook JSON on stdin, evaluate policy, respond with JSON on stdout
 - [ ] Version policy YAML + SQLite schema with migrations
 
 ### Policy engine
 - [ ] YAML parser + hot-reload (fsnotify watch, atomic swap — no partial policy states)
-- [ ] T1–T5 blast-radius classifier
-- [ ] Allow / Block / Confirm rule engine (confirm falls back to `check_mode_confirm`)
-- [ ] Allow-list / block-list glob matching for shell commands
+- [x] T1–T5 blast-radius classifier
+- [x] Allow / Block / Confirm rule engine (confirm falls back to `check_mode_confirm`)
+- [x] Allow-list / block-list glob matching for shell commands
 - [x] `parry validate` — check `~/.parry/policy.yaml` for syntax errors, unknown fields, invalid tier refs
-- [ ] Default policy — shell, filesystem rules out of box
+- [x] Default policy — shell, filesystem rules out of box
 
 ### Rate limiter + observe mode
 - [ ] Sliding window rate limiter — per-tool, per-scope, stateful via SQLite
-- [ ] Session isolation — derived from cwd, overridable via `PARRY_SESSION`
-- [ ] Observe mode + `parry report` — summary of hypothetical blocks
+- [x] Session isolation — derived from cwd, overridable via `PARRY_SESSION`
+- [x] Observe mode + `parry report` — summary of hypothetical blocks
 
 ### Alpha release
 - [ ] Cursor integration guide — exact `.cursor/hooks.json` for `parry check`
@@ -38,9 +38,10 @@
 
 **Goal:** Expand check mode to other tools and Cursor hook events.
 
-- [ ] Claude Code support — `PreToolUse` hook in `.claude/settings.json`
-- [ ] Cursor `beforeMCPExecution` / `preToolUse` / `afterFileEdit` hooks
-- [ ] Input normalization — auto-detect format from each tool
+- [x] Claude Code support — `PreToolUse` hook in `.claude/settings.json`
+- [x] Cursor `preToolUse` hook support
+- [ ] Cursor `beforeMCPExecution` / `afterFileEdit` hooks
+- [x] Input normalization — auto-detect format from each tool
 - [ ] Integration guides for each tool
 
 **Milestone: v0.1.5**

@@ -124,15 +124,19 @@ func (s *Store) Report() (*Summary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("querying actions: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var action string
 		var count int
 		if err := rows.Scan(&action, &count); err != nil {
+			_ = rows.Close()
 			return nil, fmt.Errorf("scanning action row: %w", err)
 		}
 		sum.ByAction[action] = count
 		sum.Total += count
+	}
+	_ = rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating action rows: %w", err)
 	}
 
 	// By tier.
@@ -140,13 +144,17 @@ func (s *Store) Report() (*Summary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("querying tiers: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var tier, count int
 		if err := rows.Scan(&tier, &count); err != nil {
+			_ = rows.Close()
 			return nil, fmt.Errorf("scanning tier row: %w", err)
 		}
 		sum.ByTier[tier] = count
+	}
+	_ = rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating tier rows: %w", err)
 	}
 
 	// Top commands.
@@ -155,11 +163,11 @@ func (s *Store) Report() (*Summary, error) {
 	if err != nil {
 		return nil, fmt.Errorf("querying top commands: %w", err)
 	}
-	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var inputJSON string
 		var count int
 		if err := rows.Scan(&inputJSON, &count); err != nil {
+			_ = rows.Close()
 			return nil, fmt.Errorf("scanning command row: %w", err)
 		}
 		var input map[string]any
@@ -168,6 +176,10 @@ func (s *Store) Report() (*Summary, error) {
 				sum.TopCommands = append(sum.TopCommands, CommandCount{Command: cmd, Count: count})
 			}
 		}
+	}
+	_ = rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating command rows: %w", err)
 	}
 
 	return sum, nil

@@ -48,13 +48,6 @@ func (r *Rule) buildBinaries() {
 	}
 }
 
-type RateLimit struct {
-	Scope    string `yaml:"scope"`
-	Max      int    `yaml:"max"`
-	Window   string `yaml:"window"`
-	OnExceed Action `yaml:"on_exceed"`
-}
-
 type Policy struct {
 	Version          int             `yaml:"version"`
 	Mode             string          `yaml:"mode"`
@@ -62,8 +55,7 @@ type Policy struct {
 	DefaultTier      Tier            `yaml:"default_tier"`
 	Tiers            map[Tier]Action `yaml:"tiers"`
 	ProtectedPaths   []string        `yaml:"protected_paths,omitempty"`
-	Rules            map[string]Rule `yaml:"rules"`
-	RateLimits       []RateLimit     `yaml:"rate_limits"`
+	Rules            map[string]*Rule `yaml:"rules"`
 }
 
 func (p *Policy) MaxTier() Tier {

@@ -3,6 +3,7 @@ package policy
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"go.yaml.in/yaml/v4"
 )
@@ -31,9 +32,8 @@ func (e *Engine) LoadBytes(data []byte) error {
 	if err := p.validate(); err != nil {
 		return fmt.Errorf("invalid policy: %w", err)
 	}
-	for name, rule := range p.Rules {
+	for _, rule := range p.Rules {
 		rule.buildBinaries()
-		p.Rules[name] = rule
 	}
 	e.policy = &p
 	return nil
@@ -67,6 +67,11 @@ func (p *Policy) validate() error {
 	for name, rule := range p.Rules {
 		if rule.DefaultTier != 0 && !validTier(rule.DefaultTier) {
 			return fmt.Errorf("rule %q: invalid default_tier %d", name, rule.DefaultTier)
+		}
+	}
+	for _, pattern := range p.ProtectedPaths {
+		if _, err := filepath.Match(pattern, ""); err != nil {
+			return fmt.Errorf("invalid protected_paths pattern %q: %w", pattern, err)
 		}
 	}
 	return nil

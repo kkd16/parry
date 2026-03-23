@@ -123,9 +123,3 @@ rules:
 
   file_read:
     default_tier: 1
-
-rate_limits:
-  - scope: "shell"
-    max: 10
-    window: "1m"
-    on_exceed: block

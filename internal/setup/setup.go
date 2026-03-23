@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 )
 
 // Configurer knows how to install/detect parry hooks for one agent.
@@ -25,15 +24,6 @@ func Register(c Configurer) {
 func Get(name string) (Configurer, bool) {
 	c, ok := configurers[name]
 	return c, ok
-}
-
-func Names() []string {
-	names := make([]string, 0, len(configurers))
-	for n := range configurers {
-		names = append(names, n)
-	}
-	sort.Strings(names)
-	return names
 }
 
 // ReadJSONFile reads a JSON file into map[string]any. Returns empty map if file doesn't exist.

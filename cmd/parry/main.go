@@ -53,6 +53,29 @@ func fatal(err error) {
 	os.Exit(check.ExitBlock)
 }
 
+type verdict struct {
+	action  string // for logging and DB: "allow", "block", "observe"
+	respond string // for agent response: "allow" or "block"
+	message string // human-readable reason
+}
+
+func resolveVerdict(mode string, action policy.Action, confirmFallback policy.Action) verdict {
+	if mode == "observe" {
+		return verdict{"observe", "allow", ""}
+	}
+	switch action {
+	case policy.Allow:
+		return verdict{"allow", "allow", ""}
+	case policy.Confirm:
+		if confirmFallback == policy.Block {
+			return verdict{"block", "block", "Blocked by Parry: requires confirmation"}
+		}
+		return verdict{"allow", "allow", ""}
+	default:
+		return verdict{"block", "block", "Blocked by Parry"}
+	}
+}
+
 type CheckCmd struct{}
 
 func (c *CheckCmd) Run() error {
@@ -71,33 +94,17 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
-	// Resolve the decision.
+	p := engine.Policy()
+	v := resolveVerdict(p.Mode, action, p.CheckModeConfirm)
+
 	cmd, _ := tc.ToolInput["command"].(string)
 	if cmd == "" {
 		cmd = tc.RawName
 	}
-	p := engine.Policy()
 
-	var decision, perm, userMsg string
-	switch {
-	case p.Mode == "observe":
-		decision, perm = "observe", "allow"
-	case action == policy.Allow:
-		decision, perm = "allow", "allow"
-	case action == policy.Confirm && p.CheckModeConfirm == policy.Block:
-		decision, perm, userMsg = "block", "block", "Blocked by Parry: requires confirmation"
-	case action == policy.Confirm:
-		decision, perm = "allow", "allow"
-	case action == policy.Block:
-		decision, perm, userMsg = "block", "block", "Blocked by Parry"
-	default:
-		decision, perm, userMsg = "block", "block", "Blocked by Parry: unknown action"
-	}
-
-	// Log + record + respond.
-	ui.LogCheck(decision, cmd, int(tier))
-	recordEvent(tc, int(tier), decision, engine.Policy().Mode)
-	if err := agent.Respond(os.Stdout, check.Result{Decision: perm, Message: userMsg}); err != nil {
+	ui.LogCheck(v.action, cmd, int(tier))
+	recordEvent(tc, int(tier), v.action, p.Mode)
+	if err := agent.Respond(os.Stdout, check.Result{Decision: v.respond, Message: v.message}); err != nil {
 		fmt.Fprintf(os.Stderr, "parry: encoding response: %v\n", err)
 		os.Exit(check.ExitBlock)
 	}
@@ -118,7 +125,7 @@ func recordEvent(tc *check.ToolCall, tier int, action, mode string) {
 	}
 	defer func() { _ = s.Close() }()
 	if err := s.RecordEvent(store.Event{
-		ToolName:  tc.RawName,
+		ToolName:  string(tc.Tool),
 		ToolInput: tc.ToolInput,
 		Tier:      tier,
 		Action:    action,
