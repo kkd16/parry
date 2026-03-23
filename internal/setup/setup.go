@@ -15,6 +15,58 @@ type Configurer interface {
 	Inject(data map[string]any) map[string]any
 }
 
+// HookConfigurer implements Configurer for any hook-based coding tool.
+// Extension files declare one by filling in fields.
+type HookConfigurer struct {
+	AgentName  string
+	RelPath    []string                        // path components relative to home, e.g. {".claude", "settings.json"}
+	EventKey   string                          // key under "hooks", e.g. "PreToolUse"
+	MatchEntry func(entry map[string]any) bool // returns true if entry is parry's hook
+	BuildEntry func() any                      // returns the hook entry to append
+	PreInject  func(data map[string]any)       // optional: extra setup before hook injection (e.g. set version)
+}
+
+func (h *HookConfigurer) Name() string { return h.AgentName }
+
+func (h *HookConfigurer) ConfigPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("finding home directory: %w", err)
+	}
+	parts := append([]string{home}, h.RelPath...)
+	return filepath.Join(parts...), nil
+}
+
+func (h *HookConfigurer) IsInstalled(data map[string]any) bool {
+	hooks, _ := data["hooks"].(map[string]any)
+	if hooks == nil {
+		return false
+	}
+	entries, _ := hooks[h.EventKey].([]any)
+	for _, entry := range entries {
+		m, _ := entry.(map[string]any)
+		if h.MatchEntry(m) {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *HookConfigurer) Inject(data map[string]any) map[string]any {
+	if h.PreInject != nil {
+		h.PreInject(data)
+	}
+	hooks, _ := data["hooks"].(map[string]any)
+	if hooks == nil {
+		hooks = make(map[string]any)
+	}
+	entries, _ := hooks[h.EventKey].([]any)
+	entries = append(entries, h.BuildEntry())
+	hooks[h.EventKey] = entries
+	data["hooks"] = hooks
+	return data
+}
+
 var configurers = map[string]Configurer{}
 
 func Register(c Configurer) {

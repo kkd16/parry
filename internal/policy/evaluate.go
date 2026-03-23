@@ -88,6 +88,7 @@ func (e *Engine) anyPathProtected(paths []string) bool {
 	for _, path := range paths {
 		base := filepath.Base(path)
 		for _, pattern := range e.policy.ProtectedPaths {
+			// Forward: does the protected pattern match the input path?
 			if matched, _ := filepath.Match(pattern, path); matched {
 				return true
 			}
@@ -95,6 +96,18 @@ func (e *Engine) anyPathProtected(paths []string) bool {
 			// so ".env" blocks "/any/path/.env".
 			if !strings.Contains(pattern, "/") {
 				if matched, _ := filepath.Match(pattern, base); matched {
+					return true
+				}
+			}
+			// Reverse: does the input (as a glob) match the protected pattern?
+			// Catches cases where the input is a broader glob than the protected
+			// pattern, e.g. input=".e*" matching protected=".env".
+			patternBase := filepath.Base(pattern)
+			if matched, _ := filepath.Match(path, pattern); matched {
+				return true
+			}
+			if !strings.Contains(pattern, "/") {
+				if matched, _ := filepath.Match(base, patternBase); matched {
 					return true
 				}
 			}

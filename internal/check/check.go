@@ -83,6 +83,35 @@ func normalizeInput(canonical CanonicalTool, raw map[string]any) map[string]any 
 	return input
 }
 
+// HookAgent implements Agent for any hook-based coding tool.
+// Extension files declare one by filling in fields.
+type HookAgent struct {
+	AgentName     string
+	EventName     string                        // hook_event_name value to detect, e.g. "PreToolUse"
+	ToolMapping   map[string]CanonicalTool
+	WriteResponse func(w io.Writer, result Result) error
+}
+
+func (h *HookAgent) Name() string { return h.AgentName }
+
+func (h *HookAgent) Detect(raw map[string]any) bool {
+	event, _ := raw["hook_event_name"].(string)
+	return event == h.EventName
+}
+
+func (h *HookAgent) Parse(raw map[string]any) (*ToolCall, error) {
+	toolName, _ := raw["tool_name"].(string)
+	if toolName == "" {
+		return nil, fmt.Errorf("missing tool_name")
+	}
+	rawInput, _ := raw["tool_input"].(map[string]any)
+	return NormalizeTool(toolName, rawInput, h.ToolMapping), nil
+}
+
+func (h *HookAgent) Respond(w io.Writer, result Result) error {
+	return h.WriteResponse(w, result)
+}
+
 var agents []Agent
 
 // Register adds an agent to the detection registry. Called from init() in each agent file.
