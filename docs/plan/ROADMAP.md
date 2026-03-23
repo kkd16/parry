@@ -39,7 +39,6 @@
 **Goal:** Expand check mode to other tools and Cursor hook events.
 
 - [ ] Claude Code support — `PreToolUse` hook in `.claude/settings.json`
-- [ ] GitHub Copilot support
 - [ ] Cursor `beforeMCPExecution` / `preToolUse` / `afterFileEdit` hooks
 - [ ] Input normalization — auto-detect format from each tool
 - [ ] Integration guides for each tool

@@ -80,7 +80,6 @@ rate_limits:
 |------|------|-------|
 | Claude Code | Check | `PreToolUse` hook in `.claude/settings.json` |
 | Cursor AI | Check | `beforeShellExecution` / `beforeMCPExecution` in `.cursor/hooks.json` |
-| GitHub Copilot | Check | `.github/hooks` `preToolUse` |
 | Any MCP agent | Proxy | `parry wrap <server command>` |
 | Any tool with pre-exec hooks | Check | Pipe JSON to stdin, read exit code |
 
