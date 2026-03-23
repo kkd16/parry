@@ -46,15 +46,23 @@ func (c *ClaudeCodeAgent) Parse(raw map[string]any) (*check.ToolCall, error) {
 	return check.NormalizeTool(toolName, rawInput, claudeToolMapping), nil
 }
 
+type claudeHookOutput struct {
+	HookEventName          string         `json:"hookEventName"`
+	PermissionDecision     string         `json:"permissionDecision"`
+	PermissionDecisionReason string       `json:"permissionDecisionReason,omitempty"`
+}
+
 type claudeResponse struct {
-	Decision string `json:"decision"`
-	Reason   string `json:"reason,omitempty"`
+	HookSpecificOutput claudeHookOutput `json:"hookSpecificOutput"`
 }
 
 func (c *ClaudeCodeAgent) Respond(w io.Writer, result check.Result) error {
 	return json.NewEncoder(w).Encode(claudeResponse{
-		Decision: result.Decision,
-		Reason:   result.Message,
+		HookSpecificOutput: claudeHookOutput{
+			HookEventName:            "PreToolUse",
+			PermissionDecision:       result.Decision,
+			PermissionDecisionReason: result.Message,
+		},
 	})
 }
 

@@ -51,12 +51,8 @@ type cursorResponse struct {
 }
 
 func (c *CursorAgent) Respond(w io.Writer, result check.Result) error {
-	perm := result.Decision
-	if perm == "block" {
-		perm = "deny"
-	}
 	return json.NewEncoder(w).Encode(cursorResponse{
-		Permission:  perm,
+		Permission:  result.Decision,
 		UserMessage: result.Message,
 	})
 }

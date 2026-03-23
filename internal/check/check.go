@@ -29,7 +29,7 @@ type ToolCall struct {
 
 // Result carries the agent-agnostic policy decision. Each Agent maps this to its wire format.
 type Result struct {
-	Decision string // "allow" or "block"
+	Decision string // "allow" or "deny"
 	Message  string // human-readable reason (empty = no message)
 }
 
@@ -68,6 +68,12 @@ func normalizeInput(canonical CanonicalTool, raw map[string]any) map[string]any 
 			input["path"] = fp
 		} else if fp, ok := raw["path"].(string); ok {
 			input["path"] = fp
+		}
+		if g, ok := raw["glob"].(string); ok {
+			input["glob"] = g
+		}
+		if p, ok := raw["pattern"].(string); ok {
+			input["pattern"] = p
 		}
 	default:
 		for k, v := range raw {

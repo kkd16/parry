@@ -10,6 +10,7 @@ type Command struct {
 	Binary     string
 	Subcommand string
 	Args       []string
+	Resolved   bool // true if all parts are literal (no variable/command expansion)
 }
 
 // Parse extracts all commands from a shell command string, handling pipes,
@@ -28,14 +29,20 @@ func Parse(cmd string) []Command {
 			return true
 		}
 
-		binary := wordToString(call.Args[0])
-		if binary == "" {
+		binary, binResolved := wordToString(call.Args[0])
+		if binary == "" && binResolved {
 			return true
 		}
 
+		resolved := binResolved
+
 		var sub string
 		if len(call.Args) > 1 {
-			sub = wordToString(call.Args[1])
+			var subResolved bool
+			sub, subResolved = wordToString(call.Args[1])
+			if !subResolved {
+				resolved = false
+			}
 		}
 
 		if isBashLike(binary) && hasCFlag(call.Args) {
@@ -48,10 +55,14 @@ func Parse(cmd string) []Command {
 
 		var args []string
 		for _, arg := range call.Args[1:] {
-			args = append(args, wordToString(arg))
+			s, r := wordToString(arg)
+			args = append(args, s)
+			if !r {
+				resolved = false
+			}
 		}
 
-		cmds = append(cmds, Command{Binary: binary, Subcommand: sub, Args: args})
+		cmds = append(cmds, Command{Binary: binary, Subcommand: sub, Args: args, Resolved: resolved})
 		return true
 	})
 
@@ -61,14 +72,35 @@ func Parse(cmd string) []Command {
 	return cmds
 }
 
-func wordToString(w *syntax.Word) string {
+// wordToString extracts text from a shell word. Returns the string and whether
+// the word is fully resolved (all literal). Non-literal parts (variable
+// expansions, command substitutions, etc.) are skipped and cause resolved=false.
+func wordToString(w *syntax.Word) (string, bool) {
 	var b strings.Builder
+	resolved := true
 	for _, part := range w.Parts {
-		if lit, ok := part.(*syntax.Lit); ok {
-			b.WriteString(lit.Value)
+		switch p := part.(type) {
+		case *syntax.Lit:
+			b.WriteString(p.Value)
+		case *syntax.SglQuoted:
+			b.WriteString(p.Value)
+		default:
+			resolved = false
 		}
 	}
-	return b.String()
+	return b.String(), resolved
+}
+
+// HasUnresolved returns true if any command contains non-literal parts
+// (variable expansions, command substitutions, etc.) that cannot be
+// statically analyzed for security checks.
+func HasUnresolved(cmds []Command) bool {
+	for _, c := range cmds {
+		if !c.Resolved {
+			return true
+		}
+	}
+	return false
 }
 
 func isBashLike(binary string) bool {
@@ -77,7 +109,8 @@ func isBashLike(binary string) bool {
 
 func hasCFlag(args []*syntax.Word) bool {
 	for _, arg := range args[1:] {
-		if wordToString(arg) == "-c" {
+		s, _ := wordToString(arg)
+		if s == "-c" {
 			return true
 		}
 	}
@@ -86,8 +119,10 @@ func hasCFlag(args []*syntax.Word) bool {
 
 func extractCArg(args []*syntax.Word) string {
 	for i := 1; i < len(args); i++ {
-		if wordToString(args[i]) == "-c" && i+1 < len(args) {
-			return wordToString(args[i+1])
+		s, _ := wordToString(args[i])
+		if s == "-c" && i+1 < len(args) {
+			r, _ := wordToString(args[i+1])
+			return r
 		}
 	}
 	return ""

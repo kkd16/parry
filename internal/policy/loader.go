@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"go.yaml.in/yaml/v4"
 )
@@ -32,6 +33,7 @@ func (e *Engine) LoadBytes(data []byte) error {
 	if err := p.validate(); err != nil {
 		return fmt.Errorf("invalid policy: %w", err)
 	}
+	p.expandHome()
 	for _, rule := range p.Rules {
 		rule.buildBinaries()
 	}
@@ -75,4 +77,18 @@ func (p *Policy) validate() error {
 		}
 	}
 	return nil
+}
+
+// expandHome replaces leading ~/ in protected_paths with the actual home directory.
+// Called after validation so patterns are already known to be valid globs.
+func (p *Policy) expandHome() {
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		return
+	}
+	for i, pattern := range p.ProtectedPaths {
+		if strings.HasPrefix(pattern, "~/") {
+			p.ProtectedPaths[i] = filepath.Join(home, pattern[2:])
+		}
+	}
 }

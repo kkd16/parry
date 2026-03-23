@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/shellparse"
@@ -30,6 +31,10 @@ func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (A
 		}
 
 		cmds := shellparse.Parse(cmd)
+
+		if shellparse.HasUnresolved(cmds) {
+			return Block, maxTier, nil
+		}
 
 		if hasRule {
 			for _, c := range cmds {
@@ -62,6 +67,11 @@ func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (A
 		if path != "" && e.anyPathProtected([]string{path}) {
 			return Block, maxTier, nil
 		}
+		// Glob patterns can target protected files even when path is a directory.
+		glob, _ := toolInput["glob"].(string)
+		if glob != "" && e.anyPathProtected([]string{glob}) {
+			return Block, maxTier, nil
+		}
 	}
 
 	return e.actionForTier(tier), tier, nil
@@ -76,9 +86,17 @@ func (e *Engine) actionForTier(tier Tier) Action {
 
 func (e *Engine) anyPathProtected(paths []string) bool {
 	for _, path := range paths {
+		base := filepath.Base(path)
 		for _, pattern := range e.policy.ProtectedPaths {
 			if matched, _ := filepath.Match(pattern, path); matched {
 				return true
+			}
+			// Patterns without a directory separator also match the basename,
+			// so ".env" blocks "/any/path/.env".
+			if !strings.Contains(pattern, "/") {
+				if matched, _ := filepath.Match(pattern, base); matched {
+					return true
+				}
 			}
 		}
 	}

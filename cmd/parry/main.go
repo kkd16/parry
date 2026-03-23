@@ -55,11 +55,11 @@ func fatal(err error) {
 
 type verdict struct {
 	action  string // for logging and DB: "allow", "block", "observe"
-	respond string // for agent response: "allow" or "block"
+	respond string // for agent response: "allow" or "deny"
 	message string // human-readable reason
 }
 
-func resolveVerdict(mode string, action policy.Action, confirmFallback policy.Action) verdict {
+func resolveVerdict(mode string, action policy.Action) verdict {
 	if mode == "observe" {
 		return verdict{"observe", "allow", ""}
 	}
@@ -67,12 +67,10 @@ func resolveVerdict(mode string, action policy.Action, confirmFallback policy.Ac
 	case policy.Allow:
 		return verdict{"allow", "allow", ""}
 	case policy.Confirm:
-		if confirmFallback == policy.Block {
-			return verdict{"block", "block", "Blocked by Parry: requires confirmation"}
-		}
+		// TODO: temporarily pass confirm through as allow until confirm UI is implemented.
 		return verdict{"allow", "allow", ""}
 	default:
-		return verdict{"block", "block", "Blocked by Parry"}
+		return verdict{"block", "deny", "Blocked by Parry"}
 	}
 }
 
@@ -95,7 +93,7 @@ func (c *CheckCmd) Run() error {
 	}
 
 	p := engine.Policy()
-	v := resolveVerdict(p.Mode, action, p.CheckModeConfirm)
+	v := resolveVerdict(p.Mode, action)
 
 	cmd, _ := tc.ToolInput["command"].(string)
 	if cmd == "" {
