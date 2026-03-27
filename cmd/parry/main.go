@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/google/uuid"
 	"github.com/kkd16/parry/configs"
 	_ "github.com/kkd16/parry/internal/agents"
 	"github.com/kkd16/parry/internal/check"
@@ -307,58 +306,40 @@ func installHook(cfg setup.Configurer) {
 }
 
 func wizardNotifications(policyPath string) {
+	providers := notify.AllProviders()
+	if len(providers) == 0 {
+		return
+	}
+
 	ui.Info("step 2/2: notifications")
 	fmt.Println("   Approve or deny tool calls from your phone via push notifications.")
 	fmt.Println()
-	fmt.Println("   [1] ntfy")
+	for i, p := range providers {
+		fmt.Printf("   [%d] %s\n", i+1, p.Name())
+	}
 	fmt.Println("   [s] skip")
 	fmt.Println()
 	fmt.Print("   select: ")
 	choice := readChoice()
 
-	if choice != "1" {
+	if choice == "s" || choice == "S" || choice == "" {
 		return
 	}
 
-	topic := "parry-" + uuid.NewString()[:8]
-	if err := enableNtfyInPolicy(policyPath, topic, "https://ntfy.sh"); err != nil {
-		ui.Error(fmt.Sprintf("configuring notifications: %v", err))
+	idx := 0
+	if _, err := fmt.Sscanf(choice, "%d", &idx); err != nil || idx < 1 || idx > len(providers) {
+		ui.Warn("invalid selection, skipping")
+		ui.Break()
 		return
 	}
 
-	confirmer := &notify.NtfyConfirmer{Server: "https://ntfy.sh", Topic: topic}
-	if err := confirmer.SendTest(context.Background()); err != nil {
-		ui.Warn(fmt.Sprintf("test notification failed: %v", err))
-		ui.Info("notifications configured, but verify your connection")
-	} else {
-		ui.Success("test notification sent")
+	if err := providers[idx-1].RunSetup(policyPath); err != nil {
+		ui.Error(fmt.Sprintf("notification setup failed: %v", err))
 	}
-
-	printSubscribeInstructions(topic, "https://ntfy.sh")
-}
-
-func enableNtfyInPolicy(policyPath, topic, server string) error {
-	raw, err := os.ReadFile(policyPath)
-	if err != nil {
-		return err
-	}
-	updated := strings.Replace(string(raw), `provider: ""`, `provider: ntfy`, 1)
-	updated = strings.Replace(updated, `topic: ""`, fmt.Sprintf("topic: %s", topic), 1)
-	return os.WriteFile(policyPath, []byte(updated), 0o644)
-}
-
-func printSubscribeInstructions(topic, server string) {
-	ui.Detail("topic", topic)
-	ui.Detail("server", server)
-	ui.Break()
-	ui.Info("subscribe on your phone:")
-	ui.Detail("1", "Install ntfy (Android/iOS)")
-	ui.Detail("2", fmt.Sprintf("Subscribe to topic: %s", topic))
-	ui.Break()
 }
 
 type SetupCmd struct {
-	Agent string `arg:"" help:"Agent to configure (claude or cursor)." enum:"claude,cursor"`
+	Agent string `arg:"" help:"Agent to configure."`
 }
 
 func (s *SetupCmd) Run() error {
@@ -377,7 +358,11 @@ func (s *SetupCmd) Run() error {
 
 	cfg, ok := setup.Get(s.Agent)
 	if !ok {
-		return fmt.Errorf("unknown agent: %s", s.Agent)
+		names := make([]string, 0)
+		for _, c := range setup.All() {
+			names = append(names, c.Name())
+		}
+		return fmt.Errorf("unknown agent %q (available: %s)", s.Agent, strings.Join(names, ", "))
 	}
 
 	installHook(cfg)
@@ -569,9 +554,16 @@ func (v *ValidateCmd) Run() error {
 }
 
 func confirmViaNotify(p *policy.Policy, tc *check.ToolCall, tier policy.Tier) verdict {
-	confirmer := &notify.NtfyConfirmer{
-		Server: p.Notifications.Ntfy.Server,
-		Topic:  p.Notifications.Ntfy.Topic,
+	prov, ok := notify.GetProvider(p.Notifications.Provider)
+	if !ok {
+		fmt.Fprintf(os.Stderr, "parry: unknown notification provider %q\n", p.Notifications.Provider)
+		return resolveVerdict(p, p.CheckModeConfirm)
+	}
+
+	confirmer, err := prov.NewConfirmer(p.Notifications.ProviderConfig())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parry: notify: %v\n", err)
+		return resolveVerdict(p, p.CheckModeConfirm)
 	}
 
 	timeout := p.Notifications.ParseTimeout()
@@ -608,8 +600,7 @@ type NotifyCmd struct {
 }
 
 type NotifySetupCmd struct {
-	Topic  string `name:"topic" short:"t" help:"ntfy topic name (generated if omitted)."`
-	Server string `name:"server" short:"s" default:"https://ntfy.sh" help:"ntfy server URL."`
+	Provider string `arg:"" optional:"" help:"Notification provider to configure."`
 }
 
 func (n *NotifySetupCmd) Run() error {
@@ -622,8 +613,6 @@ func (n *NotifySetupCmd) Run() error {
 	if p.NotificationsEnabled() {
 		ui.Info("notifications already configured")
 		ui.Detail("provider", p.Notifications.Provider)
-		ui.Detail("topic", p.Notifications.Ntfy.Topic)
-		ui.Detail("server", p.Notifications.Ntfy.Server)
 		ui.Break()
 
 		if term.IsTerminal(int(os.Stdin.Fd())) {
@@ -638,17 +627,36 @@ func (n *NotifySetupCmd) Run() error {
 		}
 	}
 
-	topic := n.Topic
-	if topic == "" {
-		if term.IsTerminal(int(os.Stdin.Fd())) {
-			generated := "parry-" + uuid.NewString()[:8]
-			fmt.Printf("   topic [%s]: ", generated)
-			_, _ = fmt.Scanln(&topic)
-			if topic == "" {
-				topic = generated
+	var prov notify.Provider
+	if n.Provider != "" {
+		var ok bool
+		prov, ok = notify.GetProvider(n.Provider)
+		if !ok {
+			return fmt.Errorf("unknown provider %q (available: %s)",
+				n.Provider, strings.Join(notify.ProviderNames(), ", "))
+		}
+	} else {
+		providers := notify.AllProviders()
+		if len(providers) == 0 {
+			return fmt.Errorf("no notification providers available")
+		}
+		if len(providers) == 1 {
+			prov = providers[0]
+		} else if term.IsTerminal(int(os.Stdin.Fd())) {
+			fmt.Println()
+			for i, p := range providers {
+				fmt.Printf("   [%d] %s\n", i+1, p.Name())
 			}
+			fmt.Println()
+			fmt.Print("   select: ")
+			choice := readChoice()
+			idx := 0
+			if _, err := fmt.Sscanf(choice, "%d", &idx); err != nil || idx < 1 || idx > len(providers) {
+				return fmt.Errorf("invalid selection")
+			}
+			prov = providers[idx-1]
 		} else {
-			topic = "parry-" + uuid.NewString()[:8]
+			prov = providers[0]
 		}
 	}
 
@@ -658,19 +666,12 @@ func (n *NotifySetupCmd) Run() error {
 	}
 	policyPath := filepath.Join(dir, "policy.yaml")
 
-	if err := enableNtfyInPolicy(policyPath, topic, n.Server); err != nil {
+	if err := prov.RunSetup(policyPath); err != nil {
 		return err
 	}
 
-	confirmer := &notify.NtfyConfirmer{Server: n.Server, Topic: topic}
-	if err := confirmer.SendTest(context.Background()); err != nil {
-		ui.Warn(fmt.Sprintf("test notification failed: %v", err))
-	} else {
-		ui.Success("test notification sent")
-	}
-
 	ui.Success("notifications configured")
-	printSubscribeInstructions(topic, n.Server)
+	ui.Break()
 	return nil
 }
 
@@ -690,16 +691,17 @@ func (n *NotifyTestCmd) Run() error {
 		return fmt.Errorf("notifications not configured")
 	}
 
-	confirmer := &notify.NtfyConfirmer{
-		Server: p.Notifications.Ntfy.Server,
-		Topic:  p.Notifications.Ntfy.Topic,
+	prov, ok := notify.GetProvider(p.Notifications.Provider)
+	if !ok {
+		return fmt.Errorf("unknown notification provider %q", p.Notifications.Provider)
 	}
-	if err := confirmer.SendTest(context.Background()); err != nil {
+
+	if err := prov.SendTest(context.Background(), p.Notifications.ProviderConfig()); err != nil {
 		return err
 	}
 
 	ui.Success("test notification sent")
-	ui.Detail("topic", p.Notifications.Ntfy.Topic)
+	ui.Detail("provider", p.Notifications.Provider)
 	ui.Break()
 	return nil
 }

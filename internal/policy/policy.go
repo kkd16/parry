@@ -66,14 +66,17 @@ func (r *RateLimit) ParseWindow() time.Duration {
 }
 
 type Notifications struct {
-	Provider            string      `yaml:"provider"`
-	ConfirmationTimeout string      `yaml:"confirmation_timeout,omitempty"`
-	Ntfy                *NtfyConfig `yaml:"ntfy,omitempty"`
+	Provider            string         `yaml:"provider"`
+	ConfirmationTimeout string         `yaml:"confirmation_timeout,omitempty"`
+	Extra               map[string]any `yaml:",inline"`
 }
 
-type NtfyConfig struct {
-	Topic  string `yaml:"topic"`
-	Server string `yaml:"server,omitempty"`
+func (n *Notifications) ProviderConfig() map[string]any {
+	if n.Extra == nil {
+		return nil
+	}
+	cfg, _ := n.Extra[n.Provider].(map[string]any)
+	return cfg
 }
 
 func (n *Notifications) ParseTimeout() time.Duration {

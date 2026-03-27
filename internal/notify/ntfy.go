@@ -5,11 +5,78 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kkd16/parry/internal/ui"
 )
+
+func init() {
+	Register(&ntfyProvider{})
+}
+
+type ntfyProvider struct{}
+
+func (p *ntfyProvider) Name() string { return "ntfy" }
+
+func (p *ntfyProvider) NewConfirmer(cfg map[string]any) (Confirmer, error) {
+	topic, _ := cfg["topic"].(string)
+	if topic == "" {
+		return nil, fmt.Errorf("ntfy: topic is required")
+	}
+	server, _ := cfg["server"].(string)
+	if server == "" {
+		server = "https://ntfy.sh"
+	}
+	return &NtfyConfirmer{Server: server, Topic: topic}, nil
+}
+
+func (p *ntfyProvider) SendTest(ctx context.Context, cfg map[string]any) error {
+	c, err := p.NewConfirmer(cfg)
+	if err != nil {
+		return err
+	}
+	return c.(*NtfyConfirmer).SendTest(ctx)
+}
+
+func (p *ntfyProvider) RunSetup(policyPath string) error {
+	topic := "parry-" + uuid.NewString()[:8]
+	server := "https://ntfy.sh"
+
+	if err := enableInPolicy(policyPath, "ntfy", topic, server); err != nil {
+		ui.Error(fmt.Sprintf("configuring notifications: %v", err))
+		return err
+	}
+
+	confirmer := &NtfyConfirmer{Server: server, Topic: topic}
+	if err := confirmer.SendTest(context.Background()); err != nil {
+		ui.Warn(fmt.Sprintf("test notification failed: %v", err))
+		ui.Info("notifications configured, but verify your connection")
+	} else {
+		ui.Success("test notification sent")
+	}
+
+	ui.Detail("topic", topic)
+	ui.Detail("server", server)
+	ui.Break()
+	ui.Info("subscribe on your phone:")
+	ui.Detail("1", "Install ntfy (Android/iOS)")
+	ui.Detail("2", fmt.Sprintf("Subscribe to topic: %s", topic))
+	ui.Break()
+	return nil
+}
+
+func enableInPolicy(policyPath, provider, topic, server string) error {
+	raw, err := os.ReadFile(policyPath)
+	if err != nil {
+		return err
+	}
+	updated := strings.Replace(string(raw), `provider: ""`, fmt.Sprintf("provider: %s", provider), 1)
+	updated = strings.Replace(updated, `topic: ""`, fmt.Sprintf("topic: %s", topic), 1)
+	return os.WriteFile(policyPath, []byte(updated), 0o644)
+}
 
 type NtfyConfirmer struct {
 	Server string

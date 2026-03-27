@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kkd16/parry/internal/notify"
 	"go.yaml.in/yaml/v4"
 )
 
@@ -89,17 +90,13 @@ func (p *Policy) validate() error {
 		}
 	}
 	if n := p.Notifications; n != nil && n.Provider != "" {
-		if n.Provider != "ntfy" {
-			return fmt.Errorf("notifications.provider %q: only \"ntfy\" is supported", n.Provider)
+		prov, ok := notify.GetProvider(n.Provider)
+		if !ok {
+			return fmt.Errorf("notifications.provider %q: unknown (available: %s)",
+				n.Provider, strings.Join(notify.ProviderNames(), ", "))
 		}
-		if n.Ntfy == nil {
-			return fmt.Errorf("notifications.ntfy is required when provider is \"ntfy\"")
-		}
-		if n.Ntfy.Topic == "" {
-			return fmt.Errorf("notifications.ntfy.topic is required")
-		}
-		if n.Ntfy.Server == "" {
-			n.Ntfy.Server = "https://ntfy.sh"
+		if _, err := prov.NewConfirmer(n.ProviderConfig()); err != nil {
+			return err
 		}
 		if n.ConfirmationTimeout != "" {
 			d, err := time.ParseDuration(n.ConfirmationTimeout)
