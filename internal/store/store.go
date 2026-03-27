@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS events (
 	tier       INTEGER NOT NULL,
 	action     TEXT    NOT NULL,
 	session    TEXT    NOT NULL,
-	mode       TEXT    NOT NULL
+	mode       TEXT    NOT NULL,
+	raw_name   TEXT    NOT NULL DEFAULT '',
+	binary     TEXT    NOT NULL DEFAULT '',
+	subcommand TEXT    NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_events_session ON events(session);
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
@@ -33,12 +36,15 @@ type Store struct {
 }
 
 type Event struct {
-	ToolName  string
-	ToolInput map[string]any
-	Tier      int
-	Action    string
-	Session   string
-	Mode      string
+	ToolName   string
+	ToolInput  map[string]any
+	Tier       int
+	Action     string
+	Session    string
+	Mode       string
+	RawName    string
+	Binary     string
+	Subcommand string
 }
 
 func Open(dbPath string) (*Store, error) {
@@ -73,8 +79,8 @@ func (s *Store) RecordEvent(e Event) error {
 	}
 
 	_, err = s.db.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
@@ -82,6 +88,9 @@ func (s *Store) RecordEvent(e Event) error {
 		e.Action,
 		e.Session,
 		e.Mode,
+		e.RawName,
+		e.Binary,
+		e.Subcommand,
 	)
 	if err != nil {
 		return fmt.Errorf("inserting event: %w", err)
@@ -123,8 +132,8 @@ func (s *Store) CountAndRecord(session string, since time.Time, e Event) (int, e
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
@@ -132,6 +141,9 @@ func (s *Store) CountAndRecord(session string, since time.Time, e Event) (int, e
 		e.Action,
 		e.Session,
 		e.Mode,
+		e.RawName,
+		e.Binary,
+		e.Subcommand,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("inserting event: %w", err)
@@ -148,23 +160,29 @@ func (s *Store) Close() error {
 }
 
 type EventRow struct {
-	ID        int            `json:"id"`
-	Timestamp string         `json:"timestamp"`
-	ToolName  string         `json:"tool_name"`
-	ToolInput map[string]any `json:"tool_input"`
-	Tier      int            `json:"tier"`
-	Action    string         `json:"action"`
-	Session   string         `json:"session"`
-	Mode      string         `json:"mode"`
+	ID         int            `json:"id"`
+	Timestamp  string         `json:"timestamp"`
+	ToolName   string         `json:"tool_name"`
+	ToolInput  map[string]any `json:"tool_input"`
+	Tier       int            `json:"tier"`
+	Action     string         `json:"action"`
+	Session    string         `json:"session"`
+	Mode       string         `json:"mode"`
+	RawName    string         `json:"raw_name"`
+	Binary     string         `json:"binary"`
+	Subcommand string         `json:"subcommand"`
 }
 
 // allowedSortCols is the whitelist of columns that can be sorted on.
 var allowedSortCols = map[string]string{
-	"timestamp": "timestamp",
-	"tool_name": "tool_name",
-	"action":    "action",
-	"tier":      "tier",
-	"mode":      "mode",
+	"timestamp":  "timestamp",
+	"tool_name":  "tool_name",
+	"action":     "action",
+	"tier":       "tier",
+	"mode":       "mode",
+	"raw_name":   "raw_name",
+	"binary":     "binary",
+	"subcommand": "subcommand",
 }
 
 func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, search string, tier int) ([]EventRow, int, error) {
@@ -204,7 +222,7 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 		orderClause = col + " " + dir + ", id " + dir
 	}
 
-	q := "SELECT id, timestamp, tool_name, tool_input, tier, action, session, mode FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
+	q := "SELECT id, timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
 	rowArgs := append(args, limit, offset)
 	rows, err := s.db.Query(q, rowArgs...)
 	if err != nil {
@@ -216,7 +234,7 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 	for rows.Next() {
 		var ev EventRow
 		var inputJSON string
-		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Tier, &ev.Action, &ev.Session, &ev.Mode); err != nil {
+		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Tier, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.Subcommand); err != nil {
 			return nil, 0, fmt.Errorf("scanning event: %w", err)
 		}
 		if err := json.Unmarshal([]byte(inputJSON), &ev.ToolInput); err != nil {

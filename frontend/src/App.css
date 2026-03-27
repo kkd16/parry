@@ -75,6 +75,62 @@ header h1 {
   color: #484f58;
 }
 
+.col-toggle {
+  position: relative;
+  margin-left: auto;
+}
+
+.col-toggle-btn {
+  background: #161b22;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.col-toggle-btn:hover {
+  border-color: #58a6ff;
+}
+
+.col-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 8px 0;
+  min-width: 140px;
+  z-index: 10;
+}
+
+.col-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  color: #c9d1d9;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.col-option:hover {
+  background: #21262d;
+}
+
+.col-option input[type="checkbox"] {
+  accent-color: #58a6ff;
+}
+
+.muted {
+  color: #484f58;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

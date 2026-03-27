@@ -3,15 +3,61 @@ import type { Event, EventsResponse } from "./types";
 
 const PAGE_SIZE = 100;
 
-type SortCol = "timestamp" | "tool_name" | "action" | "tier" | "mode" | "";
+type ColKey =
+  | "timestamp"
+  | "raw_name"
+  | "tool_name"
+  | "binary"
+  | "subcommand"
+  | "action"
+  | "tier"
+  | "mode"
+  | "session"
+  | "tool_input";
 
-const SORTABLE_COLS: { key: SortCol; label: string }[] = [
-  { key: "timestamp", label: "Time" },
-  { key: "tool_name", label: "Tool" },
-  { key: "action", label: "Action" },
-  { key: "tier", label: "Tier" },
-  { key: "mode", label: "Mode" },
+type SortCol = ColKey | "";
+
+interface ColDef {
+  key: ColKey;
+  label: string;
+  sortable: boolean;
+}
+
+const ALL_COLUMNS: ColDef[] = [
+  { key: "timestamp", label: "Time", sortable: true },
+  { key: "raw_name", label: "Raw Tool", sortable: true },
+  { key: "tool_name", label: "Tool", sortable: true },
+  { key: "binary", label: "Binary", sortable: true },
+  { key: "subcommand", label: "Subcmd", sortable: true },
+  { key: "action", label: "Action", sortable: true },
+  { key: "tier", label: "Tier", sortable: true },
+  { key: "mode", label: "Mode", sortable: true },
+  { key: "session", label: "Session", sortable: false },
+  { key: "tool_input", label: "Input", sortable: false },
 ];
+
+const DEFAULT_VISIBLE: ColKey[] = [
+  "timestamp",
+  "tool_name",
+  "binary",
+  "action",
+  "tier",
+  "mode",
+  "session",
+];
+
+const STORAGE_KEY = "parry-columns";
+
+function loadVisibleCols(): ColKey[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as ColKey[];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return DEFAULT_VISIBLE;
+}
 
 function actionClass(action: string): string {
   switch (action) {
@@ -40,6 +86,35 @@ function sortIndicator(col: SortCol, activeCol: SortCol, order: "asc" | "desc"):
   return order === "asc" ? " \u25B2" : " \u25BC";
 }
 
+function renderCell(ev: Event, col: ColKey): React.ReactNode {
+  switch (col) {
+    case "timestamp":
+      return <span className="nowrap">{formatTime(ev.timestamp)}</span>;
+    case "raw_name":
+      return ev.raw_name;
+    case "tool_name":
+      return ev.tool_name;
+    case "binary":
+      return ev.binary ? <span className="mono">{ev.binary}</span> : <span className="muted">-</span>;
+    case "subcommand":
+      return ev.subcommand ? <span className="mono">{ev.subcommand}</span> : <span className="muted">-</span>;
+    case "action":
+      return <span className={actionClass(ev.action)}>{ev.action}</span>;
+    case "tier":
+      return <span className="center">T{ev.tier}</span>;
+    case "mode":
+      return ev.mode;
+    case "session":
+      return <span className="mono">{ev.session.slice(0, 8)}</span>;
+    case "tool_input":
+      return (
+        <span className="input-cell" title={JSON.stringify(ev.tool_input)}>
+          {truncate(JSON.stringify(ev.tool_input), 60)}
+        </span>
+      );
+  }
+}
+
 export default function App() {
   const [events, setEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
@@ -53,7 +128,10 @@ export default function App() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [visibleCols, setVisibleCols] = useState<ColKey[]>(loadVisibleCols);
+  const [colMenuOpen, setColMenuOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const colMenuRef = useRef<HTMLDivElement>(null);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -91,6 +169,17 @@ export default function App() {
     fetchEvents();
   }, [fetchEvents]);
 
+  useEffect(() => {
+    if (!colMenuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (colMenuRef.current && !colMenuRef.current.contains(e.target as Node)) {
+        setColMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [colMenuOpen]);
+
   const handleFilterChange = (setter: (v: string) => void) => {
     return (e: React.ChangeEvent<HTMLSelectElement>) => {
       setter(e.target.value);
@@ -108,7 +197,9 @@ export default function App() {
     }, 300);
   };
 
-  const handleSort = (col: SortCol) => {
+  const handleSort = (col: ColKey) => {
+    const def = ALL_COLUMNS.find((c) => c.key === col);
+    if (!def?.sortable) return;
     if (sortCol === col) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -118,6 +209,19 @@ export default function App() {
     setOffset(0);
   };
 
+  const toggleCol = (key: ColKey) => {
+    const next = visibleCols.includes(key)
+      ? visibleCols.filter((c) => c !== key)
+      : [...visibleCols, key];
+    if (next.length === 0) return;
+    setVisibleCols(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    if (sortCol === key && !next.includes(key)) {
+      setSortCol("");
+    }
+  };
+
+  const activeCols = ALL_COLUMNS.filter((c) => visibleCols.includes(c.key));
   const page = Math.floor(offset / PAGE_SIZE) + 1;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -166,6 +270,25 @@ export default function App() {
             <option value="5">T5</option>
           </select>
         </label>
+        <div className="col-toggle" ref={colMenuRef}>
+          <button className="col-toggle-btn" onClick={() => setColMenuOpen(!colMenuOpen)}>
+            Columns
+          </button>
+          {colMenuOpen && (
+            <div className="col-dropdown">
+              {ALL_COLUMNS.map(({ key, label }) => (
+                <label key={key} className="col-option">
+                  <input
+                    type="checkbox"
+                    checked={visibleCols.includes(key)}
+                    onChange={() => toggleCol(key)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {error && <div className="error">{error}</div>}
@@ -175,36 +298,30 @@ export default function App() {
         <table>
           <thead>
             <tr>
-              {SORTABLE_COLS.map(({ key, label }) => (
-                <th key={key} className="sortable" onClick={() => handleSort(key)}>
-                  {label}{sortIndicator(key, sortCol, sortOrder)}
+              {activeCols.map(({ key, label, sortable }) => (
+                <th
+                  key={key}
+                  className={sortable ? "sortable" : undefined}
+                  onClick={sortable ? () => handleSort(key) : undefined}
+                >
+                  {label}{sortable ? sortIndicator(key, sortCol, sortOrder) : ""}
                 </th>
               ))}
-              <th>Session</th>
-              <th>Input</th>
             </tr>
           </thead>
           <tbody>
             {events.length === 0 ? (
               <tr>
-                <td colSpan={7} className="empty">
+                <td colSpan={activeCols.length} className="empty">
                   No events found
                 </td>
               </tr>
             ) : (
               events.map((ev) => (
                 <tr key={ev.id}>
-                  <td className="nowrap">{formatTime(ev.timestamp)}</td>
-                  <td>{ev.tool_name}</td>
-                  <td>
-                    <span className={actionClass(ev.action)}>{ev.action}</span>
-                  </td>
-                  <td className="center">T{ev.tier}</td>
-                  <td>{ev.mode}</td>
-                  <td className="mono">{ev.session.slice(0, 8)}</td>
-                  <td className="input-cell" title={JSON.stringify(ev.tool_input)}>
-                    {truncate(JSON.stringify(ev.tool_input), 60)}
-                  </td>
+                  {activeCols.map(({ key }) => (
+                    <td key={key}>{renderCell(ev, key)}</td>
+                  ))}
                 </tr>
               ))
             )}

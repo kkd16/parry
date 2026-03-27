@@ -7,6 +7,9 @@ export interface Event {
   action: "allow" | "block" | "observe";
   session: string;
   mode: "observe" | "enforce";
+  raw_name: string;
+  binary: string;
+  subcommand: string;
 }
 
 export interface EventsResponse {

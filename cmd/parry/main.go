@@ -13,6 +13,7 @@ import (
 	"github.com/kkd16/parry/internal/dashboard"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/setup"
+	"github.com/kkd16/parry/internal/shellparse"
 	"github.com/kkd16/parry/internal/store"
 	"github.com/kkd16/parry/internal/ui"
 )
@@ -101,14 +102,7 @@ func (c *CheckCmd) Run() error {
 		if s, err := openStore(); err == nil {
 			defer func() { _ = s.Close() }()
 			window := p.RateLimit.ParseWindow()
-			event := store.Event{
-				ToolName:  string(tc.Tool),
-				ToolInput: tc.ToolInput,
-				Tier:      int(tier),
-				Action:    v.action,
-				Session:   store.Session(),
-				Mode:      p.Mode,
-			}
+			event := buildEvent(tc, int(tier), v.action, p.Mode)
 			count, err := s.CountAndRecord(store.Session(), time.Now().UTC().Add(-window), event)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
@@ -147,15 +141,28 @@ func openStore() (*store.Store, error) {
 	return store.Open(filepath.Join(dir, "parry.db"))
 }
 
-func recordEventWithStore(s *store.Store, tc *check.ToolCall, tier int, action, mode string) {
-	if err := s.RecordEvent(store.Event{
+func buildEvent(tc *check.ToolCall, tier int, action, mode string) store.Event {
+	e := store.Event{
 		ToolName:  string(tc.Tool),
 		ToolInput: tc.ToolInput,
 		Tier:      tier,
 		Action:    action,
 		Session:   store.Session(),
 		Mode:      mode,
-	}); err != nil {
+		RawName:   tc.RawName,
+	}
+	if cmd, ok := tc.ToolInput["command"].(string); ok && cmd != "" {
+		cmds := shellparse.Parse(cmd)
+		if len(cmds) > 0 {
+			e.Binary = cmds[0].Binary
+			e.Subcommand = cmds[0].Subcommand
+		}
+	}
+	return e
+}
+
+func recordEventWithStore(s *store.Store, tc *check.ToolCall, tier int, action, mode string) {
+	if err := s.RecordEvent(buildEvent(tc, tier, action, mode)); err != nil {
 		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
 	}
 }
