@@ -65,6 +65,28 @@ func (r *RateLimit) ParseWindow() time.Duration {
 	return d
 }
 
+type Notifications struct {
+	Provider            string      `yaml:"provider"`
+	ConfirmationTimeout string      `yaml:"confirmation_timeout,omitempty"`
+	Ntfy                *NtfyConfig `yaml:"ntfy,omitempty"`
+}
+
+type NtfyConfig struct {
+	Topic  string `yaml:"topic"`
+	Server string `yaml:"server,omitempty"`
+}
+
+func (n *Notifications) ParseTimeout() time.Duration {
+	if n.ConfirmationTimeout == "" {
+		return 5 * time.Minute
+	}
+	d, _ := time.ParseDuration(n.ConfirmationTimeout)
+	if d <= 0 {
+		return 5 * time.Minute
+	}
+	return d
+}
+
 type Policy struct {
 	Version          int              `yaml:"version"`
 	Mode             string           `yaml:"mode"`
@@ -75,6 +97,11 @@ type Policy struct {
 	ProtectedPaths   []string         `yaml:"protected_paths,omitempty"`
 	Rules            map[string]*Rule `yaml:"rules"`
 	RateLimit        *RateLimit       `yaml:"rate_limit,omitempty"`
+	Notifications    *Notifications   `yaml:"notifications,omitempty"`
+}
+
+func (p *Policy) NotificationsEnabled() bool {
+	return p.Notifications != nil && p.Notifications.Provider != ""
 }
 
 func (p *Policy) MaxTier() Tier {

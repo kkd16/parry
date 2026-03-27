@@ -88,6 +88,29 @@ func (p *Policy) validate() error {
 			return fmt.Errorf("invalid protected_paths pattern %q: %w", pattern, err)
 		}
 	}
+	if n := p.Notifications; n != nil && n.Provider != "" {
+		if n.Provider != "ntfy" {
+			return fmt.Errorf("notifications.provider %q: only \"ntfy\" is supported", n.Provider)
+		}
+		if n.Ntfy == nil {
+			return fmt.Errorf("notifications.ntfy is required when provider is \"ntfy\"")
+		}
+		if n.Ntfy.Topic == "" {
+			return fmt.Errorf("notifications.ntfy.topic is required")
+		}
+		if n.Ntfy.Server == "" {
+			n.Ntfy.Server = "https://ntfy.sh"
+		}
+		if n.ConfirmationTimeout != "" {
+			d, err := time.ParseDuration(n.ConfirmationTimeout)
+			if err != nil {
+				return fmt.Errorf("notifications.confirmation_timeout %q: %w", n.ConfirmationTimeout, err)
+			}
+			if d <= 0 {
+				return fmt.Errorf("notifications.confirmation_timeout must be positive")
+			}
+		}
+	}
 	if rl := p.RateLimit; rl != nil {
 		d, err := time.ParseDuration(rl.Window)
 		if err != nil {

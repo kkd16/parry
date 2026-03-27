@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 type Configurer interface {
@@ -73,6 +74,15 @@ func Register(c Configurer) {
 func Get(name string) (Configurer, bool) {
 	c, ok := configurers[name]
 	return c, ok
+}
+
+func All() []Configurer {
+	out := make([]Configurer, 0, len(configurers))
+	for _, c := range configurers {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name() < out[j].Name() })
+	return out
 }
 
 func ReadJSONFile(path string) (map[string]any, error) {

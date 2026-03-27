@@ -5,6 +5,14 @@ version: 1
 mode: observe
 
 check_mode_confirm: block
+
+notifications:
+  provider: ""              # ntfy (leave blank to disable)
+  confirmation_timeout: 5m
+  ntfy:
+    topic: ""
+    server: https://ntfy.sh
+
 default_tier: 3
 
 tiers:
