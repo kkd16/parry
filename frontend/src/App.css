@@ -56,6 +56,15 @@ header h1 {
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 0.85rem;
+  transition: border-color 150ms ease;
+}
+
+.filters select:hover,
+.filters select:focus,
+.search-input:hover,
+.search-input:focus {
+  border-color: #58a6ff;
+  outline: none;
 }
 
 .search-input {
@@ -86,6 +95,7 @@ thead th {
 
 thead th.sortable {
   cursor: pointer;
+  transition: color 150ms ease;
 }
 
 thead th.sortable:hover {
@@ -94,6 +104,7 @@ thead th.sortable:hover {
 
 tbody tr {
   border-bottom: 1px solid #21262d;
+  transition: background-color 150ms ease;
 }
 
 tbody tr:hover {
@@ -158,6 +169,7 @@ tbody td {
   gap: 16px;
   margin-top: 16px;
   font-size: 0.85rem;
+  min-height: 36px;
 }
 
 .pagination button {
@@ -168,6 +180,7 @@ tbody td {
   padding: 6px 16px;
   cursor: pointer;
   font-size: 0.85rem;
+  transition: background-color 150ms ease, opacity 150ms ease;
 }
 
 .pagination button:hover:not(:disabled) {
@@ -188,10 +201,32 @@ tbody td {
   font-size: 0.85rem;
 }
 
-.loading {
-  text-align: center;
-  color: #8b949e;
-  padding: 40px;
+.table-wrap {
+  position: relative;
+  opacity: 1;
+  transition: opacity 150ms ease;
+}
+
+.table-wrap.table-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.loading-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #58a6ff;
+  animation: loading-slide 1s ease-in-out infinite;
+}
+
+@keyframes loading-slide {
+  0%   { transform: scaleX(0); transform-origin: left; }
+  50%  { transform: scaleX(1); transform-origin: left; }
+  51%  { transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
 }
 
 .empty {

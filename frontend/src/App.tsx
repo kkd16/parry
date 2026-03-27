@@ -170,67 +170,68 @@ export default function App() {
 
       {error && <div className="error">{error}</div>}
 
-      {loading ? (
-        <div className="loading">Loading...</div>
-      ) : (
-        <>
-          <table>
-            <thead>
+      <div className={`table-wrap${loading ? " table-loading" : ""}`}>
+        {loading && <div className="loading-bar" />}
+        <table>
+          <thead>
+            <tr>
+              {SORTABLE_COLS.map(({ key, label }) => (
+                <th key={key} className="sortable" onClick={() => handleSort(key)}>
+                  {label}{sortIndicator(key, sortCol, sortOrder)}
+                </th>
+              ))}
+              <th>Session</th>
+              <th>Input</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.length === 0 ? (
               <tr>
-                {SORTABLE_COLS.map(({ key, label }) => (
-                  <th key={key} className="sortable" onClick={() => handleSort(key)}>
-                    {label}{sortIndicator(key, sortCol, sortOrder)}
-                  </th>
-                ))}
-                <th>Session</th>
-                <th>Input</th>
+                <td colSpan={7} className="empty">
+                  No events found
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {events.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="empty">
-                    No events found
+            ) : (
+              events.map((ev) => (
+                <tr key={ev.id}>
+                  <td className="nowrap">{formatTime(ev.timestamp)}</td>
+                  <td>{ev.tool_name}</td>
+                  <td>
+                    <span className={actionClass(ev.action)}>{ev.action}</span>
+                  </td>
+                  <td className="center">T{ev.tier}</td>
+                  <td>{ev.mode}</td>
+                  <td className="mono">{ev.session.slice(0, 8)}</td>
+                  <td className="input-cell" title={JSON.stringify(ev.tool_input)}>
+                    {truncate(JSON.stringify(ev.tool_input), 60)}
                   </td>
                 </tr>
-              ) : (
-                events.map((ev) => (
-                  <tr key={ev.id}>
-                    <td className="nowrap">{formatTime(ev.timestamp)}</td>
-                    <td>{ev.tool_name}</td>
-                    <td>
-                      <span className={actionClass(ev.action)}>{ev.action}</span>
-                    </td>
-                    <td className="center">T{ev.tier}</td>
-                    <td>{ev.mode}</td>
-                    <td className="mono">{ev.session.slice(0, 8)}</td>
-                    <td className="input-cell" title={JSON.stringify(ev.tool_input)}>
-                      {truncate(JSON.stringify(ev.tool_input), 60)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>
-                Prev
-              </button>
-              <span>
-                Page {page} of {totalPages}
-              </span>
-              <button
-                disabled={offset + PAGE_SIZE >= total}
-                onClick={() => setOffset(offset + PAGE_SIZE)}
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </>
-      )}
+      <div className="pagination">
+        {totalPages > 1 ? (
+          <>
+            <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>
+              Prev
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              disabled={offset + PAGE_SIZE >= total}
+              onClick={() => setOffset(offset + PAGE_SIZE)}
+            >
+              Next
+            </button>
+          </>
+        ) : (
+          <span>&nbsp;</span>
+        )}
+      </div>
     </div>
   );
 }
