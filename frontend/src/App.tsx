@@ -60,7 +60,9 @@ function loadVisibleCols(): ColKey[] {
       const parsed = JSON.parse(stored) as ColKey[];
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch {}
+  } catch {
+    // invalid stored column config
+  }
   return DEFAULT_VISIBLE;
 }
 
