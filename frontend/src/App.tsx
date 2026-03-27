@@ -13,6 +13,8 @@ type ColKey =
   | "tier"
   | "mode"
   | "session"
+  | "workdir"
+  | "file"
   | "tool_input";
 
 type SortCol = ColKey | "";
@@ -32,7 +34,9 @@ const ALL_COLUMNS: ColDef[] = [
   { key: "action", label: "Action", sortable: true },
   { key: "tier", label: "Tier", sortable: true },
   { key: "mode", label: "Mode", sortable: true },
+  { key: "workdir", label: "Directory", sortable: true },
   { key: "session", label: "Session", sortable: false },
+  { key: "file", label: "File", sortable: true },
   { key: "tool_input", label: "Input", sortable: false },
 ];
 
@@ -40,10 +44,11 @@ const DEFAULT_VISIBLE: ColKey[] = [
   "timestamp",
   "tool_name",
   "binary",
+  "file",
   "action",
   "tier",
   "mode",
-  "session",
+  "workdir",
 ];
 
 const STORAGE_KEY = "parry-columns";
@@ -104,6 +109,10 @@ function renderCell(ev: Event, col: ColKey): React.ReactNode {
       return <span className="center">T{ev.tier}</span>;
     case "mode":
       return ev.mode;
+    case "workdir":
+      return ev.workdir ? <span className="mono">{ev.workdir}</span> : <span className="muted">-</span>;
+    case "file":
+      return ev.file ? <span className="mono">{ev.file}</span> : <span className="muted">-</span>;
     case "session":
       return <span className="mono">{ev.session.slice(0, 8)}</span>;
     case "tool_input":

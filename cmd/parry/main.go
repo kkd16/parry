@@ -150,6 +150,7 @@ func buildEvent(tc *check.ToolCall, tier int, action, mode string) store.Event {
 		Session:   store.Session(),
 		Mode:      mode,
 		RawName:   tc.RawName,
+		Workdir:   store.Workdir(),
 	}
 	if cmd, ok := tc.ToolInput["command"].(string); ok && cmd != "" {
 		cmds := shellparse.Parse(cmd)
@@ -157,6 +158,9 @@ func buildEvent(tc *check.ToolCall, tier int, action, mode string) store.Event {
 			e.Binary = cmds[0].Binary
 			e.Subcommand = cmds[0].Subcommand
 		}
+	}
+	if p, ok := tc.ToolInput["path"].(string); ok {
+		e.File = p
 	}
 	return e
 }

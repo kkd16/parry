@@ -10,6 +10,8 @@ export interface Event {
   raw_name: string;
   binary: string;
   subcommand: string;
+  file: string;
+  workdir: string;
 }
 
 export interface EventsResponse {

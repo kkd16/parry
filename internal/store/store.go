@@ -25,7 +25,9 @@ CREATE TABLE IF NOT EXISTS events (
 	mode       TEXT    NOT NULL,
 	raw_name   TEXT    NOT NULL DEFAULT '',
 	binary     TEXT    NOT NULL DEFAULT '',
-	subcommand TEXT    NOT NULL DEFAULT ''
+	subcommand TEXT    NOT NULL DEFAULT '',
+	file       TEXT    NOT NULL DEFAULT '',
+	workdir    TEXT    NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_events_session ON events(session);
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
@@ -45,6 +47,8 @@ type Event struct {
 	RawName    string
 	Binary     string
 	Subcommand string
+	File       string
+	Workdir    string
 }
 
 func Open(dbPath string) (*Store, error) {
@@ -79,8 +83,8 @@ func (s *Store) RecordEvent(e Event) error {
 	}
 
 	_, err = s.db.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand, file, workdir)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
@@ -91,6 +95,8 @@ func (s *Store) RecordEvent(e Event) error {
 		e.RawName,
 		e.Binary,
 		e.Subcommand,
+		e.File,
+		e.Workdir,
 	)
 	if err != nil {
 		return fmt.Errorf("inserting event: %w", err)
@@ -132,8 +138,8 @@ func (s *Store) CountAndRecord(session string, since time.Time, e Event) (int, e
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand, file, workdir)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
@@ -144,6 +150,8 @@ func (s *Store) CountAndRecord(session string, since time.Time, e Event) (int, e
 		e.RawName,
 		e.Binary,
 		e.Subcommand,
+		e.File,
+		e.Workdir,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("inserting event: %w", err)
@@ -171,6 +179,8 @@ type EventRow struct {
 	RawName    string         `json:"raw_name"`
 	Binary     string         `json:"binary"`
 	Subcommand string         `json:"subcommand"`
+	File       string         `json:"file"`
+	Workdir    string         `json:"workdir"`
 }
 
 // allowedSortCols is the whitelist of columns that can be sorted on.
@@ -183,6 +193,8 @@ var allowedSortCols = map[string]string{
 	"raw_name":   "raw_name",
 	"binary":     "binary",
 	"subcommand": "subcommand",
+	"file":       "file",
+	"workdir":    "workdir",
 }
 
 func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, search string, tier int) ([]EventRow, int, error) {
@@ -222,7 +234,7 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 		orderClause = col + " " + dir + ", id " + dir
 	}
 
-	q := "SELECT id, timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
+	q := "SELECT id, timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
 	rowArgs := append(args, limit, offset)
 	rows, err := s.db.Query(q, rowArgs...)
 	if err != nil {
@@ -234,7 +246,7 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 	for rows.Next() {
 		var ev EventRow
 		var inputJSON string
-		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Tier, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.Subcommand); err != nil {
+		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Tier, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.Subcommand, &ev.File, &ev.Workdir); err != nil {
 			return nil, 0, fmt.Errorf("scanning event: %w", err)
 		}
 		if err := json.Unmarshal([]byte(inputJSON), &ev.ToolInput); err != nil {
@@ -338,4 +350,12 @@ func Session() string {
 	}
 	h := sha256.Sum256([]byte(cwd))
 	return hex.EncodeToString(h[:])
+}
+
+func Workdir() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	return cwd
 }
