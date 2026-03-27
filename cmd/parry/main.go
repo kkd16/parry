@@ -410,7 +410,8 @@ func (v *ValidateCmd) Run() error {
 		binaries += len(r.Binaries)
 	}
 	ui.Detail("binaries", fmt.Sprintf("%d classified", binaries))
-	ui.Detail("paths", fmt.Sprintf("%d protected", len(p.ProtectedPaths)))
+	ui.Detail("parry paths", fmt.Sprintf("%d protected", len(p.ParryPaths)))
+	ui.Detail("user paths", fmt.Sprintf("%d protected", len(p.ProtectedPaths)))
 	ui.Break()
 	return nil
 }

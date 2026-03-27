@@ -71,6 +71,7 @@ type Policy struct {
 	CheckModeConfirm Action           `yaml:"check_mode_confirm"`
 	DefaultTier      Tier             `yaml:"default_tier"`
 	Tiers            map[Tier]Action  `yaml:"tiers"`
+	ParryPaths       []string         `yaml:"parry_paths,omitempty"`
 	ProtectedPaths   []string         `yaml:"protected_paths,omitempty"`
 	Rules            map[string]*Rule `yaml:"rules"`
 	RateLimit        *RateLimit       `yaml:"rate_limit,omitempty"`

@@ -83,11 +83,18 @@ func (e *Engine) actionForTier(tier Tier) Action {
 	return Block
 }
 
+func (e *Engine) allProtectedPaths() []string {
+	all := make([]string, 0, len(e.policy.ParryPaths)+len(e.policy.ProtectedPaths))
+	all = append(all, e.policy.ParryPaths...)
+	all = append(all, e.policy.ProtectedPaths...)
+	return all
+}
+
 func (e *Engine) anyPathProtected(paths []string) bool {
 	for _, path := range paths {
 		base := filepath.Base(path)
 		isGlob := containsGlobMeta(path)
-		for _, pattern := range e.policy.ProtectedPaths {
+		for _, pattern := range e.allProtectedPaths() {
 			if matched, _ := filepath.Match(pattern, path); matched {
 				return true
 			}

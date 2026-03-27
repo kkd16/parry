@@ -78,6 +78,11 @@ func (p *Policy) validate() error {
 			return fmt.Errorf("rule %q: invalid default_tier %d", name, rule.DefaultTier)
 		}
 	}
+	for _, pattern := range p.ParryPaths {
+		if _, err := filepath.Match(pattern, ""); err != nil {
+			return fmt.Errorf("invalid parry_paths pattern %q: %w", pattern, err)
+		}
+	}
 	for _, pattern := range p.ProtectedPaths {
 		if _, err := filepath.Match(pattern, ""); err != nil {
 			return fmt.Errorf("invalid protected_paths pattern %q: %w", pattern, err)
@@ -107,6 +112,11 @@ func (p *Policy) expandHome() {
 	home, _ := os.UserHomeDir()
 	if home == "" {
 		return
+	}
+	for i, pattern := range p.ParryPaths {
+		if strings.HasPrefix(pattern, "~/") {
+			p.ParryPaths[i] = filepath.Join(home, pattern[2:])
+		}
 	}
 	for i, pattern := range p.ProtectedPaths {
 		if strings.HasPrefix(pattern, "~/") {

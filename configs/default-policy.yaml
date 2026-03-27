@@ -14,12 +14,9 @@ tiers:
   4: confirm
   5: block
 
-# Paths that are off limits to all tools. Any tool call that references
-# a protected path is blocked regardless of tier or binary classification.
-protected_paths:
-  - "~/.ssh/*"
-  - "~/.aws/*"
-  - "~/.gnupg/*"
+# Parry internals - paths parry needs to protect itself and the tools it guards.
+# Modifying these could let an agent tamper with parry's own config or hooks.
+parry_paths:
   - "~/.parry/*"
   - "~/.claude/*"
   - "~/.cursor/*"
@@ -27,6 +24,13 @@ protected_paths:
   - "/opt/homebrew/Library/Taps/*"
   - "/usr/local/Homebrew/Library/Taps/*"
   - "/home/linuxbrew/.linuxbrew/Library/Taps/*"
+
+# Paths that are off limits to all tools. Any tool call that references
+# a protected path is blocked regardless of tier or binary classification.
+protected_paths:
+  - "~/.ssh/*"
+  - "~/.aws/*"
+  - "~/.gnupg/*"
   - "/etc/shadow"
   - "/etc/passwd"
   - ".env"
