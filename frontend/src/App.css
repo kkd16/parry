@@ -48,13 +48,22 @@ header h1 {
   color: #8b949e;
 }
 
-.filters select {
+.filters select,
+.search-input {
   background: #161b22;
   color: #c9d1d9;
   border: 1px solid #30363d;
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 0.85rem;
+}
+
+.search-input {
+  min-width: 200px;
+}
+
+.search-input::placeholder {
+  color: #484f58;
 }
 
 table {
@@ -72,6 +81,15 @@ thead th {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  user-select: none;
+}
+
+thead th.sortable {
+  cursor: pointer;
+}
+
+thead th.sortable:hover {
+  color: #c9d1d9;
 }
 
 tbody tr {
