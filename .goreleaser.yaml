@@ -40,7 +40,7 @@ homebrew_casks:
     binaries:
       - parry
     homepage: "https://github.com/kkd16/parry"
-    description: "Runtime security enforcement for AI agents and coding tools."
+    description: "Runtime security enforcement for AI agents and coding tools"
     license: "Apache-2.0"
     repository:
       owner: kkd16
