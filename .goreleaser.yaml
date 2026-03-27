@@ -34,3 +34,16 @@ changelog:
       - "^test:"
 
 release:
+
+homebrew_casks:
+  - name: parry
+    binaries:
+      - parry
+    homepage: "https://github.com/kkd16/parry"
+    description: "Runtime security enforcement for AI agents and coding tools."
+    license: "Apache-2.0"
+    repository:
+      owner: kkd16
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    directory: Casks
