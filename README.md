@@ -12,7 +12,7 @@ Parry sits **outside** your AI agent. It reads tool-call payloads from stdin, cl
 
 AI agents run shell commands, send emails, edit files, and hit APIs on your behalf. When they go wrong (prompt injection, context drift, misconfiguration), the consequences are real.
 
-Most security tools today run *inside* the agent as natural-language instructions. A prompt injection can override those. Your security skill gets talked out of protecting you.
+Many security tools today run inside the agent as natural-language instructions. A prompt injection can override those. Your security skill gets talked out of protecting you.
 
 Parry runs out-of-process. Deterministic rules. The agent doesn't know it's there.
 
