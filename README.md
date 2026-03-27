@@ -16,6 +16,18 @@ Most security tools today run *inside* the agent as natural-language instruction
 
 Parry runs out-of-process. Deterministic rules. The agent doesn't know it's there.
 
+## Install
+
+```bash
+brew install kkd16/tap/parry
+```
+
+Or with Go:
+
+```bash
+go install github.com/kkd16/parry@latest
+```
+
 ## How it works (check mode)
 
 Parry reads a tool call on stdin and returns allow/block (and an optional message) via stdout + exit code. If Parry crashes, a non-zero exit code blocks the action (fail-closed).
@@ -125,14 +137,6 @@ make test         # run tests with race detector
 
 - Keep changes focused and easy to review.
 - Vibe coded contributions welcome. 
-
-## Distribution
-
-```bash
-go install github.com/kkd16/parry@latest    # go install
-```
-
-macOS (ARM + Intel) + Linux (AMD64 + ARM64). Windows via WSL2.
 
 ## License
 
