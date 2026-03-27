@@ -91,6 +91,11 @@ func (e *Engine) anyPathProtected(paths []string) bool {
 			if matched, _ := filepath.Match(pattern, path); matched {
 				return true
 			}
+			if dir, ok := strings.CutSuffix(pattern, "/*"); ok {
+				if strings.HasPrefix(path, dir+"/") {
+					return true
+				}
+			}
 			if !strings.Contains(pattern, "/") {
 				if matched, _ := filepath.Match(pattern, base); matched {
 					return true

@@ -158,7 +158,16 @@ type EventRow struct {
 	Mode      string         `json:"mode"`
 }
 
-func (s *Store) ListEvents(limit, offset int, action, tool string) ([]EventRow, int, error) {
+// allowedSortCols is the whitelist of columns that can be sorted on.
+var allowedSortCols = map[string]string{
+	"timestamp": "timestamp",
+	"tool_name": "tool_name",
+	"action":    "action",
+	"tier":      "tier",
+	"mode":      "mode",
+}
+
+func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, search string, tier int) ([]EventRow, int, error) {
 	where := ""
 	var args []any
 
@@ -170,6 +179,15 @@ func (s *Store) ListEvents(limit, offset int, action, tool string) ([]EventRow, 
 		where += " AND tool_name = ?"
 		args = append(args, tool)
 	}
+	if tier > 0 {
+		where += " AND tier = ?"
+		args = append(args, tier)
+	}
+	if search != "" {
+		where += " AND (tool_input LIKE ? OR tool_name LIKE ? OR session LIKE ?)"
+		like := "%" + search + "%"
+		args = append(args, like, like, like)
+	}
 
 	var total int
 	countQ := "SELECT COUNT(*) FROM events WHERE 1=1" + where
@@ -177,7 +195,16 @@ func (s *Store) ListEvents(limit, offset int, action, tool string) ([]EventRow, 
 		return nil, 0, fmt.Errorf("counting events: %w", err)
 	}
 
-	q := "SELECT id, timestamp, tool_name, tool_input, tier, action, session, mode FROM events WHERE 1=1" + where + " ORDER BY id DESC LIMIT ? OFFSET ?"
+	orderClause := "id DESC"
+	if col, ok := allowedSortCols[sortCol]; ok {
+		dir := "DESC"
+		if sortOrder == "asc" {
+			dir = "ASC"
+		}
+		orderClause = col + " " + dir + ", id " + dir
+	}
+
+	q := "SELECT id, timestamp, tool_name, tool_input, tier, action, session, mode FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
 	rowArgs := append(args, limit, offset)
 	rows, err := s.db.Query(q, rowArgs...)
 	if err != nil {

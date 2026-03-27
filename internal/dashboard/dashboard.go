@@ -47,8 +47,12 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	offset := intParam(q.Get("offset"), 0, 0, 1_000_000)
 	action := q.Get("action")
 	tool := q.Get("tool")
+	sort := q.Get("sort")
+	order := q.Get("order")
+	search := q.Get("search")
+	tier := intParam(q.Get("tier"), 0, 0, 5)
 
-	events, total, err := s.store.ListEvents(limit, offset, action, tool)
+	events, total, err := s.store.ListEvents(limit, offset, action, tool, sort, order, search, tier)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
