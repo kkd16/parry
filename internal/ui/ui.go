@@ -61,18 +61,34 @@ func Break() {
 	_, _ = fmt.Fprintln(outW)
 }
 
-func Boldf(format string, a ...any) string {
-	if outTTY {
-		return fmt.Sprintf("%s"+format+"%s", append([]any{bold}, append(a, reset)...)...)
+func colorf(isTTY bool, c, format string, a ...any) string {
+	if isTTY {
+		return fmt.Sprintf("%s"+format+"%s", append([]any{c}, append(a, reset)...)...)
 	}
 	return fmt.Sprintf(format, a...)
 }
 
-func Dimf(format string, a ...any) string {
+func Boldf(format string, a ...any) string  { return colorf(outTTY, bold, format, a...) }
+func Dimf(format string, a ...any) string   { return colorf(outTTY, dim, format, a...) }
+func Greenf(format string, a ...any) string { return colorf(outTTY, green, format, a...) }
+func Redf(format string, a ...any) string   { return colorf(outTTY, red, format, a...) }
+func Yellowf(format string, a ...any) string { return colorf(outTTY, yellow, format, a...) }
+func Bluef(format string, a ...any) string  { return colorf(outTTY, blue, format, a...) }
+
+func SectionHeader(label string) {
 	if outTTY {
-		return fmt.Sprintf("%s"+format+"%s", append([]any{dim}, append(a, reset)...)...)
+		_, _ = fmt.Fprintf(outW, "   %s──%s %s%s%s\n", dim, reset, bold, label, reset)
+	} else {
+		_, _ = fmt.Fprintf(outW, "   -- %s\n", label)
 	}
-	return fmt.Sprintf(format, a...)
+}
+
+func Separator() {
+	if outTTY {
+		_, _ = fmt.Fprintf(outW, "   %s────────────────────%s\n", dim, reset)
+	} else {
+		_, _ = fmt.Fprintln(outW)
+	}
 }
 
 func LogCheck(action, command string, tier int) {
@@ -99,10 +115,22 @@ func LogCheck(action, command string, tier int) {
 		cmd = cmd[:57] + "..."
 	}
 
-	_, _ = fmt.Fprintf(errW, " %s%s%s %-8s %s%s%s  %s\n",
+	var tierColor string
+	switch {
+	case tier <= 1:
+		tierColor = green
+	case tier <= 2:
+		tierColor = blue
+	case tier <= 4:
+		tierColor = yellow
+	default:
+		tierColor = red
+	}
+
+	_, _ = fmt.Fprintf(errW, " %s%s%s %-8s %s%s%s  %s%s%s\n",
 		color, symbol, reset,
 		action,
 		dim, cmd, reset,
-		Dimf("%s", tierLabel),
+		tierColor, tierLabel, reset,
 	)
 }

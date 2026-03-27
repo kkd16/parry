@@ -347,24 +347,44 @@ func (r *ReportCmd) Run() error {
 	ui.Info(fmt.Sprintf("report — %d events recorded", sum.Total))
 	ui.Break()
 
-	ui.Detail("action", "count")
+	ui.SectionHeader("Actions")
 	for _, action := range []string{"observe", "allow", "block"} {
 		if c, ok := sum.ByAction[action]; ok {
-			ui.Detail("  "+action, fmt.Sprintf("%d", c))
+			var val string
+			switch action {
+			case "allow":
+				val = ui.Greenf("%d", c)
+			case "block":
+				val = ui.Redf("%d", c)
+			case "observe":
+				val = ui.Yellowf("%d", c)
+			}
+			ui.Detail("  "+action, val)
 		}
 	}
-	ui.Break()
 
-	ui.Detail("tier", "count")
+	ui.Separator()
+	ui.SectionHeader("Tiers")
 	for tier := 1; tier <= 5; tier++ {
 		if c, ok := sum.ByTier[tier]; ok {
-			ui.Detail(fmt.Sprintf("  T%d", tier), fmt.Sprintf("%d", c))
+			var val string
+			switch {
+			case tier <= 1:
+				val = ui.Greenf("%d", c)
+			case tier <= 2:
+				val = ui.Bluef("%d", c)
+			case tier <= 4:
+				val = ui.Yellowf("%d", c)
+			default:
+				val = ui.Redf("%d", c)
+			}
+			ui.Detail(fmt.Sprintf("  T%d", tier), val)
 		}
 	}
 
 	if len(sum.TopCommands) > 0 {
-		ui.Break()
-		ui.Detail("top cmds", "")
+		ui.Separator()
+		ui.SectionHeader("Top Commands")
 		for _, tc := range sum.TopCommands {
 			cmd := tc.Command
 			if len(cmd) > 50 {
@@ -419,7 +439,7 @@ func (v *ValidateCmd) Run() error {
 type VersionCmd struct{}
 
 func (v *VersionCmd) Run() error {
-	fmt.Printf(" parry %s\n", ui.Boldf("%s", version))
+	fmt.Printf("\n %s parry %s\n\n", ui.Bluef("⟐"), ui.Boldf("v%s", version))
 	return nil
 }
 
