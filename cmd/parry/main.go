@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -585,7 +586,11 @@ func confirmViaNotify(p *policy.Policy, tc *check.ToolCall, tier policy.Tier) ve
 	})
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "parry: notify: %v\n", err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			ui.Warn(fmt.Sprintf("confirmation timed out after %s", timeout))
+		} else {
+			fmt.Fprintf(os.Stderr, "parry: notify: %v\n", err)
+		}
 		return resolveVerdict(p, p.CheckModeConfirm)
 	}
 	if approved {

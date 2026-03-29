@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -73,9 +74,11 @@ func enableInPolicy(policyPath, provider, topic, server string) error {
 	if err != nil {
 		return err
 	}
-	updated := strings.Replace(string(raw), `provider: ""`, fmt.Sprintf("provider: %s", provider), 1)
-	updated = strings.Replace(updated, `topic: ""`, fmt.Sprintf("topic: %s", topic), 1)
-	return os.WriteFile(policyPath, []byte(updated), 0o644)
+	s := string(raw)
+	s = regexp.MustCompile(`(?m)^(  provider:).*`).ReplaceAllString(s, "${1} "+provider)
+	s = regexp.MustCompile(`(?m)^(    topic:).*`).ReplaceAllString(s, "${1} "+topic)
+	s = regexp.MustCompile(`(?m)^(    server:).*`).ReplaceAllString(s, "${1} "+server)
+	return os.WriteFile(policyPath, []byte(s), 0o644)
 }
 
 type NtfyConfirmer struct {
@@ -129,25 +132,36 @@ func (n *NtfyConfirmer) waitForResponse(ctx context.Context, reqID string, since
 	approveBody := "approve:" + reqID
 	denyBody := "deny:" + reqID
 
+	check := func() (approved, found bool) {
+		msgs, err := n.poll(ctx, since)
+		if err != nil {
+			return false, false
+		}
+		for _, msg := range msgs {
+			if msg.Message == approveBody {
+				return true, true
+			}
+			if msg.Message == denyBody {
+				return false, true
+			}
+		}
+		return false, false
+	}
+
+	if approved, found := check(); found {
+		return approved, nil
+	}
+
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return false, nil
+			return false, ctx.Err()
 		case <-ticker.C:
-			msgs, err := n.poll(ctx, since)
-			if err != nil {
-				continue
-			}
-			for _, msg := range msgs {
-				if msg.Message == approveBody {
-					return true, nil
-				}
-				if msg.Message == denyBody {
-					return false, nil
-				}
+			if approved, found := check(); found {
+				return approved, nil
 			}
 		}
 	}
