@@ -120,7 +120,7 @@ func (n *NtfyConfirmer) publish(ctx context.Context, reqID string, req ConfirmRe
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("ntfy returned %d", resp.StatusCode)
@@ -185,7 +185,7 @@ func (n *NtfyConfirmer) poll(ctx context.Context, since int64) ([]ntfyMessage, e
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var msgs []ntfyMessage
 	dec := json.NewDecoder(resp.Body)
@@ -214,7 +214,7 @@ func (n *NtfyConfirmer) SendTest(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("sending test notification: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("ntfy returned %d", resp.StatusCode)
