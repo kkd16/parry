@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -371,7 +372,8 @@ func (s *SetupCmd) Run() error {
 }
 
 type DashboardCmd struct {
-	Addr string `name:"addr" short:"a" default:":7777" help:"Listen address (e.g. :7777 or 127.0.0.1:7777)."`
+	Port  int  `name:"port" short:"p" default:"8080" help:"Port to listen on."`
+	Debug bool `name:"debug" short:"d" help:"Print HTTP requests and debug info to stderr."`
 }
 
 func (d *DashboardCmd) Run() error {
@@ -386,14 +388,23 @@ func (d *DashboardCmd) Run() error {
 		return nil
 	}
 
-	srv, err := dashboard.New(dbPath, d.Addr)
+	var opts []dashboard.Option
+	if d.Debug {
+		opts = append(opts, dashboard.WithLogger(log.New(os.Stderr, "dashboard: ", log.LstdFlags)))
+	}
+
+	addr := fmt.Sprintf(":%d", d.Port)
+	srv, err := dashboard.New(dbPath, addr, opts...)
 	if err != nil {
 		return fmt.Errorf("starting dashboard: %w", err)
 	}
 	defer func() { _ = srv.Close() }()
 
 	ui.Success("dashboard running")
-	ui.Detail("url", "http://localhost"+d.Addr)
+	ui.Detail("url", fmt.Sprintf("http://localhost:%d", d.Port))
+	if d.Debug {
+		ui.Detail("debug", "enabled")
+	}
 	ui.Break()
 
 	return srv.Run()
