@@ -1,6 +1,7 @@
 package dashboard
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/kkd16/parry/configs"
@@ -55,6 +57,7 @@ func (s *Server) Run() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/events", s.handleEvents)
 	mux.HandleFunc("GET /api/policy", s.handlePolicy)
+	mux.HandleFunc("GET /api/notify/health", s.handleNotifyHealth)
 	mux.Handle("/", s.spaHandler())
 
 	var handler http.Handler = mux
@@ -134,16 +137,88 @@ func (s *Server) spaHandler() http.Handler {
 	})
 }
 
-func (s *Server) handlePolicy(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) loadPolicy() (*policy.Policy, error) {
 	engine := policy.NewEngine()
 	path := filepath.Join(s.policyDir, "policy.yaml")
 	if err := engine.Load(path); err != nil {
 		if err := engine.LoadBytes(configs.DefaultPolicy); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-			return
+			return nil, err
 		}
 	}
-	writeJSON(w, http.StatusOK, engine.Policy())
+	return engine.Policy(), nil
+}
+
+func (s *Server) handleNotifyHealth(w http.ResponseWriter, _ *http.Request) {
+	p, err := s.loadPolicy()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	if !p.NotificationsEnabled() {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "unconfigured"})
+		return
+	}
+
+	cfg := p.Notifications.ProviderConfig()
+	topic, _ := cfg["topic"].(string)
+	server, _ := cfg["server"].(string)
+	if server == "" {
+		server = "https://ntfy.sh"
+	}
+
+	result := map[string]string{
+		"status":   "ok",
+		"provider": p.Notifications.Provider,
+		"topic":    topic,
+		"server":   server,
+	}
+
+	if topic == "" {
+		result["status"] = "error"
+		result["error"] = "no topic configured"
+		writeJSON(w, http.StatusOK, result)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	url := strings.TrimRight(server, "/") + "/" + topic + "/json?poll=1&since=" + strconv.FormatInt(time.Now().Unix(), 10)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		result["status"] = "error"
+		result["error"] = err.Error()
+		writeJSON(w, http.StatusOK, result)
+		return
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		result["status"] = "error"
+		result["error"] = "unreachable"
+		writeJSON(w, http.StatusOK, result)
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		result["status"] = "error"
+		result["error"] = fmt.Sprintf("ntfy returned %d", resp.StatusCode)
+		writeJSON(w, http.StatusOK, result)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (s *Server) handlePolicy(w http.ResponseWriter, _ *http.Request) {
+	p, err := s.loadPolicy()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, p)
 }
 
 func intParam(s string, fallback, min, max int) int {

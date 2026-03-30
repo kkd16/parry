@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Policy, Rule } from "./types";
+import type { Policy, Rule, NotifyHealth } from "./types";
 
 function actionBadge(action: string): React.ReactNode {
   let cls = "badge";
@@ -40,6 +40,7 @@ function ruleBindings(rule: Rule): { tier: number; binaries: string[] }[] {
 
 export default function PolicyPage() {
   const [policy, setPolicy] = useState<Policy | null>(null);
+  const [health, setHealth] = useState<NotifyHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +54,14 @@ export default function PolicyPage() {
         setError(e instanceof Error ? e.message : "Unknown error");
       } finally {
         setLoading(false);
+      }
+    })();
+    (async () => {
+      try {
+        const res = await fetch("/api/notify/health");
+        if (res.ok) setHealth(await res.json());
+      } catch {
+        // health check is best-effort
       }
     })();
   }, []);
@@ -209,6 +218,38 @@ export default function PolicyPage() {
               <span className="policy-label">Provider</span>
               <span className="policy-value">{policy.notifications.provider}</span>
             </div>
+            {health && (
+              <div className="policy-field">
+                <span className="policy-label">Status</span>
+                <span className="policy-value">
+                  {health.status === "ok" && <span className="badge badge-allow">connected</span>}
+                  {health.status === "error" && (
+                    <span className="badge badge-block">unreachable</span>
+                  )}
+                  {health.status === "unconfigured" && (
+                    <span className="muted">not configured</span>
+                  )}
+                </span>
+              </div>
+            )}
+            {health?.status === "error" && health.error && (
+              <div className="policy-field">
+                <span className="policy-label">Error</span>
+                <span className="policy-value muted">{health.error}</span>
+              </div>
+            )}
+            {health?.topic && (
+              <div className="policy-field">
+                <span className="policy-label">Topic</span>
+                <span className="policy-value mono">{health.topic}</span>
+              </div>
+            )}
+            {health?.server && (
+              <div className="policy-field">
+                <span className="policy-label">Server</span>
+                <span className="policy-value mono">{health.server}</span>
+              </div>
+            )}
             {policy.notifications.confirmation_timeout && (
               <div className="policy-field">
                 <span className="policy-label">Timeout</span>

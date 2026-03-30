@@ -43,6 +43,14 @@ export interface Notifications {
   extra?: Record<string, unknown>;
 }
 
+export interface NotifyHealth {
+  status: "ok" | "error" | "unconfigured";
+  provider?: string;
+  topic?: string;
+  server?: string;
+  error?: string;
+}
+
 export interface Policy {
   version: number;
   mode: string;
