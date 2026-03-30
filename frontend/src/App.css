@@ -12,26 +12,56 @@ body {
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 24px;
 }
 
-header {
+.navbar {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
+  border-bottom: 1px solid #30363d;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
 }
 
-header h1 {
+.navbar-title {
   font-size: 1.5rem;
+  font-weight: 700;
   color: #f0f6fc;
 }
 
-.total {
+.navbar-tabs {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.navbar-tab {
+  background: transparent;
+  color: #8b949e;
+  border: none;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.navbar-tab:hover {
+  color: #c9d1d9;
+  background: #161b22;
+}
+
+.navbar-tab.active {
+  color: #f0f6fc;
+  background: #21262d;
+  font-weight: 600;
+}
+
+.page-subtitle {
   color: #8b949e;
   font-size: 0.9rem;
+  margin-bottom: 16px;
 }
 
 .filters {
@@ -289,4 +319,89 @@ tbody td {
   text-align: center;
   color: #8b949e;
   padding: 40px;
+}
+
+.policy-loading {
+  color: #8b949e;
+  padding: 40px;
+  text-align: center;
+}
+
+.policy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.policy-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.policy-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.policy-card h2 {
+  font-size: 0.8rem;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.policy-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.policy-label {
+  color: #8b949e;
+  min-width: 140px;
+  font-size: 0.85rem;
+}
+
+.policy-value {
+  color: #c9d1d9;
+  font-size: 0.85rem;
+}
+
+.policy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.policy-table thead th {
+  text-align: left;
+  padding: 6px 12px;
+  border-bottom: 1px solid #30363d;
+  color: #8b949e;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.policy-table tbody td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #21262d;
+  vertical-align: top;
+}
+
+.policy-table tbody td:first-child {
+  white-space: nowrap;
+  width: 60px;
+}
+
+.path-list {
+  list-style: none;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+  line-height: 1.8;
 }

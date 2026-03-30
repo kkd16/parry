@@ -475,7 +475,7 @@ func (d *DashboardCmd) Run() error {
 		return nil
 	}
 
-	var opts []dashboard.Option
+	opts := []dashboard.Option{dashboard.WithPolicyDir(dir)}
 	if d.Debug {
 		opts = append(opts, dashboard.WithLogger(log.New(os.Stderr, "dashboard: ", log.LstdFlags)))
 	}

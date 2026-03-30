@@ -6,18 +6,22 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"time"
 
+	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/frontend"
+	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/store"
 )
 
 type Server struct {
-	store    *store.Store
-	addr     string
-	frontend fs.FS
-	logger   *log.Logger
+	store     *store.Store
+	addr      string
+	frontend  fs.FS
+	logger    *log.Logger
+	policyDir string
 }
 
 func New(dbPath, addr string, opts ...Option) (*Server, error) {
@@ -43,9 +47,14 @@ func WithLogger(l *log.Logger) Option {
 	return func(s *Server) { s.logger = l }
 }
 
+func WithPolicyDir(dir string) Option {
+	return func(s *Server) { s.policyDir = dir }
+}
+
 func (s *Server) Run() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/events", s.handleEvents)
+	mux.HandleFunc("GET /api/policy", s.handlePolicy)
 	mux.Handle("/", s.spaHandler())
 
 	var handler http.Handler = mux
@@ -123,6 +132,18 @@ func (s *Server) spaHandler() http.Handler {
 		}
 		fileServer.ServeHTTP(w, r)
 	})
+}
+
+func (s *Server) handlePolicy(w http.ResponseWriter, _ *http.Request) {
+	engine := policy.NewEngine()
+	path := filepath.Join(s.policyDir, "policy.yaml")
+	if err := engine.Load(path); err != nil {
+		if err := engine.LoadBytes(configs.DefaultPolicy); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, engine.Policy())
 }
 
 func intParam(s string, fallback, min, max int) int {
