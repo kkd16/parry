@@ -50,8 +50,7 @@ func loadPolicy() (*policy.Engine, error) {
 type CLI struct {
 	Check     CheckCmd     `cmd:"" help:"Evaluate a tool call from stdin against policy."`
 	Init      InitCmd      `cmd:"" help:"Initialize Parry configuration."`
-	Setup     SetupCmd     `cmd:"" help:"Configure Parry hooks in your agent."`
-	Notify    NotifyCmd    `cmd:"" help:"Manage notifications."`
+	Config    ConfigCmd    `cmd:"" help:"View and manage Parry configuration."`
 	Report    ReportCmd    `cmd:"" help:"Show observe mode report."`
 	Validate  ValidateCmd  `cmd:"" help:"Validate policy YAML for errors."`
 	Dashboard DashboardCmd `cmd:"" help:"Start the web dashboard."`
@@ -340,33 +339,121 @@ func wizardNotifications(policyPath string) {
 	}
 }
 
-type SetupCmd struct {
-	Agent string `arg:"" help:"Agent to configure."`
+type ConfigCmd struct {
+	Status ConfigStatusCmd `cmd:"" default:"withargs" hidden:"" help:"Show configuration status."`
+	Hook   ConfigHookCmd   `cmd:"" help:"Install Parry hooks in your agent."`
+	Notify ConfigNotifyCmd `cmd:"" help:"Configure notifications."`
+	Mode   ConfigModeCmd   `cmd:"" help:"View or set enforcement mode."`
 }
 
-func (s *SetupCmd) Run() error {
-	dir, err := parryDir()
+type ConfigStatusCmd struct{}
+
+func (c *ConfigStatusCmd) Run() error {
+	engine, err := loadPolicy()
 	if err != nil {
-		return err
+		ui.Warn("policy not found")
+		ui.Info("run " + ui.Boldf("parry init") + " to get started")
+		ui.Break()
+		return nil
 	}
-	policyPath := filepath.Join(dir, "policy.yaml")
-	if _, err := os.Stat(policyPath); os.IsNotExist(err) {
-		ui.Info("initializing parry first...")
-		init := &InitCmd{}
-		if err := init.Run(); err != nil {
-			return fmt.Errorf("auto-init: %w", err)
+	p := engine.Policy()
+
+	ui.Info("parry configuration")
+	ui.Break()
+
+	ui.SectionHeader("Hooks")
+	for _, cfg := range setup.All() {
+		configPath, err := cfg.ConfigPath()
+		if err != nil {
+			ui.Detail("  "+cfg.Name(), ui.Redf("error: %v", err))
+			continue
+		}
+		data, err := setup.ReadJSONFile(configPath)
+		if err != nil {
+			ui.Detail("  "+cfg.Name(), ui.Dimf("not installed"))
+			continue
+		}
+		if cfg.IsInstalled(data) {
+			ui.Detail("  "+cfg.Name(), ui.Greenf("installed"))
+		} else {
+			ui.Detail("  "+cfg.Name(), ui.Dimf("not installed"))
 		}
 	}
 
-	cfg, ok := setup.Get(s.Agent)
+	ui.Separator()
+	ui.SectionHeader("Notifications")
+	if p.NotificationsEnabled() {
+		ui.Detail("  provider", ui.Greenf("%s", p.Notifications.Provider))
+	} else {
+		ui.Detail("  provider", ui.Dimf("none"))
+	}
+
+	ui.Separator()
+	ui.SectionHeader("Policy")
+	ui.Detail("  mode", p.Mode)
+	ui.Detail("  rules", fmt.Sprintf("%d", len(p.Rules)))
+	binaries := 0
+	for _, r := range p.Rules {
+		binaries += len(r.Binaries)
+	}
+	ui.Detail("  binaries", fmt.Sprintf("%d classified", binaries))
+	ui.Break()
+	return nil
+}
+
+type ConfigHookCmd struct {
+	Agent string `arg:"" optional:"" help:"Agent to configure (claude, cursor)."`
+}
+
+func (h *ConfigHookCmd) Run() error {
+	if h.Agent == "" {
+		agents := setup.All()
+		if len(agents) == 0 {
+			ui.Info("no agents available")
+			ui.Break()
+			return nil
+		}
+		if !term.IsTerminal(int(os.Stdin.Fd())) {
+			return fmt.Errorf("agent argument required in non-interactive mode")
+		}
+
+		ui.Info("select an agent to configure")
+		fmt.Println()
+		for i, a := range agents {
+			fmt.Printf("   [%d] %s\n", i+1, a.Name())
+		}
+		fmt.Println("   [a] all")
+		fmt.Println()
+		fmt.Print("   select: ")
+		choice := readChoice()
+
+		var selected []setup.Configurer
+		switch choice {
+		case "", "q", "Q":
+			return nil
+		case "a", "A":
+			selected = agents
+		default:
+			idx := 0
+			if _, err := fmt.Sscanf(choice, "%d", &idx); err != nil || idx < 1 || idx > len(agents) {
+				return fmt.Errorf("invalid selection")
+			}
+			selected = []setup.Configurer{agents[idx-1]}
+		}
+		for _, cfg := range selected {
+			installHook(cfg)
+		}
+		return nil
+	}
+
+	cfg, ok := setup.Get(h.Agent)
 	if !ok {
 		names := make([]string, 0)
 		for _, c := range setup.All() {
 			names = append(names, c.Name())
 		}
-		return fmt.Errorf("unknown agent %q (available: %s)", s.Agent, strings.Join(names, ", "))
+		return fmt.Errorf("unknown agent %q (available: %s)", h.Agent, strings.Join(names, ", "))
 	}
-
 	installHook(cfg)
 	return nil
 }
@@ -610,16 +697,16 @@ func confirmViaNotify(p *policy.Policy, tc *check.ToolCall, tier policy.Tier) ve
 	return verdict{"block", "deny", "Denied via notification"}
 }
 
-type NotifyCmd struct {
-	Setup NotifySetupCmd `cmd:"" help:"Configure notification settings."`
-	Test  NotifyTestCmd  `cmd:"" help:"Send a test notification."`
+type ConfigNotifyCmd struct {
+	Setup    ConfigNotifySetupCmd `cmd:"" default:"withargs" hidden:"" help:"Configure notification provider."`
+	Test     ConfigNotifyTestCmd  `cmd:"" help:"Send a test notification."`
 }
 
-type NotifySetupCmd struct {
+type ConfigNotifySetupCmd struct {
 	Provider string `arg:"" optional:"" help:"Notification provider to configure."`
 }
 
-func (n *NotifySetupCmd) Run() error {
+func (n *ConfigNotifySetupCmd) Run() error {
 	engine, err := loadPolicy()
 	if err != nil {
 		return err
@@ -691,9 +778,9 @@ func (n *NotifySetupCmd) Run() error {
 	return nil
 }
 
-type NotifyTestCmd struct{}
+type ConfigNotifyTestCmd struct{}
 
-func (n *NotifyTestCmd) Run() error {
+func (n *ConfigNotifyTestCmd) Run() error {
 	engine, err := loadPolicy()
 	if err != nil {
 		return err
@@ -702,7 +789,7 @@ func (n *NotifyTestCmd) Run() error {
 
 	if !p.NotificationsEnabled() {
 		ui.Error("notifications not configured")
-		ui.Info("run " + ui.Boldf("%s", "parry notify setup") + " first")
+		ui.Info("run " + ui.Boldf("%s", "parry config notify") + " first")
 		ui.Break()
 		return fmt.Errorf("notifications not configured")
 	}
@@ -718,6 +805,61 @@ func (n *NotifyTestCmd) Run() error {
 
 	ui.Success("test notification sent")
 	ui.Detail("provider", p.Notifications.Provider)
+	ui.Break()
+	return nil
+}
+
+type ConfigModeCmd struct {
+	Mode string `arg:"" optional:"" help:"Mode to set (observe or enforce)."`
+}
+
+func (m *ConfigModeCmd) Run() error {
+	if m.Mode == "" {
+		engine, err := loadPolicy()
+		if err != nil {
+			return err
+		}
+		p := engine.Policy()
+		ui.Info("current mode: " + ui.Boldf("%s", p.Mode))
+		ui.Break()
+		return nil
+	}
+
+	if m.Mode != "observe" && m.Mode != "enforce" {
+		return fmt.Errorf("invalid mode %q: must be \"observe\" or \"enforce\"", m.Mode)
+	}
+
+	dir, err := parryDir()
+	if err != nil {
+		return err
+	}
+	policyPath := filepath.Join(dir, "policy.yaml")
+
+	data, err := os.ReadFile(policyPath)
+	if err != nil {
+		return fmt.Errorf("reading policy: %w", err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	found := false
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "mode:") {
+			indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
+			lines[i] = indent + "mode: " + m.Mode
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("could not find mode field in policy.yaml")
+	}
+
+	if err := os.WriteFile(policyPath, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+		return fmt.Errorf("writing policy: %w", err)
+	}
+
+	ui.Success("mode set to " + ui.Boldf("%s", m.Mode))
 	ui.Break()
 	return nil
 }
