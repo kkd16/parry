@@ -18,7 +18,8 @@ body {
 .navbar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px 16px;
   border-bottom: 1px solid #30363d;
   margin-bottom: 24px;
   padding-bottom: 12px;
@@ -28,12 +29,84 @@ body {
   font-size: 1.5rem;
   font-weight: 700;
   color: #f0f6fc;
+  flex-shrink: 0;
+}
+
+.navbar-overview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+}
+
+.navbar-overview-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+
+.navbar-overview-sep {
+  width: 1px;
+  height: 1.25rem;
+  background: #30363d;
+  flex-shrink: 0;
+}
+
+.navbar-overview-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.navbar-overview-item-wide {
+  max-width: min(280px, 100%);
+}
+
+.navbar-overview-label {
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.navbar-overview-value {
+  color: #c9d1d9;
+  min-width: 0;
+}
+
+.navbar-overview-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 12rem;
+}
+
+.navbar-overview .badge {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+}
+
+.navbar-overview-error {
+  color: #f85149;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .navbar-tabs {
   display: flex;
   gap: 4px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .navbar-tab {

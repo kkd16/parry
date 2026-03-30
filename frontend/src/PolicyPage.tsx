@@ -1,26 +1,6 @@
-import { useEffect, useState } from "react";
-import type { Policy, Rule, NotifyHealth } from "./types";
-
-function actionBadge(action: string): React.ReactNode {
-  let cls = "badge";
-  switch (action) {
-    case "allow":
-      cls += " badge-allow";
-      break;
-    case "block":
-      cls += " badge-block";
-      break;
-    case "confirm":
-      cls += " badge-observe";
-      break;
-  }
-  return <span className={cls}>{action}</span>;
-}
-
-function modeBadge(mode: string): React.ReactNode {
-  const cls = mode === "enforce" ? "badge badge-block" : "badge badge-allow";
-  return <span className={cls}>{mode}</span>;
-}
+import { actionBadge } from "./policyBadges";
+import type { Rule } from "./types";
+import type { PolicyOverviewState } from "./usePolicyOverview";
 
 function tierRows(tiers: Record<string, string>): [number, string][] {
   return Object.entries(tiers)
@@ -38,34 +18,11 @@ function ruleBindings(rule: Rule): { tier: number; binaries: string[] }[] {
   return tiers;
 }
 
-export default function PolicyPage() {
-  const [policy, setPolicy] = useState<Policy | null>(null);
-  const [health, setHealth] = useState<NotifyHealth | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/policy");
-        if (!res.ok) throw new Error(await res.text());
-        setPolicy(await res.json());
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    })();
-    (async () => {
-      try {
-        const res = await fetch("/api/notify/health");
-        if (res.ok) setHealth(await res.json());
-      } catch {
-        // health check is best-effort
-      }
-    })();
-  }, []);
-
+export default function PolicyPage({
+  policy,
+  loading,
+  error,
+}: PolicyOverviewState) {
   if (loading) return <div className="policy-loading">Loading policy...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!policy) return null;
@@ -76,26 +33,6 @@ export default function PolicyPage() {
 
   return (
     <div className="policy-grid">
-      <div className="policy-card">
-        <h2>General</h2>
-        <div className="policy-field">
-          <span className="policy-label">Mode</span>
-          <span className="policy-value">{modeBadge(policy.mode)}</span>
-        </div>
-        <div className="policy-field">
-          <span className="policy-label">Version</span>
-          <span className="policy-value">{policy.version}</span>
-        </div>
-        <div className="policy-field">
-          <span className="policy-label">Default Tier</span>
-          <span className="policy-value">T{policy.default_tier}</span>
-        </div>
-        <div className="policy-field">
-          <span className="policy-label">Confirm Fallback</span>
-          <span className="policy-value">{actionBadge(policy.check_mode_confirm)}</span>
-        </div>
-      </div>
-
       <div className="policy-card">
         <h2>Tier Actions</h2>
         <table className="policy-table">
@@ -207,58 +144,6 @@ export default function PolicyPage() {
           </ul>
         ) : (
           <span className="muted">None</span>
-        )}
-      </div>
-
-      <div className="policy-card">
-        <h2>Notifications</h2>
-        {policy.notifications?.provider ? (
-          <>
-            <div className="policy-field">
-              <span className="policy-label">Provider</span>
-              <span className="policy-value">{policy.notifications.provider}</span>
-            </div>
-            {health && (
-              <div className="policy-field">
-                <span className="policy-label">Status</span>
-                <span className="policy-value">
-                  {health.status === "ok" && <span className="badge badge-allow">connected</span>}
-                  {health.status === "error" && (
-                    <span className="badge badge-block">unreachable</span>
-                  )}
-                  {health.status === "unconfigured" && (
-                    <span className="muted">not configured</span>
-                  )}
-                </span>
-              </div>
-            )}
-            {health?.status === "error" && health.error && (
-              <div className="policy-field">
-                <span className="policy-label">Error</span>
-                <span className="policy-value muted">{health.error}</span>
-              </div>
-            )}
-            {health?.topic && (
-              <div className="policy-field">
-                <span className="policy-label">Topic</span>
-                <span className="policy-value mono">{health.topic}</span>
-              </div>
-            )}
-            {health?.server && (
-              <div className="policy-field">
-                <span className="policy-label">Server</span>
-                <span className="policy-value mono">{health.server}</span>
-              </div>
-            )}
-            {policy.notifications.confirmation_timeout && (
-              <div className="policy-field">
-                <span className="policy-label">Timeout</span>
-                <span className="policy-value mono">{policy.notifications.confirmation_timeout}</span>
-              </div>
-            )}
-          </>
-        ) : (
-          <span className="muted">Not configured</span>
         )}
       </div>
     </div>
