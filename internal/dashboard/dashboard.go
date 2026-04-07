@@ -8,12 +8,15 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/frontend"
+	"github.com/kkd16/parry/internal/buildinfo"
 	"github.com/kkd16/parry/internal/notify"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/store"
@@ -62,6 +65,7 @@ func (s *Server) Run() error {
 	mux.HandleFunc("POST /api/notify/test", s.handleNotifyTest)
 	mux.HandleFunc("GET /api/heatmap", s.handleHeatmap)
 	mux.HandleFunc("GET /api/overview", s.handleOverview)
+	mux.HandleFunc("GET /api/about", s.handleAbout)
 	mux.Handle("/", s.spaHandler())
 
 	var handler http.Handler = mux
@@ -107,8 +111,9 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	sort := q.Get("sort")
 	order := q.Get("order")
 	search := q.Get("search")
+	sinceID := intParam(q.Get("since_id"), 0, 0, 1_000_000_000)
 
-	events, total, err := s.store.ListEvents(limit, offset, action, tool, sort, order, search)
+	events, total, err := s.store.ListEvents(limit, offset, sinceID, action, tool, sort, order, search)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -119,6 +124,33 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		"total":  total,
 		"limit":  limit,
 		"offset": offset,
+	})
+}
+
+func (s *Server) handleAbout(w http.ResponseWriter, _ *http.Request) {
+	commit := ""
+	built := ""
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, st := range info.Settings {
+			switch st.Key {
+			case "vcs.revision":
+				if len(st.Value) >= 8 {
+					commit = st.Value[:8]
+				} else {
+					commit = st.Value
+				}
+			case "vcs.time":
+				built = st.Value
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"version":    buildinfo.Version,
+		"go_version": runtime.Version(),
+		"commit":     commit,
+		"built":      built,
+		"platform":   runtime.GOOS + "/" + runtime.GOARCH,
+		"data_dir":   s.policyDir,
 	})
 }
 

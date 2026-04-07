@@ -166,6 +166,8 @@ export default function EventsPage({
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [colMenuOpen, setColMenuOpen] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
+  const [freshIds, setFreshIds] = useState<Set<number>>(new Set());
+  const tailTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
   const [columnSizing, setColumnSizing] = useLocalStorage<ColumnSizingState>(
     "parry-col-sizing",
@@ -240,12 +242,72 @@ export default function EventsPage({
     fetchEvents();
   }, [fetchEvents]);
 
+  const tailNewEvents = useCallback(async () => {
+    const lastSeenId = events.reduce((m, e) => (e.id > m ? e.id : m), 0);
+    const params = new URLSearchParams({
+      limit: "50",
+      since_id: String(lastSeenId),
+    });
+    if (actionFilter) params.set("action", actionFilter);
+    if (toolFilter) params.set("tool", toolFilter);
+    if (search) params.set("search", search);
+    const sort = sorting[0];
+    if (sort) {
+      params.set("sort", sort.id);
+      params.set("order", sort.desc ? "desc" : "asc");
+    }
+    try {
+      const res = await fetch(`/api/events?${params}`);
+      if (!res.ok) return;
+      const data: EventsResponse = await res.json();
+      const incoming = data.events ?? [];
+      if (incoming.length === 0) return;
+      setEvents((prev) => {
+        const seen = new Set(prev.map((e) => e.id));
+        const fresh = incoming.filter((e) => !seen.has(e.id));
+        if (fresh.length === 0) return prev;
+        const newIds = fresh.map((e) => e.id);
+        setFreshIds((prevIds) => {
+          const next = new Set(prevIds);
+          for (const id of newIds) next.add(id);
+          return next;
+        });
+        for (const id of newIds) {
+          const t = setTimeout(() => {
+            setFreshIds((prevIds) => {
+              if (!prevIds.has(id)) return prevIds;
+              const next = new Set(prevIds);
+              next.delete(id);
+              return next;
+            });
+            tailTimeoutsRef.current.delete(t);
+          }, 3000);
+          tailTimeoutsRef.current.add(t);
+        }
+        return [...fresh.reverse(), ...prev].slice(0, 500);
+      });
+      if (typeof data.total === "number") {
+        setTotal(data.total);
+        onCountChange(data.total);
+      }
+    } catch {
+      // swallow tail errors; full fetch will surface them
+    }
+  }, [events, actionFilter, toolFilter, search, sorting, onCountChange]);
+
   useEffect(() => {
     onLiveChange(autoRefresh);
     if (!autoRefresh) return;
-    const id = setInterval(fetchEvents, 5000);
-    return () => clearInterval(id);
-  }, [autoRefresh, fetchEvents, onLiveChange]);
+    const id = setInterval(() => {
+      void tailNewEvents();
+    }, 3000);
+    const timeouts = tailTimeoutsRef.current;
+    return () => {
+      clearInterval(id);
+      for (const t of timeouts) clearTimeout(t);
+      timeouts.clear();
+    };
+  }, [autoRefresh, tailNewEvents, onLiveChange]);
 
   useEffect(() => {
     if (!colMenuOpen) return;
@@ -817,7 +879,7 @@ export default function EventsPage({
               table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className={selected?.id === row.original.id ? "selected" : ""}
+                  className={`${selected?.id === row.original.id ? "selected" : ""}${freshIds.has(row.original.id) ? " is-fresh" : ""}`}
                   onClick={() => setSelected(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (

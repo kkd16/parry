@@ -8,6 +8,7 @@ import NotifyPage from "./NotifyPage";
 import Sidebar from "./components/Sidebar";
 import CommandPalette from "./components/CommandPalette";
 import ShortcutsHelp from "./components/ShortcutsHelp";
+import AboutDialog from "./components/AboutDialog";
 import { ToastsProvider } from "./components/Toasts";
 import { usePolicyOverview } from "./usePolicyOverview";
 import { useKeyboardNav } from "./hooks/useKeyboardNav";
@@ -27,9 +28,10 @@ interface ShellState {
   setTab: (t: Tab) => void;
   setPendingFilter: (f: QuickFilter) => void;
   openShortcuts: () => void;
+  openAbout: () => void;
 }
 
-function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState) {
+function GlobalCommands({ setTab, setPendingFilter, openShortcuts, openAbout }: ShellState) {
   const cmds = useMemo<Command[]>(
     () => [
       {
@@ -94,6 +96,12 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         label: "Show keyboard shortcuts",
         hint: "?",
         perform: openShortcuts,
+      },
+      {
+        id: "help.about",
+        group: "Help",
+        label: "About Parry",
+        perform: openAbout,
       },
       {
         id: "filter.blocked",
@@ -237,7 +245,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         },
       },
     ],
-    [setTab, setPendingFilter, openShortcuts],
+    [setTab, setPendingFilter, openShortcuts, openAbout],
   );
   useRegisterCommands(cmds, [cmds]);
   return null;
@@ -281,6 +289,7 @@ function AppShell() {
   );
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [pendingFilter, setPendingFilter] = useState<QuickFilter | null>(null);
   const [eventCount, setEventCount] = useState(0);
   const [live, setLive] = useState(false);
@@ -292,6 +301,8 @@ function AppShell() {
   const closePalette = useCallback(() => setPaletteOpen(false), []);
   const closeShortcuts = useCallback(() => setShortcutsOpen(false), []);
   const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const closeAbout = useCallback(() => setAboutOpen(false), []);
+  const openAbout = useCallback(() => setAboutOpen(true), []);
   const queueFilter = useCallback((f: QuickFilter) => setPendingFilter(f), []);
 
   useKeyboardNav({
@@ -306,6 +317,7 @@ function AppShell() {
     onEscape: () => {
       closePalette();
       closeShortcuts();
+      closeAbout();
     },
   });
 
@@ -315,6 +327,7 @@ function AppShell() {
         setTab={setTab}
         setPendingFilter={queueFilter}
         openShortcuts={openShortcuts}
+        openAbout={openAbout}
       />
       <BookmarkCommands bookmarks={bookmarks} onOpen={openBookmark} />
       <div className="shell">
@@ -325,6 +338,7 @@ function AppShell() {
           eventCount={eventCount}
           live={live}
           onShowHelp={openShortcuts}
+          onShowAbout={openAbout}
           bookmarks={bookmarks}
           counts={counts}
           onOpenBookmark={openBookmark}
@@ -361,6 +375,7 @@ function AppShell() {
         </main>
         <CommandPalette open={paletteOpen} onClose={closePalette} />
         <ShortcutsHelp open={shortcutsOpen} onClose={closeShortcuts} />
+        <AboutDialog open={aboutOpen} onClose={closeAbout} />
       </div>
     </>
   );
