@@ -1,4 +1,4 @@
-.PHONY: build frontend test lint lint-go lint-frontend lint-fix clean
+.PHONY: build frontend test lint lint-go lint-frontend lint-fix clean update
 
 BINARY := parry
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
@@ -27,3 +27,13 @@ lint-fix:
 clean:
 	rm -f $(BINARY)
 	go clean -testcache
+
+update:
+	@echo "=== Updating all dependencies ==="
+	@echo "1) Go"
+	@go get -u ./... && go mod tidy
+	@echo "   ✓ Done"
+	@echo "2) Frontend"
+	@cd frontend && npx -y npm-check-updates -u --target minor && npm install
+	@echo "   ✓ Done"
+	@echo "✓ All dependencies updated"
