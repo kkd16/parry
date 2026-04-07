@@ -22,7 +22,8 @@ export default function StatusStrip({ section, eventCount, live, mode }: Props) 
       <div className="status-strip-right">
         {mode && <span>mode: {mode}</span>}
         <span>
-          <span className="kbd">⌘K</span> palette
+          <span className="kbd">⌘</span>
+          <span className="kbd">space</span> palette
         </span>
       </div>
     </footer>

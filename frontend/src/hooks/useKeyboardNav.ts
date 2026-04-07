@@ -37,7 +37,7 @@ export function useKeyboardNav(handlers: Handlers) {
           target.tagName === "TEXTAREA" ||
           target.isContentEditable);
 
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if ((e.metaKey || e.ctrlKey) && (e.code === "Space" || e.key === " ")) {
         e.preventDefault();
         ref.current.onOpenPalette?.();
         return;
