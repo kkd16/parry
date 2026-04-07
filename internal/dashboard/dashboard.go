@@ -59,6 +59,7 @@ func (s *Server) Run() error {
 	mux.HandleFunc("GET /api/policy", s.handlePolicy)
 	mux.HandleFunc("GET /api/notify/health", s.handleNotifyHealth)
 	mux.HandleFunc("GET /api/heatmap", s.handleHeatmap)
+	mux.HandleFunc("GET /api/overview", s.handleOverview)
 	mux.Handle("/", s.spaHandler())
 
 	var handler http.Handler = mux
@@ -117,6 +118,15 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		"limit":  limit,
 		"offset": offset,
 	})
+}
+
+func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
+	o, err := s.store.Overview()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, o)
 }
 
 type heatmapFile struct {

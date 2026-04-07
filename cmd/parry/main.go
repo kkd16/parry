@@ -111,10 +111,8 @@ func (c *CheckCmd) Run() error {
 
 	if v.respond != "deny" && p.RateLimit != nil && p.Mode == "enforce" {
 		if s, err := openStore(); err == nil {
-			defer func() { _ = s.Close() }()
 			window := p.RateLimit.ParseWindow()
-			event := buildEvent(tc, v.action, p.Mode)
-			count, err := s.CountAndRecord(store.Session(), time.Now().UTC().Add(-window), event)
+			count, err := s.CountSince(store.Session(), time.Now().UTC().Add(-window))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
 			} else if count >= p.RateLimit.Max {
@@ -124,12 +122,10 @@ func (c *CheckCmd) Run() error {
 					message: fmt.Sprintf("Rate limit exceeded: %d/%d in %s", count, p.RateLimit.Max, p.RateLimit.Window),
 				}
 			}
-		} else {
-			recordEvent(tc, v.action, p.Mode)
+			_ = s.Close()
 		}
-	} else {
-		recordEvent(tc, v.action, p.Mode)
 	}
+	recordEvent(tc, v.action, p.Mode)
 
 	cmd, _ := tc.ToolInput["command"].(string)
 	if cmd == "" {

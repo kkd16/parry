@@ -3,11 +3,13 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 type Handler = () => void;
 
 interface Handlers {
+  onGoBridge?: Handler;
   onGoEvents?: Handler;
   onGoSolar?: Handler;
   onGoPolicy?: Handler;
   onOpenPalette?: Handler;
   onFocusSearch?: Handler;
+  onShowHelp?: Handler;
   onEscape?: Handler;
 }
 
@@ -57,8 +59,15 @@ export function useKeyboardNav(handlers: Handlers) {
         return;
       }
 
+      if (e.key === "?") {
+        e.preventDefault();
+        ref.current.onShowHelp?.();
+        return;
+      }
+
       if (leader) {
-        if (e.key === "e") ref.current.onGoEvents?.();
+        if (e.key === "b") ref.current.onGoBridge?.();
+        else if (e.key === "e") ref.current.onGoEvents?.();
         else if (e.key === "s") ref.current.onGoSolar?.();
         else if (e.key === "p") ref.current.onGoPolicy?.();
         resetLeader();

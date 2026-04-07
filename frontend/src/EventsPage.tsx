@@ -20,6 +20,9 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useUrlNumber, useUrlParam } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
 import { Eraser, RotateCcw } from "lucide-react";
+import EventsTimeline from "./components/EventsTimeline";
+import FilterChips from "./components/FilterChips";
+import { useToast } from "./components/Toasts";
 
 const PAGE_SIZE = 100;
 
@@ -119,6 +122,7 @@ export default function EventsPage({
   consumePendingFilter,
   registerSearchFocus,
 }: Props) {
+  const toast = useToast();
   const [events, setEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useUrlNumber("offset", 0);
@@ -464,6 +468,78 @@ export default function EventsPage({
         sub={`${total.toLocaleString()} entries observed${autoRefresh ? " · live" : ""}`}
       />
 
+      <EventsTimeline events={filteredEvents} />
+
+      <FilterChips
+        chips={[
+          ...(actionFilter
+            ? [
+                {
+                  label: "action",
+                  value: actionFilter,
+                  onClear: () => {
+                    setActionFilter("");
+                    setOffset(0);
+                  },
+                },
+              ]
+            : []),
+          ...(toolFilter
+            ? [
+                {
+                  label: "tool",
+                  value: toolFilter,
+                  onClear: () => {
+                    setToolFilter("");
+                    setOffset(0);
+                  },
+                },
+              ]
+            : []),
+          ...(workdirFilter
+            ? [
+                {
+                  label: "dir",
+                  value: workdirFilter,
+                  onClear: () => setWorkdirFilter(""),
+                },
+              ]
+            : []),
+          ...(binaryFilter
+            ? [
+                {
+                  label: "bin",
+                  value: binaryFilter,
+                  onClear: () => setBinaryFilter(""),
+                },
+              ]
+            : []),
+          ...(timeFilter
+            ? [
+                {
+                  label: "time",
+                  value: timeFilter,
+                  onClear: () => setTimeFilter(""),
+                },
+              ]
+            : []),
+          ...(search
+            ? [
+                {
+                  label: "search",
+                  value: search,
+                  onClear: () => {
+                    setSearch("");
+                    setSearchInput("");
+                    setOffset(0);
+                  },
+                },
+              ]
+            : []),
+        ]}
+        onClearAll={clearAllFilters}
+      />
+
       <div className="toolbar">
         <input
           ref={searchInputRef}
@@ -540,10 +616,22 @@ export default function EventsPage({
 
       <div className="toolbar toolbar-actions">
         <div className="toolbar-spacer" />
-        <button className="btn" onClick={() => downloadCsv(filteredEvents)}>
+        <button
+          className="btn"
+          onClick={() => {
+            downloadCsv(filteredEvents);
+            toast.success("exported csv", `${filteredEvents.length} events`);
+          }}
+        >
           <Download /> csv
         </button>
-        <button className="btn" onClick={() => downloadJson(filteredEvents)}>
+        <button
+          className="btn"
+          onClick={() => {
+            downloadJson(filteredEvents);
+            toast.success("exported json", `${filteredEvents.length} events`);
+          }}
+        >
           <FileJson /> json
         </button>
         <div className="toolbar-group" ref={colMenuRef} style={{ position: "relative" }}>

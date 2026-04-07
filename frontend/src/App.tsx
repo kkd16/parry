@@ -1,13 +1,16 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { BookOpen, Filter, Orbit, ScrollText, Search } from "lucide-react";
+import { BookOpen, Filter, Gauge, Orbit, ScrollText, Search } from "lucide-react";
+import BridgePage from "./BridgePage";
 import EventsPage from "./EventsPage";
 import SolarSystemPage from "./SolarSystemPage";
 import PolicyPage from "./PolicyPage";
 import Sidebar from "./components/Sidebar";
 import CommandPalette from "./components/CommandPalette";
+import ShortcutsHelp from "./components/ShortcutsHelp";
+import { ToastsProvider } from "./components/Toasts";
 import { usePolicyOverview } from "./usePolicyOverview";
 import { useKeyboardNav } from "./hooks/useKeyboardNav";
-import { usePath } from "./hooks/useUrlState";
+import { usePath, useUrlParam } from "./hooks/useUrlState";
 import {
   CommandsProvider,
   useRegisterCommands,
@@ -15,16 +18,26 @@ import {
   type QuickFilter,
 } from "./commands";
 
-export type Tab = "events" | "solar" | "policy";
+export type Tab = "bridge" | "events" | "solar" | "policy";
 
 interface ShellState {
   setTab: (t: Tab) => void;
   setPendingFilter: (f: QuickFilter) => void;
+  openShortcuts: () => void;
 }
 
-function GlobalCommands({ setTab, setPendingFilter }: ShellState) {
+function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState) {
   const cmds = useMemo<Command[]>(
     () => [
+      {
+        id: "nav.bridge",
+        group: "Navigate",
+        label: "Go to Bridge",
+        hint: "g b",
+        icon: <Gauge />,
+        keywords: ["overview", "home", "dashboard"],
+        perform: () => setTab("bridge"),
+      },
       {
         id: "nav.events",
         group: "Navigate",
@@ -51,6 +64,13 @@ function GlobalCommands({ setTab, setPendingFilter }: ShellState) {
         icon: <BookOpen />,
         keywords: ["policy", "rules"],
         perform: () => setTab("policy"),
+      },
+      {
+        id: "help.shortcuts",
+        group: "Help",
+        label: "Show keyboard shortcuts",
+        hint: "?",
+        perform: openShortcuts,
       },
       {
         id: "filter.blocked",
@@ -194,7 +214,7 @@ function GlobalCommands({ setTab, setPendingFilter }: ShellState) {
         },
       },
     ],
-    [setTab, setPendingFilter],
+    [setTab, setPendingFilter, openShortcuts],
   );
   useRegisterCommands(cmds, [cmds]);
   return null;
@@ -205,28 +225,41 @@ function AppShell() {
   const tab = path.slice(1) as Tab;
   const setTab = useCallback((t: Tab) => setPath("/" + t), [setPath]);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [pendingFilter, setPendingFilter] = useState<QuickFilter | null>(null);
   const [eventCount, setEventCount] = useState(0);
   const [live, setLive] = useState(false);
   const overview = usePolicyOverview();
   const searchFocusRef = useRef<() => void>(() => {});
+  const [, setBinaryParam] = useUrlParam("binary", "");
 
   const focusSearch = useCallback(() => searchFocusRef.current?.(), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
+  const closeShortcuts = useCallback(() => setShortcutsOpen(false), []);
+  const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
   const queueFilter = useCallback((f: QuickFilter) => setPendingFilter(f), []);
 
   useKeyboardNav({
+    onGoBridge: () => setTab("bridge"),
     onGoEvents: () => setTab("events"),
     onGoSolar: () => setTab("solar"),
     onGoPolicy: () => setTab("policy"),
     onOpenPalette: () => setPaletteOpen((v) => !v),
     onFocusSearch: focusSearch,
-    onEscape: closePalette,
+    onShowHelp: openShortcuts,
+    onEscape: () => {
+      closePalette();
+      closeShortcuts();
+    },
   });
 
   return (
     <>
-      <GlobalCommands setTab={setTab} setPendingFilter={queueFilter} />
+      <GlobalCommands
+        setTab={setTab}
+        setPendingFilter={queueFilter}
+        openShortcuts={openShortcuts}
+      />
       <div className="shell">
         <Sidebar
           tab={tab}
@@ -234,9 +267,20 @@ function AppShell() {
           overview={overview}
           eventCount={eventCount}
           live={live}
+          onShowHelp={openShortcuts}
         />
         <main className="shell-main">
           <div className="shell-main-inner">
+            {tab === "bridge" && (
+              <BridgePage
+                overview={overview}
+                onEventClick={() => setTab("events")}
+                onFilterBinary={(b) => {
+                  setBinaryParam(b);
+                  setTab("events");
+                }}
+              />
+            )}
             {tab === "events" && (
               <EventsPage
                 onCountChange={setEventCount}
@@ -253,6 +297,7 @@ function AppShell() {
           </div>
         </main>
         <CommandPalette open={paletteOpen} onClose={closePalette} />
+        <ShortcutsHelp open={shortcutsOpen} onClose={closeShortcuts} />
       </div>
     </>
   );
@@ -260,8 +305,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <CommandsProvider>
-      <AppShell />
-    </CommandsProvider>
+    <ToastsProvider>
+      <CommandsProvider>
+        <AppShell />
+      </CommandsProvider>
+    </ToastsProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { BookOpen, Orbit, ScrollText } from "lucide-react";
+import { BookOpen, Gauge, Orbit, ScrollText } from "lucide-react";
 import type { Tab } from "../App";
 import type { PolicyOverviewState } from "../usePolicyOverview";
 import { useLocalStorage } from "../hooks/useLocalStorage";
@@ -10,12 +10,13 @@ interface Props {
   overview: PolicyOverviewState;
   eventCount: number;
   live: boolean;
+  onShowHelp: () => void;
 }
 
 const MIN_W = 180;
 const MAX_W = 360;
 
-export default function Sidebar({ tab, setTab, overview, eventCount, live }: Props) {
+export default function Sidebar({ tab, setTab, overview, eventCount, live, onShowHelp }: Props) {
   const [width, setWidth] = useLocalStorage<number>("parry-sidebar-w", 232);
   const resizing = useRef(false);
 
@@ -61,6 +62,14 @@ export default function Sidebar({ tab, setTab, overview, eventCount, live }: Pro
 
       <nav className="sidebar-nav">
         <div className="sidebar-nav-label">Instruments</div>
+        <button
+          className={`sidebar-nav-item${tab === "bridge" ? " active" : ""}`}
+          onClick={() => setTab("bridge")}
+        >
+          <Gauge />
+          <span>Bridge</span>
+          <span className="sidebar-nav-hint">g b</span>
+        </button>
         <button
           className={`sidebar-nav-item${tab === "events" ? " active" : ""}`}
           onClick={() => setTab("events")}
@@ -120,11 +129,14 @@ export default function Sidebar({ tab, setTab, overview, eventCount, live }: Pro
             {live ? "on" : "off"}
           </span>
         </div>
-        <div className="sidebar-footer-hint">
+        <button className="sidebar-footer-hint-btn" onClick={onShowHelp}>
           <span className="kbd">⌘</span>
           <span className="kbd">space</span>
           <span>palette</span>
-        </div>
+          <span className="sidebar-footer-sep">·</span>
+          <span className="kbd">?</span>
+          <span>help</span>
+        </button>
       </div>
 
       <div className="sidebar-resize" onMouseDown={onDown} />

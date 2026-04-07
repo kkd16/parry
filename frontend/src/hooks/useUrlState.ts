@@ -27,11 +27,11 @@ function dispatch() {
   window.dispatchEvent(new Event(URL_EVENT));
 }
 
-const VALID_PATHS = new Set(["/events", "/solar", "/policy"]);
+const VALID_PATHS = new Set(["/bridge", "/events", "/solar", "/policy"]);
 
 function normalizePath(p: string): string {
   if (VALID_PATHS.has(p)) return p;
-  return "/events";
+  return "/bridge";
 }
 
 export function usePath(): [string, (next: string) => void] {
