@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/kkd16/parry/internal/policyfile"
 	"github.com/kkd16/parry/internal/ui"
 )
 
@@ -46,7 +45,10 @@ func (p *ntfyProvider) RunSetup(policyPath string) error {
 	topic := "parry-" + uuid.NewString()[:8]
 	server := "https://ntfy.sh"
 
-	if err := enableInPolicy(policyPath, "ntfy", topic, server); err != nil {
+	if err := policyfile.SetNotificationProvider(policyPath, "ntfy", map[string]string{
+		"topic":  topic,
+		"server": server,
+	}); err != nil {
 		ui.Error(fmt.Sprintf("configuring notifications: %v", err))
 		return err
 	}
@@ -67,18 +69,6 @@ func (p *ntfyProvider) RunSetup(policyPath string) error {
 	ui.Detail("2", fmt.Sprintf("Subscribe to topic: %s", topic))
 	ui.Break()
 	return nil
-}
-
-func enableInPolicy(policyPath, provider, topic, server string) error {
-	raw, err := os.ReadFile(policyPath)
-	if err != nil {
-		return err
-	}
-	s := string(raw)
-	s = regexp.MustCompile(`(?m)^(  provider:).*`).ReplaceAllString(s, "${1} "+provider)
-	s = regexp.MustCompile(`(?m)^(    topic:).*`).ReplaceAllString(s, "${1} "+topic)
-	s = regexp.MustCompile(`(?m)^(    server:).*`).ReplaceAllString(s, "${1} "+server)
-	return os.WriteFile(policyPath, []byte(s), 0o644)
 }
 
 type NtfyConfirmer struct {

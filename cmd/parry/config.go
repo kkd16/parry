@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/kkd16/parry/internal/policyfile"
 	"github.com/kkd16/parry/internal/setup"
 	"github.com/kkd16/parry/internal/ui"
 	"golang.org/x/term"
@@ -153,30 +155,8 @@ func (m *ConfigModeCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	policyPath := dir + "/policy.yaml"
-
-	data, err := os.ReadFile(policyPath)
-	if err != nil {
-		return fmt.Errorf("reading policy: %w", err)
-	}
-
-	lines := strings.Split(string(data), "\n")
-	found := false
-	for i, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "mode:") {
-			indent := line[:len(line)-len(strings.TrimLeft(line, " \t"))]
-			lines[i] = indent + "mode: " + m.Mode
-			found = true
-			break
-		}
-	}
-	if !found {
-		return fmt.Errorf("could not find mode field in policy.yaml")
-	}
-
-	if err := os.WriteFile(policyPath, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
-		return fmt.Errorf("writing policy: %w", err)
+	if err := policyfile.SetMode(filepath.Join(dir, "policy.yaml"), m.Mode); err != nil {
+		return err
 	}
 
 	ui.Success("mode set to " + ui.Boldf("%s", m.Mode))

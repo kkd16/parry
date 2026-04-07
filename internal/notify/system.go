@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
-	"regexp"
 	"runtime"
 	"strings"
 
+	"github.com/kkd16/parry/internal/policyfile"
 	"github.com/kkd16/parry/internal/ui"
 )
 
@@ -54,7 +53,7 @@ func (p *systemProvider) RunSetup(policyPath string) error {
 		return err
 	}
 
-	if err := setProviderInPolicy(policyPath, "system"); err != nil {
+	if err := policyfile.SetProvider(policyPath, "system"); err != nil {
 		ui.Error(fmt.Sprintf("configuring notifications: %v", err))
 		return err
 	}
@@ -155,14 +154,3 @@ func osaQuote(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }
 
-// setProviderInPolicy rewrites just the `provider:` line in the policy YAML.
-// Unlike enableInPolicy, it leaves any provider-specific config (e.g. ntfy
-// topic/server) untouched.
-func setProviderInPolicy(policyPath, provider string) error {
-	raw, err := os.ReadFile(policyPath)
-	if err != nil {
-		return err
-	}
-	s := regexp.MustCompile(`(?m)^(  provider:).*`).ReplaceAllString(string(raw), "${1} "+provider)
-	return os.WriteFile(policyPath, []byte(s), 0o644)
-}
