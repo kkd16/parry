@@ -114,16 +114,6 @@ parry setup claude
 5. **Local-first.** All data, models, and enforcement stay on your machine. Nothing leaves.
 6. **Fail closed.** If Parry crashes, tool calls are blocked via a non-zero exit code.
 
-## Tech Stack
-
-| Component | Choice |
-|-----------|--------|
-| Language | Go 1.26+, single binary, ~15MB core |
-| Database | `modernc.org/sqlite`, pure Go, no CGO |
-| Policy | YAML (`go.yaml.in/yaml/v4`) |
-| CLI | `alecthomas/kong` |
-| Dashboard | React (Vite) embedded in binary via `embed` |
-
 ## Development
 
 ```bash
