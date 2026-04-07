@@ -185,8 +185,21 @@ rules:
       - "git clone"
       - "npm publish"
       - "docker push"
-      - nc
     block:
+      - "rm -rf"
+      - "rm -fr"
+      - "rm -Rf"
+      - "rm -fR"
+      - "chmod -R"
+      - "chmod -Rf"
+      - "chown -R"
+      - "bash -i"
+      - "sh -i"
+      - "zsh -i"
+      - bash
+      - sh
+      - zsh
+      - nc
       - sudo
       - su
       - doas
@@ -194,6 +207,15 @@ rules:
       - mkfs
       - mkfs.ext4
       - mkfs.xfs
+      - mkfs.btrfs
+      - mkfs.zfs
+      - mkfs.fat
+      - mkfs.vfat
+      - mke2fs
+      - wipefs
+      - blkdiscard
+      - cryptsetup
+      - losetup
       - fdisk
       - parted
       - shutdown
