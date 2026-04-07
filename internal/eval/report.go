@@ -2,72 +2,67 @@ package eval
 
 import (
 	"fmt"
-	"io"
+	"unicode/utf8"
 
 	"github.com/kkd16/parry/internal/ui"
 )
 
-func Print(s Summary, w io.Writer) {
-	fmt.Fprintln(w)
+func Print(s Summary) {
+	fmt.Println()
 	ui.SectionHeader("Eval results")
 
-	headline := fmt.Sprintf("%d/%d passed", s.Pass, s.Total)
 	if s.Pass == s.Total {
-		fmt.Fprintf(w, "   %s\n", ui.Greenf("%s", headline))
-	} else {
-		fmt.Fprintf(w, "   %s   %s   %s\n",
-			ui.Greenf("%d passed", s.Pass),
-			ui.Redf("%d failed", s.Fail),
-			ui.Yellowf("%d errored", s.Errored),
-		)
-	}
-
-	if s.Pass == s.Total {
-		fmt.Fprintln(w)
+		fmt.Printf("   %s\n\n", ui.Greenf("%d/%d passed", s.Pass, s.Total))
 		return
 	}
 
-	fmt.Fprintln(w)
+	fmt.Printf("   %s   %s   %s\n\n",
+		ui.Greenf("%d passed", s.Pass),
+		ui.Redf("%d failed", s.Fail),
+		ui.Yellowf("%d errored", s.Errored),
+	)
+
 	ui.SectionHeader("Failures")
 	for _, r := range s.Results {
 		if r.Pass {
 			continue
 		}
-		cmd := commandPreview(r.Entry)
-		switch {
-		case r.Err != nil:
-			fmt.Fprintf(w, "   %s  %s  %s\n",
-				ui.Redf("%-12s", r.Entry.ID),
-				ui.Dimf("%-14s", r.Entry.Category),
-				ui.Yellowf("error: %v", r.Err),
-			)
-		default:
-			fmt.Fprintf(w, "   %s  %s  expected=%s got=%s  %s\n",
-				ui.Redf("%-12s", r.Entry.ID),
-				ui.Dimf("%-14s", r.Entry.Category),
-				ui.Greenf("%s", string(r.Expected)),
-				ui.Redf("%s", string(r.Got)),
-				ui.Dimf("%s", cmd),
-			)
+		idCol := ui.Redf("%-12s", r.Entry.ID)
+		catCol := ui.Dimf("%-14s", r.Entry.Category)
+		if r.Err != nil {
+			fmt.Printf("   %s  %s  %s\n", idCol, catCol, ui.Yellowf("error: %v", r.Err))
+			continue
 		}
+		fmt.Printf("   %s  %s  expected=%s got=%s  %s\n",
+			idCol, catCol,
+			ui.Greenf("%s", string(r.Entry.expected)),
+			ui.Redf("%s", string(r.Got)),
+			ui.Dimf("%s", inputPreview(r.Entry)),
+		)
 	}
 
-	fmt.Fprintln(w)
-	fmt.Fprintf(w, "   %s\n",
+	fmt.Printf("\n   %s\n\n",
 		ui.Dimf("These are bypasses. Fix in internal/policy and internal/shellparse, then re-run."),
 	)
-	fmt.Fprintln(w)
 }
 
-func commandPreview(e Entry) string {
+func inputPreview(e Entry) string {
 	if cmd, ok := e.ToolInput["command"].(string); ok && cmd != "" {
-		if len(cmd) > 50 {
-			return cmd[:47] + "..."
-		}
-		return cmd
+		return truncate(cmd, 50)
 	}
 	if path, ok := e.ToolInput["path"].(string); ok && path != "" {
-		return path
+		return truncate(path, 50)
 	}
 	return ""
+}
+
+func truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	cut := n - 3
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+	return s[:cut] + "..."
 }

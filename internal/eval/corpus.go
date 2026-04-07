@@ -20,38 +20,31 @@ type Entry struct {
 	Expect    string         `yaml:"expect"`
 	Notes     string         `yaml:"notes,omitempty"`
 
-	SourceFile string `yaml:"-"`
+	expected  policy.Action
+	canonical check.CanonicalTool
 }
 
-func (e Entry) ExpectedAction() (policy.Action, error) {
-	switch policy.Action(e.Expect) {
+func parseAction(s string) (policy.Action, error) {
+	switch policy.Action(s) {
 	case policy.Allow, policy.Block, policy.Confirm:
-		return policy.Action(e.Expect), nil
+		return policy.Action(s), nil
 	default:
-		return "", fmt.Errorf("invalid expect %q (must be allow, block, or confirm)", e.Expect)
+		return "", fmt.Errorf("invalid expect %q (must be allow, block, or confirm)", s)
 	}
 }
 
-func (e Entry) CanonicalTool() (check.CanonicalTool, error) {
-	switch check.CanonicalTool(e.Tool) {
+func parseTool(s string) (check.CanonicalTool, error) {
+	switch check.CanonicalTool(s) {
 	case check.ToolShell, check.ToolFileEdit, check.ToolFileRead, check.ToolUnknown:
-		return check.CanonicalTool(e.Tool), nil
+		return check.CanonicalTool(s), nil
 	default:
-		return "", fmt.Errorf("invalid tool %q (must be shell, file_edit, file_read, or unknown)", e.Tool)
+		return "", fmt.Errorf("invalid tool %q (must be shell, file_edit, file_read, or unknown)", s)
 	}
 }
 
 func Load(dir string) ([]Entry, error) {
-	info, err := os.Stat(dir)
-	if err != nil {
-		return nil, fmt.Errorf("corpus dir %s: %w", dir, err)
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("corpus path %s is not a directory", dir)
-	}
-
 	var files []string
-	err = filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -64,7 +57,7 @@ func Load(dir string) ([]Entry, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("walking corpus dir: %w", err)
+		return nil, fmt.Errorf("walking corpus dir %s: %w", dir, err)
 	}
 	sort.Strings(files)
 
@@ -81,7 +74,6 @@ func Load(dir string) ([]Entry, error) {
 		}
 		for i := range entries {
 			e := &entries[i]
-			e.SourceFile = f
 			if e.ID == "" {
 				return nil, fmt.Errorf("%s: entry %d: missing id", f, i)
 			}
@@ -91,12 +83,16 @@ func Load(dir string) ([]Entry, error) {
 			if e.Expect == "" {
 				return nil, fmt.Errorf("%s: %s: missing expect", f, e.ID)
 			}
-			if _, err := e.ExpectedAction(); err != nil {
+			expected, err := parseAction(e.Expect)
+			if err != nil {
 				return nil, fmt.Errorf("%s: %s: %w", f, e.ID, err)
 			}
-			if _, err := e.CanonicalTool(); err != nil {
+			canonical, err := parseTool(e.Tool)
+			if err != nil {
 				return nil, fmt.Errorf("%s: %s: %w", f, e.ID, err)
 			}
+			e.expected = expected
+			e.canonical = canonical
 			if prev, ok := seen[e.ID]; ok {
 				return nil, fmt.Errorf("duplicate entry id %q in %s (also in %s)", e.ID, f, prev)
 			}

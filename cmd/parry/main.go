@@ -545,13 +545,11 @@ func (e *EvalCmd) Run() error {
 
 	entries, err := eval.Load(e.Corpus)
 	if err != nil {
-		ui.Error(err.Error())
-		ui.Break()
 		return err
 	}
 
 	summary := eval.Run(engine, entries)
-	eval.Print(summary, os.Stdout)
+	eval.Print(summary)
 
 	if summary.Fail > 0 || summary.Errored > 0 {
 		return fmt.Errorf("eval: %d failed, %d errored", summary.Fail, summary.Errored)

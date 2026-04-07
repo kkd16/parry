@@ -5,11 +5,10 @@ import (
 )
 
 type Result struct {
-	Entry    Entry
-	Expected policy.Action
-	Got      policy.Action
-	Err      error
-	Pass     bool
+	Entry Entry
+	Got   policy.Action
+	Err   error
+	Pass  bool
 }
 
 type Summary struct {
@@ -21,18 +20,15 @@ type Summary struct {
 }
 
 func Run(engine *policy.Engine, entries []Entry) Summary {
-	s := Summary{Total: len(entries)}
+	s := Summary{Total: len(entries), Results: make([]Result, 0, len(entries))}
 	for _, e := range entries {
-		expected, _ := e.ExpectedAction()
-		tool, _ := e.CanonicalTool()
-
-		got, err := engine.Evaluate(tool, e.ToolInput)
-		r := Result{Entry: e, Expected: expected, Got: got, Err: err}
+		got, err := engine.Evaluate(e.canonical, e.ToolInput)
+		r := Result{Entry: e, Got: got, Err: err}
 
 		switch {
 		case err != nil:
 			s.Errored++
-		case got == expected:
+		case got == e.expected:
 			r.Pass = true
 			s.Pass++
 		default:
