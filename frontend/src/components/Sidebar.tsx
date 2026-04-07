@@ -8,12 +8,14 @@ interface Props {
   tab: Tab;
   setTab: (t: Tab) => void;
   overview: PolicyOverviewState;
+  eventCount: number;
+  live: boolean;
 }
 
 const MIN_W = 180;
 const MAX_W = 360;
 
-export default function Sidebar({ tab, setTab, overview }: Props) {
+export default function Sidebar({ tab, setTab, overview, eventCount, live }: Props) {
   const [width, setWidth] = useLocalStorage<number>("parry-sidebar-w", 232);
   const resizing = useRef(false);
 
@@ -106,6 +108,22 @@ export default function Sidebar({ tab, setTab, overview }: Props) {
             <span className={`health-dot ${healthClass}`} />
             {notify?.provider ?? "none"}
           </span>
+        </div>
+        <div className="sidebar-footer-row">
+          <span className="sidebar-footer-label">events</span>
+          <span className="sidebar-footer-value">{eventCount.toLocaleString()}</span>
+        </div>
+        <div className="sidebar-footer-row">
+          <span className="sidebar-footer-label">live</span>
+          <span className="sidebar-footer-value">
+            <span className={`health-dot ${live ? "ok" : "none"}`} />
+            {live ? "on" : "off"}
+          </span>
+        </div>
+        <div className="sidebar-footer-hint">
+          <span className="kbd">⌘</span>
+          <span className="kbd">space</span>
+          <span>palette</span>
         </div>
       </div>
 

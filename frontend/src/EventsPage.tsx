@@ -12,12 +12,14 @@ import {
 import { Download, RefreshCw, Columns3, FileJson } from "lucide-react";
 import SearchableSelect from "./components/SearchableSelect";
 import type { Event, EventsResponse } from "./types";
-import type { QuickFilter } from "./components/CommandPalette";
+import type { QuickFilter } from "./commands";
 import { actionBadge } from "./policyBadges";
 import EventDrawer from "./components/EventDrawer";
 import PageHeader from "./components/PageHeader";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useUrlNumber, useUrlParam } from "./hooks/useUrlState";
+import { useRegisterCommands, type Command } from "./commands";
+import { Eraser, RotateCcw } from "lucide-react";
 
 const PAGE_SIZE = 100;
 
@@ -374,6 +376,85 @@ export default function EventsPage({
   const clientFiltered = !!(workdirFilter || binaryFilter || timeFilter);
   const page = Math.floor(offset / PAGE_SIZE) + 1;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const clearAllFilters = useCallback(() => {
+    setActionFilter("");
+    setToolFilter("");
+    setWorkdirFilter("");
+    setBinaryFilter("");
+    setTimeFilter("");
+    setSearch("");
+    setSearchInput("");
+    setOffset(0);
+  }, [
+    setActionFilter,
+    setToolFilter,
+    setWorkdirFilter,
+    setBinaryFilter,
+    setTimeFilter,
+    setSearch,
+    setOffset,
+  ]);
+
+  const eventsCommands = useMemo<Command[]>(
+    () => [
+      {
+        id: "events.refresh",
+        group: "Logbook",
+        label: "Refresh logbook",
+        icon: <RotateCcw />,
+        keywords: ["reload", "refetch"],
+        perform: () => fetchEvents(),
+      },
+      {
+        id: "events.toggle-live",
+        group: "Logbook",
+        label: autoRefresh ? "Stop live tail" : "Start live tail",
+        icon: <RefreshCw />,
+        keywords: ["auto", "tail", "follow"],
+        perform: () => setAutoRefresh((v) => !v),
+      },
+      {
+        id: "events.csv",
+        group: "Logbook",
+        label: "Export current view as CSV",
+        icon: <Download />,
+        keywords: ["download", "export"],
+        perform: () => downloadCsv(filteredEvents),
+      },
+      {
+        id: "events.json",
+        group: "Logbook",
+        label: "Export current view as JSON",
+        icon: <FileJson />,
+        keywords: ["download", "export"],
+        perform: () => downloadJson(filteredEvents),
+      },
+      {
+        id: "events.columns",
+        group: "Logbook",
+        label: "Toggle column picker",
+        icon: <Columns3 />,
+        perform: () => setColMenuOpen((v) => !v),
+      },
+      {
+        id: "events.focus-search",
+        group: "Logbook",
+        label: "Focus search",
+        hint: "/",
+        perform: () => searchInputRef.current?.focus(),
+      },
+      {
+        id: "events.clear-filters",
+        group: "Logbook",
+        label: "Clear all filters",
+        icon: <Eraser />,
+        perform: clearAllFilters,
+      },
+    ],
+    [autoRefresh, fetchEvents, filteredEvents, clearAllFilters],
+  );
+  useRegisterCommands(eventsCommands, [eventsCommands]);
 
   return (
     <>

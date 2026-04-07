@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { Maximize2, Minus, Orbit, Plus, RotateCcw } from "lucide-react";
 import PageHeader from "./components/PageHeader";
 import { useUrlParam } from "./hooks/useUrlState";
+import { useRegisterCommands, type Command } from "./commands";
 
 interface HeatmapFile {
   path: string;
@@ -205,6 +207,76 @@ export default function SolarSystemPage() {
     [flyTo],
   );
 
+  const orreryCommands = useMemo<Command[]>(() => {
+    const base: Command[] = [
+      {
+        id: "orrery.zoom-in",
+        group: "Orrery",
+        label: "Zoom in",
+        icon: <Plus />,
+        perform: () => {
+          const el = containerRef.current;
+          if (el) {
+            setView((v) => {
+              const next = Math.min(8, v.scale * 1.4);
+              const ratio = next / v.scale;
+              const cx = el.clientWidth / 2;
+              const cy = el.clientHeight / 2;
+              return { scale: next, tx: cx - (cx - v.tx) * ratio, ty: cy - (cy - v.ty) * ratio };
+            });
+          }
+        },
+      },
+      {
+        id: "orrery.zoom-out",
+        group: "Orrery",
+        label: "Zoom out",
+        icon: <Minus />,
+        perform: () => {
+          const el = containerRef.current;
+          if (el) {
+            setView((v) => {
+              const next = Math.max(0.1, v.scale / 1.4);
+              const ratio = next / v.scale;
+              const cx = el.clientWidth / 2;
+              const cy = el.clientHeight / 2;
+              return { scale: next, tx: cx - (cx - v.tx) * ratio, ty: cy - (cy - v.ty) * ratio };
+            });
+          }
+        },
+      },
+      {
+        id: "orrery.reset",
+        group: "Orrery",
+        label: "Reset view",
+        icon: <RotateCcw />,
+        perform: resetView,
+      },
+      {
+        id: "orrery.show-all",
+        group: "Orrery",
+        label: "Show all systems",
+        icon: <Maximize2 />,
+        perform: () => setFilterProject(""),
+      },
+    ];
+    for (const sys of allSystems) {
+      base.push({
+        id: `orrery.fly.${sys.workdir}`,
+        group: "Fly to system",
+        label: sys.label,
+        icon: <Orbit />,
+        keywords: [sys.workdir, "fly", "go"],
+        perform: () => {
+          setFilterProject("");
+          flyToSystem(sys);
+        },
+      });
+    }
+    return base;
+  }, [allSystems, flyToSystem, resetView, setFilterProject]);
+  useRegisterCommands(orreryCommands, [orreryCommands]);
+
   useEffect(() => {
     if (systems.length === 0) return;
     const el = containerRef.current;
@@ -362,11 +434,66 @@ export default function SolarSystemPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="instrument · 02"
-        title="Orrery"
-        sub="files orbit their projects · drag to pan · scroll to zoom"
-      />
+      <div className="orrery-header-row">
+        <PageHeader
+          eyebrow="instrument · 02"
+          title="Orrery"
+          sub="files orbit their projects · drag to pan · scroll to zoom"
+        />
+        <div className="orrery-cards">
+          <div className="orrery-card">
+            <div className="orrery-card-title">legend</div>
+            <div className="orrery-card-body">
+              inner orbit · hottest
+              <br />
+              larger body · more accesses
+            </div>
+            <div className="orrery-card-systems">
+              <div className="orrery-card-sub">systems</div>
+              {allSystems.map((s) => (
+                <button
+                  key={s.workdir}
+                  className={`legend-map-entry${filterProject === s.workdir ? " active" : ""}`}
+                  onClick={() => flyToSystem(s)}
+                  onDoubleClick={() =>
+                    setFilterProject(filterProject === s.workdir ? "" : s.workdir)
+                  }
+                  title="click: fly to · double-click: isolate"
+                >
+                  · {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {stats && (
+            <div className="orrery-card">
+              <div className="orrery-card-title">tally</div>
+              <div className="stats-row">
+                <span className="stats-row-label">projects</span>
+                <span className="stats-row-value">{stats.projects}</span>
+              </div>
+              <div className="stats-row">
+                <span className="stats-row-label">files</span>
+                <span className="stats-row-value">{stats.totalFiles}</span>
+              </div>
+              <div className="stats-row">
+                <span className="stats-row-label">events</span>
+                <span className="stats-row-value">
+                  {stats.totalEvents.toLocaleString()}
+                </span>
+              </div>
+              <div className="orrery-card-divider">
+                <div className="stats-row">
+                  <span className="stats-row-label">hottest file</span>
+                  <span className="stats-row-value">×{stats.topFile.count}</span>
+                </div>
+                <div className="orrery-card-hottest">{basename(stats.topFile.path)}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div
         className="heatmap-canvas"
@@ -473,58 +600,6 @@ export default function SolarSystemPage() {
             ))}
           </g>
         </svg>
-
-        <div className="heatmap-overlay legend">
-          <div className="heatmap-overlay-title">legend</div>
-          <div style={{ marginBottom: 8, lineHeight: 1.6 }}>
-            inner orbit · hottest
-            <br />
-            larger body · more accesses
-          </div>
-          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: 8, marginTop: 4 }}>
-            <div style={{ color: "var(--ink-mute)", marginBottom: 4 }}>systems</div>
-            {allSystems.map((s) => (
-              <button
-                key={s.workdir}
-                className={`legend-map-entry${filterProject === s.workdir ? " active" : ""}`}
-                onClick={() => flyToSystem(s)}
-                onDoubleClick={() =>
-                  setFilterProject(filterProject === s.workdir ? "" : s.workdir)
-                }
-                title="click: fly to · double-click: isolate"
-              >
-                · {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {stats && (
-          <div className="heatmap-overlay stats">
-            <div className="heatmap-overlay-title">tally</div>
-            <div className="stats-row">
-              <span className="stats-row-label">projects</span>
-              <span className="stats-row-value">{stats.projects}</span>
-            </div>
-            <div className="stats-row">
-              <span className="stats-row-label">files</span>
-              <span className="stats-row-value">{stats.totalFiles}</span>
-            </div>
-            <div className="stats-row">
-              <span className="stats-row-label">events</span>
-              <span className="stats-row-value">{stats.totalEvents.toLocaleString()}</span>
-            </div>
-            <div style={{ borderTop: "1px solid var(--rule)", marginTop: 6, paddingTop: 6 }}>
-              <div className="stats-row">
-                <span className="stats-row-label">hottest file</span>
-                <span className="stats-row-value">×{stats.topFile.count}</span>
-              </div>
-              <div style={{ color: "var(--ink)", fontSize: "0.66rem", marginTop: 2 }}>
-                {basename(stats.topFile.path)}
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="heatmap-overlay controls">
           <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>

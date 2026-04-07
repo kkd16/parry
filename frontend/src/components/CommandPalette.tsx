@@ -1,21 +1,26 @@
-import { Command } from "cmdk";
+import { Command as CmdkCommand } from "cmdk";
 import { motion, AnimatePresence } from "motion/react";
-import { BookOpen, Orbit, ScrollText, Filter, Search } from "lucide-react";
-import type { Tab } from "../App";
+import { useMemo } from "react";
+import { useCommands } from "../commands";
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onNav: (tab: Tab) => void;
-  onQuickFilter: (filter: QuickFilter) => void;
 }
 
-export type QuickFilter =
-  | { kind: "action"; value: "allow" | "block" | "observe" | "confirm" }
-  | { kind: "tool"; value: "shell" | "file_edit" | "file_read" }
-  | { kind: "time"; value: "1h" | "24h" | "7d" };
+export default function CommandPalette({ open, onClose }: Props) {
+  const { commands } = useCommands();
 
-export default function CommandPalette({ open, onClose, onNav, onQuickFilter }: Props) {
+  const grouped = useMemo(() => {
+    const map = new Map<string, typeof commands>();
+    for (const c of commands) {
+      const list = map.get(c.group) ?? [];
+      list.push(c);
+      map.set(c.group, list);
+    }
+    return Array.from(map.entries());
+  }, [commands]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -35,97 +40,30 @@ export default function CommandPalette({ open, onClose, onNav, onQuickFilter }: 
             transition={{ type: "spring", damping: 28, stiffness: 360 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <Command label="Command palette">
-              <Command.Input placeholder="what would you like to observe…" autoFocus />
-              <Command.List>
-                <Command.Empty>no matching command.</Command.Empty>
-                <Command.Group heading="Navigate">
-                  <Command.Item
-                    onSelect={() => {
-                      onNav("events");
-                      onClose();
-                    }}
-                  >
-                    <ScrollText /> Go to Logbook
-                    <span className="cmdk-item-hint">g e</span>
-                  </Command.Item>
-                  <Command.Item
-                    onSelect={() => {
-                      onNav("solar");
-                      onClose();
-                    }}
-                  >
-                    <Orbit /> Go to Orrery
-                    <span className="cmdk-item-hint">g s</span>
-                  </Command.Item>
-                  <Command.Item
-                    onSelect={() => {
-                      onNav("policy");
-                      onClose();
-                    }}
-                  >
-                    <BookOpen /> Go to Charter
-                    <span className="cmdk-item-hint">g p</span>
-                  </Command.Item>
-                </Command.Group>
-                <Command.Group heading="Filter events">
-                  <Command.Item
-                    onSelect={() => {
-                      onQuickFilter({ kind: "action", value: "block" });
-                      onNav("events");
-                      onClose();
-                    }}
-                  >
-                    <Filter /> Show blocked events
-                  </Command.Item>
-                  <Command.Item
-                    onSelect={() => {
-                      onQuickFilter({ kind: "action", value: "confirm" });
-                      onNav("events");
-                      onClose();
-                    }}
-                  >
-                    <Filter /> Show confirm events
-                  </Command.Item>
-                  <Command.Item
-                    onSelect={() => {
-                      onQuickFilter({ kind: "tool", value: "shell" });
-                      onNav("events");
-                      onClose();
-                    }}
-                  >
-                    <Filter /> Shell calls only
-                  </Command.Item>
-                  <Command.Item
-                    onSelect={() => {
-                      onQuickFilter({ kind: "tool", value: "file_edit" });
-                      onNav("events");
-                      onClose();
-                    }}
-                  >
-                    <Filter /> File edits only
-                  </Command.Item>
-                  <Command.Item
-                    onSelect={() => {
-                      onQuickFilter({ kind: "time", value: "1h" });
-                      onNav("events");
-                      onClose();
-                    }}
-                  >
-                    <Search /> Last hour
-                  </Command.Item>
-                  <Command.Item
-                    onSelect={() => {
-                      onQuickFilter({ kind: "time", value: "24h" });
-                      onNav("events");
-                      onClose();
-                    }}
-                  >
-                    <Search /> Last 24 hours
-                  </Command.Item>
-                </Command.Group>
-              </Command.List>
-            </Command>
+            <CmdkCommand label="Command palette">
+              <CmdkCommand.Input placeholder="what would you like to observe…" autoFocus />
+              <CmdkCommand.List>
+                <CmdkCommand.Empty>no matching command.</CmdkCommand.Empty>
+                {grouped.map(([group, items]) => (
+                  <CmdkCommand.Group key={group} heading={group}>
+                    {items.map((c) => (
+                      <CmdkCommand.Item
+                        key={c.id}
+                        value={`${c.label} ${(c.keywords ?? []).join(" ")}`}
+                        onSelect={() => {
+                          c.perform();
+                          onClose();
+                        }}
+                      >
+                        {c.icon}
+                        <span>{c.label}</span>
+                        {c.hint && <span className="cmdk-item-hint">{c.hint}</span>}
+                      </CmdkCommand.Item>
+                    ))}
+                  </CmdkCommand.Group>
+                ))}
+              </CmdkCommand.List>
+            </CmdkCommand>
           </motion.div>
         </motion.div>
       )}
