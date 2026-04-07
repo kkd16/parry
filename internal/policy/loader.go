@@ -82,13 +82,9 @@ func (p *Policy) validate() error {
 		}
 	}
 	if n := p.Notifications; n != nil && n.Provider != "" {
-		prov, ok := notify.GetProvider(n.Provider)
-		if !ok {
+		if _, ok := notify.GetProvider(n.Provider); !ok {
 			return fmt.Errorf("notifications.provider %q: unknown (available: %s)",
 				n.Provider, strings.Join(notify.ProviderNames(), ", "))
-		}
-		if _, err := prov.NewConfirmer(n.ProviderConfig()); err != nil {
-			return err
 		}
 		if n.ConfirmationTimeout != "" {
 			d, err := time.ParseDuration(n.ConfirmationTimeout)
