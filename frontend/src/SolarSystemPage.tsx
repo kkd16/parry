@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import PageHeader from "./components/PageHeader";
 
 interface HeatmapFile {
   path: string;
@@ -24,8 +25,9 @@ interface Body {
   count: number;
 }
 
-const BODY_FILL = "#e8f1ff";
-const BODY_STROKE = "#4ea1ff";
+const BODY_FILL = "#f5e9d2";
+const BODY_STROKE = "#d4a14a";
+const SUN_FILL = "#f5c97a";
 
 interface System {
   cx: number;
@@ -34,6 +36,8 @@ interface System {
   workdir: string;
   bodies: Body[];
   orbitRadii: number[];
+  total: number;
+  topFile: string;
 }
 
 const COLS = 2;
@@ -55,7 +59,6 @@ function buildSystems(projects: HeatmapProject[]): System[] {
     const cx = col * SYSTEM_W + SYSTEM_W / 2;
     const cy = row * SYSTEM_H + SYSTEM_H / 2;
     const maxCount = p.files.reduce((m, f) => Math.max(m, f.count), 1);
-
     const sorted = [...p.files].sort((a, b) => b.count - a.count);
     const bodies: Body[] = sorted.map((f, i) => {
       const orbit = INNER_ORBIT + (1 - f.count / maxCount) * ORBIT_SPAN;
@@ -69,12 +72,10 @@ function buildSystems(projects: HeatmapProject[]): System[] {
         count: f.count,
       };
     });
-
     const orbitRadii: number[] = [];
     for (let k = 0; k <= 4; k++) {
       orbitRadii.push(INNER_ORBIT + (k / 4) * ORBIT_SPAN);
     }
-
     return {
       cx,
       cy,
@@ -82,6 +83,8 @@ function buildSystems(projects: HeatmapProject[]): System[] {
       workdir: p.workdir,
       bodies,
       orbitRadii,
+      total: p.total,
+      topFile: sorted[0]?.path ?? "",
     };
   });
 }
@@ -109,13 +112,15 @@ interface Hover {
   body: Body;
 }
 
-export default function HeatmapPage() {
+export default function SolarSystemPage() {
   const [data, setData] = useState<HeatmapResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState({ tx: 0, ty: 0, scale: 1 });
   const [hover, setHover] = useState<Hover | null>(null);
+  const [filterProject, setFilterProject] = useState<string>("");
   const containerRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const flyRaf = useRef<number | null>(null);
 
   useEffect(() => {
     fetch("/api/heatmap")
@@ -130,7 +135,11 @@ export default function HeatmapPage() {
       .catch((e: unknown) => setError(String(e)));
   }, []);
 
-  const systems = useMemo(() => (data ? buildSystems(data.projects) : []), [data]);
+  const allSystems = useMemo(() => (data ? buildSystems(data.projects) : []), [data]);
+  const systems = useMemo(
+    () => (filterProject ? allSystems.filter((s) => s.workdir === filterProject) : allSystems),
+    [allSystems, filterProject],
+  );
 
   const worldBounds = useMemo(() => {
     if (systems.length === 0) return { w: SYSTEM_W, h: SYSTEM_H };
@@ -144,6 +153,25 @@ export default function HeatmapPage() {
     [worldBounds.w, worldBounds.h],
   );
 
+  const flyTo = useCallback((targetTx: number, targetTy: number, targetScale: number) => {
+    if (flyRaf.current != null) cancelAnimationFrame(flyRaf.current);
+    const startView = { ...view };
+    const start = performance.now();
+    const duration = 700;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      const ease = 1 - Math.pow(1 - t, 3);
+      setView({
+        tx: startView.tx + (targetTx - startView.tx) * ease,
+        ty: startView.ty + (targetTy - startView.ty) * ease,
+        scale: startView.scale + (targetScale - startView.scale) * ease,
+      });
+      if (t < 1) flyRaf.current = requestAnimationFrame(tick);
+    };
+    flyRaf.current = requestAnimationFrame(tick);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const resetView = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -152,8 +180,20 @@ export default function HeatmapPage() {
     const scale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
     const tx = (vw - worldBounds.w * scale) / 2;
     const ty = (vh - worldBounds.h * scale) / 2;
-    setView({ tx, ty, scale });
-  }, [worldBounds.w, worldBounds.h]);
+    flyTo(tx, ty, scale);
+  }, [worldBounds.w, worldBounds.h, flyTo]);
+
+  const flyToSystem = useCallback(
+    (sys: System) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const vw = el.clientWidth;
+      const vh = el.clientHeight;
+      const scale = 1.4;
+      flyTo(vw / 2 - sys.cx * scale, vh / 2 - sys.cy * scale, scale);
+    },
+    [flyTo],
+  );
 
   useEffect(() => {
     if (systems.length === 0) return;
@@ -161,19 +201,17 @@ export default function HeatmapPage() {
     if (!el) return;
     const vw = el.clientWidth;
     const vh = el.clientHeight;
-
     const first = systems[0];
     const startScale = Math.min(vw / 500, vh / 500);
     const startTx = vw / 2 - first.cx * startScale;
     const startTy = vh / 2 - first.cy * startScale;
-
+    setView({ tx: startTx, ty: startTy, scale: startScale });
     const endScale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
     const endTx = (vw - worldBounds.w * endScale) / 2;
     const endTy = (vh - worldBounds.h * endScale) / 2;
-
-    let raf = 0;
-    const duration = 1100;
     const start = performance.now();
+    const duration = 1100;
+    let raf = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
       const ease = 1 - Math.pow(1 - t, 3);
@@ -200,158 +238,278 @@ export default function HeatmapPage() {
     dragState.current = null;
   };
 
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const factor = Math.exp(-e.deltaY * 0.0015);
-    setView((v) => {
-      const next = Math.min(6, Math.max(0.15, v.scale * factor));
-      const ratio = next / v.scale;
-      return {
-        scale: next,
-        tx: mx - (mx - v.tx) * ratio,
-        ty: my - (my - v.ty) * ratio,
-      };
-    });
-  };
-
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const handler = (e: WheelEvent) => e.preventDefault();
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      // normalize deltaY across deltaMode: 0=pixel, 1=line, 2=page
+      let delta = e.deltaY;
+      if (e.deltaMode === 1) delta *= 16;
+      else if (e.deltaMode === 2) delta *= 100;
+      // trackpad pinch sends ctrlKey + small deltas; mouse wheel sends bigger discrete deltas
+      const intensity = e.ctrlKey ? 0.012 : 0.0035;
+      const factor = Math.exp(-delta * intensity);
+      setView((v) => {
+        const next = Math.min(8, Math.max(0.1, v.scale * factor));
+        const ratio = next / v.scale;
+        return {
+          scale: next,
+          tx: mx - (mx - v.tx) * ratio,
+          ty: my - (my - v.ty) * ratio,
+        };
+      });
+    };
     el.addEventListener("wheel", handler, { passive: false });
     return () => el.removeEventListener("wheel", handler);
   }, []);
 
-  if (error) return <div className="heatmap-empty">Error: {error}</div>;
-  if (!data) return <div className="heatmap-empty">Loading...</div>;
-  if (systems.length === 0) {
+  const stats = useMemo(() => {
+    if (!data) return null;
+    let totalEvents = 0;
+    let totalFiles = 0;
+    let topFile = { path: "", count: 0 };
+    let topProject = { workdir: "", count: 0 };
+    for (const p of data.projects) {
+      totalEvents += p.total;
+      totalFiles += p.files.length;
+      if (p.total > topProject.count) topProject = { workdir: p.workdir, count: p.total };
+      for (const f of p.files) {
+        if (f.count > topFile.count) topFile = { path: f.path, count: f.count };
+      }
+    }
+    return {
+      projects: data.projects.length,
+      totalFiles,
+      totalEvents,
+      topFile,
+      topProject,
+    };
+  }, [data]);
+
+  if (error)
     return (
-      <div className="heatmap-empty">
-        No file events recorded yet. Run some tool calls with <code>parry check</code> first.
-      </div>
+      <>
+        <PageHeader eyebrow="instrument · 02" title="Orrery" />
+        <div className="error">{error}</div>
+      </>
+    );
+  if (!data)
+    return (
+      <>
+        <PageHeader eyebrow="instrument · 02" title="Orrery" />
+        <div className="heatmap-empty">charting the heavens…</div>
+      </>
+    );
+  if (allSystems.length === 0) {
+    return (
+      <>
+        <PageHeader eyebrow="instrument · 02" title="Orrery" />
+        <div className="heatmap-empty">
+          the sky is empty.
+          <div style={{ fontSize: "0.8rem", marginTop: 12, fontStyle: "normal" }}>
+            run some tool calls with <code>parry check</code> first.
+          </div>
+        </div>
+      </>
     );
   }
 
   const showLabels = view.scale > 0.7;
 
   return (
-    <div
-      className="heatmap-canvas"
-      ref={containerRef}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onWheel={onWheel}
-    >
-      <svg width="100%" height="100%">
-        <defs>
-          <filter id="bodyGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.5" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
-          {stars.map((s, i) => (
-            <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#2a3444" />
-          ))}
+    <>
+      <PageHeader
+        eyebrow="instrument · 02"
+        title="Orrery"
+        sub="files orbit their projects · drag to pan · scroll to zoom"
+      />
 
-          {systems.map((sys) => (
-            <g key={sys.workdir}>
-              {sys.orbitRadii.map((r, i) => (
+      <div
+        className="heatmap-canvas"
+        ref={containerRef}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
+      >
+        <svg width="100%" height="100%">
+          <defs>
+            <filter id="bodyGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="sunGlow" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="6" />
+            </filter>
+          </defs>
+          <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
+            {stars.map((s, i) => (
+              <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#2a3040" />
+            ))}
+
+            {systems.map((sys) => (
+              <g key={sys.workdir}>
+                {sys.orbitRadii.map((r, i) => (
+                  <circle
+                    key={i}
+                    cx={sys.cx}
+                    cy={sys.cy}
+                    r={r}
+                    fill="none"
+                    stroke="#1d2030"
+                    strokeWidth={1}
+                    strokeDasharray="2 7"
+                  />
+                ))}
                 <circle
-                  key={i}
                   cx={sys.cx}
                   cy={sys.cy}
-                  r={r}
-                  fill="none"
-                  stroke="#1d2733"
-                  strokeWidth={1}
-                  strokeDasharray="3 6"
+                  r={42}
+                  fill={SUN_FILL}
+                  opacity={0.18}
+                  filter="url(#sunGlow)"
                 />
-              ))}
-
-              <circle cx={sys.cx} cy={sys.cy} r={18} fill="#f5d76e" opacity={0.92} />
-              <circle cx={sys.cx} cy={sys.cy} r={32} fill="#f5d76e" opacity={0.12} />
-              <text
-                x={sys.cx}
-                y={sys.cy + 52}
-                textAnchor="middle"
-                fill="#c9d1d9"
-                fontSize={16}
-                fontFamily="monospace"
-                style={{ pointerEvents: "none" }}
-              >
-                {sys.label}
-              </text>
-
-              {sys.bodies.map((b, i) => (
-                <g
-                  key={i}
-                  onMouseEnter={(e) => {
-                    const rect = containerRef.current?.getBoundingClientRect();
-                    if (!rect) return;
-                    setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, body: b });
-                  }}
-                  onMouseMove={(e) => {
-                    const rect = containerRef.current?.getBoundingClientRect();
-                    if (!rect) return;
-                    setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, body: b });
-                  }}
-                  onMouseLeave={() => setHover(null)}
+                <circle cx={sys.cx} cy={sys.cy} r={20} fill={SUN_FILL} />
+                <text
+                  x={sys.cx}
+                  y={sys.cy + 56}
+                  textAnchor="middle"
+                  fill="#eae3d2"
+                  fontSize={18}
+                  fontFamily="Instrument Serif, serif"
+                  fontStyle="italic"
+                  style={{ pointerEvents: "none" }}
                 >
-                  <circle
-                    cx={b.x}
-                    cy={b.y}
-                    r={b.r}
-                    fill={BODY_FILL}
-                    stroke={BODY_STROKE}
-                    strokeWidth={1.5}
-                    filter="url(#bodyGlow)"
-                  />
-                  {showLabels && (
-                    <text
-                      x={b.x + b.r + 4}
-                      y={b.y + 3}
-                      fill="#8b949e"
-                      fontSize={9}
-                      fontFamily="monospace"
-                      style={{ pointerEvents: "none" }}
-                    >
-                      {b.name}
-                    </text>
-                  )}
-                </g>
-              ))}
-            </g>
-          ))}
-        </g>
-      </svg>
+                  {sys.label}
+                </text>
 
-      <div className="heatmap-controls">
-        <button className="heatmap-reset" onClick={resetView}>
-          reset view
-        </button>
-        <div className="heatmap-hint">drag to pan · scroll to zoom</div>
-      </div>
+                {sys.bodies.map((b, i) => (
+                  <g
+                    key={i}
+                    onMouseEnter={(e) => {
+                      const rect = containerRef.current?.getBoundingClientRect();
+                      if (!rect) return;
+                      setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, body: b });
+                    }}
+                    onMouseMove={(e) => {
+                      const rect = containerRef.current?.getBoundingClientRect();
+                      if (!rect) return;
+                      setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, body: b });
+                    }}
+                    onMouseLeave={() => setHover(null)}
+                  >
+                    <circle
+                      cx={b.x}
+                      cy={b.y}
+                      r={b.r}
+                      fill={BODY_FILL}
+                      stroke={BODY_STROKE}
+                      strokeWidth={1.5}
+                      filter="url(#bodyGlow)"
+                    />
+                    {showLabels && (
+                      <text
+                        x={b.x + b.r + 4}
+                        y={b.y + 3}
+                        fill="#8a8478"
+                        fontSize={9}
+                        fontFamily="JetBrains Mono, monospace"
+                        style={{ pointerEvents: "none" }}
+                      >
+                        {b.name}
+                      </text>
+                    )}
+                  </g>
+                ))}
+              </g>
+            ))}
+          </g>
+        </svg>
 
-      {hover && (
-        <div
-          className="heatmap-tooltip"
-          style={{ left: hover.x + 12, top: hover.y + 12 }}
-        >
-          <div className="heatmap-tooltip-path">{hover.body.path}</div>
-          <div className="heatmap-tooltip-count">{hover.body.count} events</div>
+        <div className="heatmap-overlay legend">
+          <div className="heatmap-overlay-title">legend</div>
+          <div style={{ marginBottom: 8, lineHeight: 1.6 }}>
+            inner orbit · hottest
+            <br />
+            larger body · more accesses
+          </div>
+          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: 8, marginTop: 4 }}>
+            <div style={{ color: "var(--ink-mute)", marginBottom: 4 }}>systems</div>
+            {allSystems.map((s) => (
+              <button
+                key={s.workdir}
+                className={`legend-map-entry${filterProject === s.workdir ? " active" : ""}`}
+                onClick={() => flyToSystem(s)}
+                onDoubleClick={() =>
+                  setFilterProject(filterProject === s.workdir ? "" : s.workdir)
+                }
+                title="click: fly to · double-click: isolate"
+              >
+                · {s.label}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
-    </div>
+
+        {stats && (
+          <div className="heatmap-overlay stats">
+            <div className="heatmap-overlay-title">tally</div>
+            <div className="stats-row">
+              <span className="stats-row-label">projects</span>
+              <span className="stats-row-value">{stats.projects}</span>
+            </div>
+            <div className="stats-row">
+              <span className="stats-row-label">files</span>
+              <span className="stats-row-value">{stats.totalFiles}</span>
+            </div>
+            <div className="stats-row">
+              <span className="stats-row-label">events</span>
+              <span className="stats-row-value">{stats.totalEvents.toLocaleString()}</span>
+            </div>
+            <div style={{ borderTop: "1px solid var(--rule)", marginTop: 6, paddingTop: 6 }}>
+              <div className="stats-row">
+                <span className="stats-row-label">hottest file</span>
+                <span className="stats-row-value">×{stats.topFile.count}</span>
+              </div>
+              <div style={{ color: "var(--ink)", fontSize: "0.66rem", marginTop: 2 }}>
+                {basename(stats.topFile.path)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="heatmap-overlay controls">
+          {filterProject && (
+            <button
+              className="btn"
+              style={{ marginBottom: 6, width: "100%" }}
+              onClick={() => setFilterProject("")}
+            >
+              show all
+            </button>
+          )}
+          <button className="btn" style={{ width: "100%" }} onClick={resetView}>
+            reset view
+          </button>
+        </div>
+
+        {hover && (
+          <div
+            className="heatmap-tooltip"
+            style={{ left: hover.x + 12, top: hover.y + 12 }}
+          >
+            <div className="heatmap-tooltip-path">{hover.body.path}</div>
+            <div className="heatmap-tooltip-count">{hover.body.count} events</div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

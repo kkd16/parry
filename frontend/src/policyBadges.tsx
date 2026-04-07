@@ -10,6 +10,9 @@ export function actionBadge(action: string): ReactNode {
       cls += " badge-block";
       break;
     case "confirm":
+      cls += " badge-confirm";
+      break;
+    case "observe":
       cls += " badge-observe";
       break;
   }

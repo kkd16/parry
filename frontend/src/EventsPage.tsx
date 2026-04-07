@@ -1,144 +1,177 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ColumnDef,
+  type ColumnOrderState,
+  type ColumnSizingState,
+  type SortingState,
+  type VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { Download, RefreshCw, Columns3, FileJson } from "lucide-react";
+import SearchableSelect from "./components/SearchableSelect";
 import type { Event, EventsResponse } from "./types";
+import type { QuickFilter } from "./components/CommandPalette";
+import { actionBadge } from "./policyBadges";
+import EventDrawer from "./components/EventDrawer";
+import PageHeader from "./components/PageHeader";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 
 const PAGE_SIZE = 100;
 
-type ColKey =
-  | "timestamp"
-  | "raw_name"
-  | "tool_name"
-  | "binary"
-  | "subcommand"
-  | "action"
-  | "mode"
-  | "session"
-  | "workdir"
-  | "file"
-  | "tool_input";
-
-type SortCol = ColKey | "";
-
-interface ColDef {
-  key: ColKey;
-  label: string;
-  sortable: boolean;
+interface Props {
+  onCountChange: (n: number) => void;
+  onLiveChange: (live: boolean) => void;
+  pendingFilter: QuickFilter | null;
+  consumePendingFilter: () => void;
+  registerSearchFocus: (fn: () => void) => void;
 }
 
-const ALL_COLUMNS: ColDef[] = [
-  { key: "timestamp", label: "Time", sortable: true },
-  { key: "raw_name", label: "Raw Tool", sortable: true },
-  { key: "tool_name", label: "Tool", sortable: true },
-  { key: "binary", label: "Binary", sortable: true },
-  { key: "subcommand", label: "Subcmd", sortable: true },
-  { key: "action", label: "Action", sortable: true },
-  { key: "mode", label: "Mode", sortable: true },
-  { key: "workdir", label: "Directory", sortable: true },
-  { key: "session", label: "Session", sortable: false },
-  { key: "file", label: "File", sortable: true },
-  { key: "tool_input", label: "Input", sortable: false },
+const COLUMN_LABELS: Record<string, string> = {
+  timestamp: "Time",
+  raw_name: "Raw",
+  tool_name: "Tool",
+  binary: "Binary",
+  subcommand: "Subcmd",
+  action: "Action",
+  mode: "Mode",
+  workdir: "Directory",
+  session: "Session",
+  file: "File",
+  tool_input: "Input",
+};
+
+function shortJson(v: unknown, n = 60): string {
+  const s = JSON.stringify(v) ?? "";
+  return s.length > n ? s.slice(0, n - 1) + "…" : s;
+}
+
+const TIME_OPTIONS: { value: string; label: string; ms: number }[] = [
+  { value: "5m", label: "last 5 min", ms: 5 * 60 * 1000 },
+  { value: "15m", label: "last 15 min", ms: 15 * 60 * 1000 },
+  { value: "1h", label: "last hour", ms: 60 * 60 * 1000 },
+  { value: "6h", label: "last 6 hours", ms: 6 * 60 * 60 * 1000 },
+  { value: "24h", label: "last 24 hours", ms: 24 * 60 * 60 * 1000 },
+  { value: "7d", label: "last 7 days", ms: 7 * 24 * 60 * 60 * 1000 },
+  { value: "30d", label: "last 30 days", ms: 30 * 24 * 60 * 60 * 1000 },
 ];
 
-const DEFAULT_VISIBLE: ColKey[] = [
-  "timestamp",
-  "tool_name",
-  "binary",
-  "file",
-  "action",
-  "mode",
-  "workdir",
-];
-
-const STORAGE_KEY = "parry-columns";
-
-function loadVisibleCols(): ColKey[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored) as ColKey[];
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch {
-    // invalid stored column config
-  }
-  return DEFAULT_VISIBLE;
+function timeFilterCutoff(value: string): number | null {
+  const opt = TIME_OPTIONS.find((o) => o.value === value);
+  return opt ? Date.now() - opt.ms : null;
 }
 
-function actionClass(action: string): string {
-  switch (action) {
-    case "allow":
-      return "badge badge-allow";
-    case "confirm":
-      return "badge badge-confirm";
-    case "block":
-      return "badge badge-block";
-    case "observe":
-      return "badge badge-observe";
-    default:
-      return "badge";
-  }
+function csvEscape(v: string): string {
+  if (/[",\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
+  return v;
 }
 
-function formatTime(ts: string): string {
-  const d = new Date(ts);
-  return d.toLocaleString();
+function downloadJson(events: Event[]) {
+  const blob = new Blob([JSON.stringify(events, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `parry-events-${new Date().toISOString().slice(0, 19)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function truncate(s: string, n: number): string {
-  return s.length > n ? s.slice(0, n - 3) + "..." : s;
+function downloadCsv(events: Event[]) {
+  const cols: (keyof Event)[] = [
+    "timestamp",
+    "tool_name",
+    "raw_name",
+    "binary",
+    "subcommand",
+    "action",
+    "mode",
+    "workdir",
+    "file",
+    "session",
+  ];
+  const header = cols.join(",");
+  const rows = events.map((e) =>
+    cols
+      .map((c) => {
+        const v = e[c];
+        return csvEscape(typeof v === "string" ? v : String(v ?? ""));
+      })
+      .join(","),
+  );
+  const csv = [header, ...rows, ""].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `parry-events-${new Date().toISOString().slice(0, 19)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function sortIndicator(col: SortCol, activeCol: SortCol, order: "asc" | "desc"): string {
-  if (col !== activeCol) return "";
-  return order === "asc" ? " \u25B2" : " \u25BC";
-}
-
-function renderCell(ev: Event, col: ColKey): React.ReactNode {
-  switch (col) {
-    case "timestamp":
-      return <span className="nowrap">{formatTime(ev.timestamp)}</span>;
-    case "raw_name":
-      return ev.raw_name;
-    case "tool_name":
-      return ev.tool_name;
-    case "binary":
-      return ev.binary ? <span className="mono">{ev.binary}</span> : <span className="muted">-</span>;
-    case "subcommand":
-      return ev.subcommand ? <span className="mono">{ev.subcommand}</span> : <span className="muted">-</span>;
-    case "action":
-      return <span className={actionClass(ev.action)}>{ev.action}</span>;
-    case "mode":
-      return ev.mode;
-    case "workdir":
-      return ev.workdir ? <span className="mono">{ev.workdir}</span> : <span className="muted">-</span>;
-    case "file":
-      return ev.file ? <span className="mono">{ev.file}</span> : <span className="muted">-</span>;
-    case "session":
-      return <span className="mono">{ev.session.slice(0, 8)}</span>;
-    case "tool_input":
-      return (
-        <span className="input-cell" title={JSON.stringify(ev.tool_input)}>
-          {truncate(JSON.stringify(ev.tool_input), 60)}
-        </span>
-      );
-  }
-}
-
-export default function EventsPage() {
+export default function EventsPage({
+  onCountChange,
+  onLiveChange,
+  pendingFilter,
+  consumePendingFilter,
+  registerSearchFocus,
+}: Props) {
   const [events, setEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [actionFilter, setActionFilter] = useState("");
   const [toolFilter, setToolFilter] = useState("");
+  const [workdirFilter, setWorkdirFilter] = useState("");
+  const [binaryFilter, setBinaryFilter] = useState("");
+  const [timeFilter, setTimeFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [sortCol, setSortCol] = useState<SortCol>("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sorting, setSorting] = useState<SortingState>([{ id: "timestamp", desc: true }]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [visibleCols, setVisibleCols] = useState<ColKey[]>(loadVisibleCols);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [colMenuOpen, setColMenuOpen] = useState(false);
+  const [selected, setSelected] = useState<Event | null>(null);
+
+  const [columnSizing, setColumnSizing] = useLocalStorage<ColumnSizingState>(
+    "parry-col-sizing",
+    {},
+  );
+  const [columnOrder, setColumnOrder] = useLocalStorage<ColumnOrderState>("parry-col-order", [
+    "timestamp",
+    "tool_name",
+    "binary",
+    "file",
+    "action",
+    "mode",
+    "workdir",
+    "tool_input",
+  ]);
+  const [columnVisibility, setColumnVisibility] = useLocalStorage<VisibilityState>(
+    "parry-col-visibility",
+    {
+      raw_name: false,
+      subcommand: false,
+      session: false,
+    },
+  );
+
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const colMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    registerSearchFocus(() => searchInputRef.current?.focus());
+  }, [registerSearchFocus]);
+
+  useEffect(() => {
+    if (!pendingFilter) return;
+    if (pendingFilter.kind === "action") setActionFilter(pendingFilter.value);
+    if (pendingFilter.kind === "tool") setToolFilter(pendingFilter.value);
+    if (pendingFilter.kind === "time") setTimeFilter(pendingFilter.value);
+    setOffset(0);
+    consumePendingFilter();
+  }, [pendingFilter, consumePendingFilter]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -150,133 +183,303 @@ export default function EventsPage() {
     if (actionFilter) params.set("action", actionFilter);
     if (toolFilter) params.set("tool", toolFilter);
     if (search) params.set("search", search);
-    if (sortCol) {
-      params.set("sort", sortCol);
-      params.set("order", sortOrder);
+    const sort = sorting[0];
+    if (sort) {
+      params.set("sort", sort.id);
+      params.set("order", sort.desc ? "desc" : "asc");
     }
-
     try {
       const res = await fetch(`/api/events?${params}`);
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(body || res.statusText);
-      }
+      if (!res.ok) throw new Error((await res.text()) || res.statusText);
       const data: EventsResponse = await res.json();
       setEvents(data.events ?? []);
       setTotal(data.total);
+      onCountChange(data.total);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : "unknown error");
     } finally {
       setLoading(false);
     }
-  }, [offset, actionFilter, toolFilter, search, sortCol, sortOrder]);
+  }, [offset, actionFilter, toolFilter, search, sorting, onCountChange]);
 
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
   useEffect(() => {
+    onLiveChange(autoRefresh);
+    if (!autoRefresh) return;
+    const id = setInterval(fetchEvents, 5000);
+    return () => clearInterval(id);
+  }, [autoRefresh, fetchEvents, onLiveChange]);
+
+  useEffect(() => {
     if (!colMenuOpen) return;
-    const handleClick = (e: MouseEvent) => {
+    const click = (e: MouseEvent) => {
       if (colMenuRef.current && !colMenuRef.current.contains(e.target as Node)) {
         setColMenuOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("mousedown", click);
+    return () => document.removeEventListener("mousedown", click);
   }, [colMenuOpen]);
 
-  const handleFilterChange = (setter: (v: string) => void) => {
-    return (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setter(e.target.value);
-      setOffset(0);
-    };
-  };
-
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setSearchInput(val);
+  const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setSearchInput(v);
     clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setSearch(val);
+      setSearch(v);
       setOffset(0);
     }, 300);
   };
 
-  const handleSort = (col: ColKey) => {
-    const def = ALL_COLUMNS.find((c) => c.key === col);
-    if (!def?.sortable) return;
-    if (sortCol === col) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortCol(col);
-      setSortOrder("desc");
-    }
-    setOffset(0);
-  };
+  // client-side filtering on top of server response
+  const filteredEvents = useMemo(() => {
+    let out = events;
+    if (workdirFilter) out = out.filter((e) => e.workdir === workdirFilter);
+    if (binaryFilter) out = out.filter((e) => e.binary === binaryFilter);
+    const cutoff = timeFilterCutoff(timeFilter);
+    if (cutoff != null) out = out.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
+    return out;
+  }, [events, workdirFilter, binaryFilter, timeFilter]);
 
-  const toggleCol = (key: ColKey) => {
-    const next = visibleCols.includes(key)
-      ? visibleCols.filter((c) => c !== key)
-      : [...visibleCols, key];
-    if (next.length === 0) return;
-    setVisibleCols(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    if (sortCol === key && !next.includes(key)) {
-      setSortCol("");
-    }
-  };
+  const workdirs = useMemo(
+    () => Array.from(new Set(events.map((e) => e.workdir).filter(Boolean))).sort(),
+    [events],
+  );
+  const binaries = useMemo(
+    () => Array.from(new Set(events.map((e) => e.binary).filter(Boolean))).sort(),
+    [events],
+  );
 
-  const activeCols = ALL_COLUMNS.filter((c) => visibleCols.includes(c.key));
+  const columns = useMemo<ColumnDef<Event>[]>(
+    () => [
+      {
+        accessorKey: "timestamp",
+        header: "Time",
+        size: 170,
+        cell: (c) => <span className="mono">{new Date(c.getValue<string>()).toLocaleString()}</span>,
+      },
+      {
+        accessorKey: "raw_name",
+        header: "Raw",
+        size: 110,
+        cell: (c) => c.getValue<string>() || <span className="muted">—</span>,
+      },
+      {
+        accessorKey: "tool_name",
+        header: "Tool",
+        size: 110,
+      },
+      {
+        accessorKey: "binary",
+        header: "Binary",
+        size: 110,
+        cell: (c) => {
+          const v = c.getValue<string>();
+          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
+        },
+      },
+      {
+        accessorKey: "subcommand",
+        header: "Subcmd",
+        size: 110,
+        cell: (c) => {
+          const v = c.getValue<string>();
+          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
+        },
+      },
+      {
+        accessorKey: "action",
+        header: "Action",
+        size: 100,
+        cell: (c) => actionBadge(c.getValue<string>()),
+      },
+      {
+        accessorKey: "mode",
+        header: "Mode",
+        size: 90,
+      },
+      {
+        accessorKey: "workdir",
+        header: "Directory",
+        size: 240,
+        cell: (c) => {
+          const v = c.getValue<string>();
+          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
+        },
+      },
+      {
+        accessorKey: "session",
+        header: "Session",
+        size: 100,
+        enableSorting: false,
+        cell: (c) => <span className="mono">{c.getValue<string>().slice(0, 8)}</span>,
+      },
+      {
+        accessorKey: "file",
+        header: "File",
+        size: 240,
+        cell: (c) => {
+          const v = c.getValue<string>();
+          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
+        },
+      },
+      {
+        accessorKey: "tool_input",
+        header: "Input",
+        size: 280,
+        enableSorting: false,
+        cell: (c) => <span className="mono muted">{shortJson(c.getValue())}</span>,
+      },
+    ],
+    [],
+  );
+
+  const table = useReactTable({
+    data: filteredEvents,
+    columns,
+    state: { sorting, columnSizing, columnOrder, columnVisibility },
+    onSortingChange: setSorting,
+    onColumnSizingChange: setColumnSizing,
+    onColumnOrderChange: setColumnOrder,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    columnResizeMode: "onChange",
+    manualSorting: true,
+    enableColumnResizing: true,
+  });
+
   const page = Math.floor(offset / PAGE_SIZE) + 1;
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <>
-      <div className="page-subtitle">{total} events</div>
+      <PageHeader
+        eyebrow="instrument · 01"
+        title="Logbook"
+        sub={`${total.toLocaleString()} entries observed${autoRefresh ? " · live" : ""}`}
+      />
 
-      <div className="filters">
+      <div className="toolbar">
         <input
+          ref={searchInputRef}
+          className="input search-input"
           type="text"
-          className="search-input"
-          placeholder="Search events..."
+          placeholder="search entries… (press / to focus)"
           value={searchInput}
-          onChange={handleSearchInput}
+          onChange={onSearch}
         />
-        <label>
-          Action:
-          <select value={actionFilter} onChange={handleFilterChange(setActionFilter)}>
-            <option value="">All</option>
-            <option value="allow">Allow</option>
-            <option value="confirm">Confirm</option>
-            <option value="block">Block</option>
-            <option value="observe">Observe</option>
-          </select>
-        </label>
-        <label>
-          Tool:
-          <select value={toolFilter} onChange={handleFilterChange(setToolFilter)}>
-            <option value="">All</option>
-            <option value="shell">Shell</option>
-            <option value="file_edit">File Edit</option>
-            <option value="file_read">File Read</option>
-            <option value="unknown">Unknown</option>
-          </select>
-        </label>
-        <div className="col-toggle" ref={colMenuRef}>
-          <button className="col-toggle-btn" onClick={() => setColMenuOpen(!colMenuOpen)}>
-            Columns
+        <select
+          className="input"
+          value={actionFilter}
+          onChange={(e) => {
+            setActionFilter(e.target.value);
+            setOffset(0);
+          }}
+        >
+          <option value="">action: all</option>
+          <option value="allow">allow</option>
+          <option value="confirm">confirm</option>
+          <option value="block">block</option>
+          <option value="observe">observe</option>
+        </select>
+        <select
+          className="input"
+          value={toolFilter}
+          onChange={(e) => {
+            setToolFilter(e.target.value);
+            setOffset(0);
+          }}
+        >
+          <option value="">tool: all</option>
+          <option value="shell">shell</option>
+          <option value="file_edit">file_edit</option>
+          <option value="file_read">file_read</option>
+          <option value="unknown">unknown</option>
+        </select>
+        <SearchableSelect
+          label="dir"
+          value={workdirFilter}
+          options={workdirs}
+          onChange={setWorkdirFilter}
+        />
+        <SearchableSelect
+          label="bin"
+          value={binaryFilter}
+          options={binaries}
+          onChange={setBinaryFilter}
+        />
+        <select
+          className="input"
+          value={timeFilter}
+          onChange={(e) => setTimeFilter(e.target.value)}
+        >
+          <option value="">time: all</option>
+          {TIME_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+
+        <div className="toolbar-spacer" />
+
+        <button
+          className={`btn${autoRefresh ? " active" : ""}`}
+          onClick={() => setAutoRefresh((v) => !v)}
+          title="auto-refresh every 5s"
+        >
+          <RefreshCw style={{ animation: autoRefresh ? "spin 2s linear infinite" : "" }} />
+          live
+        </button>
+      </div>
+
+      <div className="toolbar toolbar-actions">
+        <div className="toolbar-spacer" />
+        <button className="btn" onClick={() => downloadCsv(filteredEvents)}>
+          <Download /> csv
+        </button>
+        <button className="btn" onClick={() => downloadJson(filteredEvents)}>
+          <FileJson /> json
+        </button>
+        <div className="toolbar-group" ref={colMenuRef} style={{ position: "relative" }}>
+          <button className="btn" onClick={() => setColMenuOpen((v) => !v)}>
+            <Columns3 /> cols
           </button>
           {colMenuOpen && (
-            <div className="col-dropdown">
-              {ALL_COLUMNS.map(({ key, label }) => (
-                <label key={key} className="col-option">
+            <div
+              className="card"
+              style={{
+                position: "absolute",
+                right: 0,
+                top: "calc(100% + 6px)",
+                zIndex: 20,
+                padding: "10px 14px",
+                minWidth: 160,
+              }}
+            >
+              {table.getAllLeafColumns().map((col) => (
+                <label
+                  key={col.id}
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    fontSize: "0.78rem",
+                    padding: "4px 0",
+                    cursor: "pointer",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
                   <input
                     type="checkbox"
-                    checked={visibleCols.includes(key)}
-                    onChange={() => toggleCol(key)}
+                    checked={col.getIsVisible()}
+                    onChange={col.getToggleVisibilityHandler()}
+                    style={{ accentColor: "var(--brass)" }}
                   />
-                  {label}
+                  {COLUMN_LABELS[col.id] ?? col.id}
                 </label>
               ))}
             </div>
@@ -286,34 +489,73 @@ export default function EventsPage() {
 
       {error && <div className="error">{error}</div>}
 
-      <div className={`table-wrap${loading ? " table-loading" : ""}`}>
+      <div className={`table-wrap${loading ? " loading" : ""}`}>
         {loading && <div className="loading-bar" />}
-        <table>
+        <table className="events-table" style={{ width: table.getCenterTotalSize() }}>
           <thead>
-            <tr>
-              {activeCols.map(({ key, label, sortable }) => (
-                <th
-                  key={key}
-                  className={sortable ? "sortable" : undefined}
-                  onClick={sortable ? () => handleSort(key) : undefined}
-                >
-                  {label}{sortable ? sortIndicator(key, sortCol, sortOrder) : ""}
-                </th>
-              ))}
-            </tr>
+            {table.getHeaderGroups().map((hg) => (
+              <tr key={hg.id}>
+                {hg.headers.map((h) => {
+                  const sortable = h.column.getCanSort();
+                  const sorted = h.column.getIsSorted();
+                  return (
+                    <th
+                      key={h.id}
+                      style={{ width: h.getSize() }}
+                      className={`${sortable ? "sortable" : ""}${sorted ? " sorted" : ""}`}
+                      onClick={
+                        sortable
+                          ? () => {
+                              h.column.toggleSorting(sorted === "asc");
+                              setOffset(0);
+                            }
+                          : undefined
+                      }
+                    >
+                      {flexRender(h.column.columnDef.header, h.getContext())}
+                      {sorted === "asc" ? " ▲" : sorted === "desc" ? " ▼" : ""}
+                      {h.column.getCanResize() && (
+                        <div
+                          onMouseDown={h.getResizeHandler()}
+                          onTouchStart={h.getResizeHandler()}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`col-resizer${h.column.getIsResizing() ? " resizing" : ""}`}
+                        />
+                      )}
+                    </th>
+                  );
+                })}
+              </tr>
+            ))}
           </thead>
           <tbody>
-            {events.length === 0 ? (
+            {table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td colSpan={activeCols.length} className="empty">
-                  No events found
+                <td
+                  colSpan={table.getAllLeafColumns().length}
+                  style={{
+                    textAlign: "center",
+                    padding: 60,
+                    fontFamily: "var(--font-display)",
+                    fontStyle: "italic",
+                    fontSize: "1.4rem",
+                    color: "var(--ink-dim)",
+                  }}
+                >
+                  the logbook is empty.
                 </td>
               </tr>
             ) : (
-              events.map((ev) => (
-                <tr key={ev.id}>
-                  {activeCols.map(({ key }) => (
-                    <td key={key}>{renderCell(ev, key)}</td>
+              table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className={selected?.id === row.original.id ? "selected" : ""}
+                  onClick={() => setSelected(row.original)}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} style={{ width: cell.column.getSize() }}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
                   ))}
                 </tr>
               ))
@@ -323,25 +565,33 @@ export default function EventsPage() {
       </div>
 
       <div className="pagination">
-        {totalPages > 1 ? (
-          <>
-            <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}>
-              Prev
-            </button>
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <button
-              disabled={offset + PAGE_SIZE >= total}
-              onClick={() => setOffset(offset + PAGE_SIZE)}
-            >
-              Next
-            </button>
-          </>
-        ) : (
-          <span>&nbsp;</span>
-        )}
+        <span>
+          showing {filteredEvents.length} of {total.toLocaleString()}
+        </span>
+        <div className="pagination-controls">
+          <button
+            className="btn"
+            disabled={offset === 0}
+            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+          >
+            prev
+          </button>
+          <span>
+            page {page} / {totalPages}
+          </span>
+          <button
+            className="btn"
+            disabled={offset + PAGE_SIZE >= total}
+            onClick={() => setOffset(offset + PAGE_SIZE)}
+          >
+            next
+          </button>
+        </div>
       </div>
+
+      <EventDrawer event={selected} onClose={() => setSelected(null)} />
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   );
 }
