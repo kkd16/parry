@@ -1,5 +1,4 @@
-# Parry default policy
-# See docs/plan/ARCHITECTURE.md for action semantics and tool name reference.
+# https://github.com/kkd16/parry/blob/main/docs/POLICY.md
 
 version: 1
 mode: observe
@@ -7,17 +6,14 @@ mode: observe
 check_mode_confirm: block
 
 notifications:
-  provider: ""              # ntfy (leave blank to disable)
+  provider: ""
   confirmation_timeout: 5m
   ntfy:
     topic: ""
     server: https://ntfy.sh
 
-# Action applied to tool calls that don't match any rule or listed binary.
 default_action: confirm
 
-# Parry internals - paths parry needs to protect itself and the tools it guards.
-# Modifying these could let an agent tamper with parry's own config or hooks.
 parry_paths:
   - "~/.parry/*"
   - "~/.claude/*"
@@ -27,8 +23,6 @@ parry_paths:
   - "/usr/local/Homebrew/Library/Taps/*"
   - "/home/linuxbrew/.linuxbrew/Library/Taps/*"
 
-# Paths that are off limits to all tools. Any tool call that references
-# a protected path is blocked regardless of binary classification.
 protected_paths:
   - "~/.ssh/*"
   - "~/.aws/*"
@@ -66,18 +60,57 @@ rules:
       - df
       - tree
       - diff
+      - ps
+      - top
+      - htop
+      - lsof
+      - uname
+      - hostname
+      - id
+      - groups
+      - history
+      - man
+      - help
+      - type
+      - command
+      - true
+      - false
+      - sleep
+      - test
+      - seq
+      - column
+      - tput
+      - basename
+      - dirname
+      - realpath
+      - readlink
+      - sed
+      - awk
+      - jq
+      - yq
+      - xargs
+      - sort
+      - uniq
+      - cut
+      - tr
+      - tee
+      - cp
+      - mv
+      - mkdir
+      - touch
+      - tar
+      - zip
+      - unzip
+      - gzip
+      - gunzip
+      - ping
       - "git status"
       - "git log"
       - "git diff"
       - "git show"
       - "git branch"
-      - cp
-      - mv
-      - mkdir
-      - touch
-      - tee
-      - sed
-      - awk
+      - "git remote"
+      - "git tag"
       - "git add"
       - "git commit"
       - "git checkout"
@@ -86,17 +119,50 @@ rules:
       - "git rebase"
       - "git stash"
       - "git reset"
+      - python
+      - python3
+      - node
+      - npx
       - "npm install"
       - "npm run"
       - "npm test"
+      - yarn
+      - pnpm
+      - bun
+      - ruby
+      - bundle
+      - "pip install"
+      - pytest
+      - jest
       - "go build"
       - "go test"
+      - "go run"
+      - "go vet"
+      - "go fmt"
       - "go mod"
       - "go get"
-      - "pip install"
-      - make
+      - gofmt
+      - golangci-lint
       - "cargo build"
       - "cargo test"
+      - "cargo run"
+      - "cargo check"
+      - "cargo fmt"
+      - "cargo clippy"
+      - make
+      - mvn
+      - gradle
+      - "docker ps"
+      - "docker images"
+      - "docker logs"
+      - "docker inspect"
+      - "docker build"
+      - "kubectl get"
+      - "kubectl describe"
+      - "kubectl logs"
+      - "terraform plan"
+      - "terraform fmt"
+      - "terraform validate"
     confirm:
       - rm
       - rmdir
@@ -119,12 +185,23 @@ rules:
       - "git clone"
       - "npm publish"
       - "docker push"
-      - ping
       - nc
     block:
       - sudo
       - su
       - doas
+      - dd
+      - mkfs
+      - mkfs.ext4
+      - mkfs.xfs
+      - fdisk
+      - parted
+      - shutdown
+      - reboot
+      - halt
+      - poweroff
+      - iptables
+      - nft
 
   file_edit:
     default_action: allow
