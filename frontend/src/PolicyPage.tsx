@@ -57,7 +57,7 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
     const params = new URLSearchParams();
     params.set("binary", b);
     window.history.replaceState(null, "", "?" + params.toString());
-    setPath("/events");
+    setPath("/logbook");
   };
 
   const charterCommands = useMemo<Command[]>(

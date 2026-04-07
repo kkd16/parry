@@ -104,43 +104,43 @@ export default function Sidebar({
           <Gauge />
           <span>Bridge</span>
           {renderBadge(counts.today)}
-          <span className="sidebar-nav-hint">g b</span>
+          <span className="sidebar-nav-hint">g h</span>
         </button>
         <button
-          className={`sidebar-nav-item${tab === "events" ? " active" : ""}`}
-          onClick={() => setTab("events")}
+          className={`sidebar-nav-item${tab === "logbook" ? " active" : ""}`}
+          onClick={() => setTab("logbook")}
         >
           <ScrollText />
           <span>Logbook</span>
           {renderBadge(eventCount > 0 ? eventCount : null)}
-          <span className="sidebar-nav-hint">g e</span>
+          <span className="sidebar-nav-hint">g l</span>
         </button>
         <button
-          className={`sidebar-nav-item${tab === "solar" ? " active" : ""}`}
-          onClick={() => setTab("solar")}
+          className={`sidebar-nav-item${tab === "orrery" ? " active" : ""}`}
+          onClick={() => setTab("orrery")}
         >
           <Orbit />
           <span>Orrery</span>
           {renderBadge(counts.projects)}
-          <span className="sidebar-nav-hint">g s</span>
+          <span className="sidebar-nav-hint">g o</span>
         </button>
         <button
-          className={`sidebar-nav-item${tab === "policy" ? " active" : ""}`}
-          onClick={() => setTab("policy")}
+          className={`sidebar-nav-item${tab === "charter" ? " active" : ""}`}
+          onClick={() => setTab("charter")}
         >
           <BookOpen />
           <span>Charter</span>
           {renderBadge(ruleCount)}
-          <span className="sidebar-nav-hint">g p</span>
+          <span className="sidebar-nav-hint">g c</span>
         </button>
         <button
-          className={`sidebar-nav-item${tab === "notify" ? " active" : ""}`}
-          onClick={() => setTab("notify")}
+          className={`sidebar-nav-item${tab === "beacon" ? " active" : ""}`}
+          onClick={() => setTab("beacon")}
         >
           <Bell />
           <span>Beacon</span>
           <span className={`sidebar-nav-dot ${healthClass}`} />
-          <span className="sidebar-nav-hint">g n</span>
+          <span className="sidebar-nav-hint">g b</span>
         </button>
 
         {bookmarks.bookmarks.length > 0 && (

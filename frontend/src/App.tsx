@@ -21,7 +21,7 @@ import {
   type QuickFilter,
 } from "./commands";
 
-export type Tab = "bridge" | "events" | "solar" | "policy" | "notify";
+export type Tab = "bridge" | "logbook" | "orrery" | "charter" | "beacon";
 
 interface ShellState {
   setTab: (t: Tab) => void;
@@ -36,46 +36,46 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         id: "nav.bridge",
         group: "Navigate",
         label: "Go to Bridge",
-        hint: "g b",
+        hint: "g h",
         icon: <Gauge />,
         keywords: ["overview", "home", "dashboard"],
         perform: () => setTab("bridge"),
       },
       {
-        id: "nav.events",
+        id: "nav.logbook",
         group: "Navigate",
         label: "Go to Logbook",
-        hint: "g e",
+        hint: "g l",
         icon: <ScrollText />,
-        keywords: ["events", "log"],
-        perform: () => setTab("events"),
+        keywords: ["logbook", "log"],
+        perform: () => setTab("logbook"),
       },
       {
-        id: "nav.solar",
+        id: "nav.orrery",
         group: "Navigate",
         label: "Go to Orrery",
-        hint: "g s",
+        hint: "g o",
         icon: <Orbit />,
-        keywords: ["solar", "system", "files", "heatmap"],
-        perform: () => setTab("solar"),
+        keywords: ["orrery", "system", "files", "heatmap"],
+        perform: () => setTab("orrery"),
       },
       {
-        id: "nav.policy",
+        id: "nav.charter",
         group: "Navigate",
         label: "Go to Charter",
-        hint: "g p",
+        hint: "g c",
         icon: <BookOpen />,
-        keywords: ["policy", "rules"],
-        perform: () => setTab("policy"),
+        keywords: ["charter", "rules"],
+        perform: () => setTab("charter"),
       },
       {
-        id: "nav.notify",
+        id: "nav.beacon",
         group: "Navigate",
         label: "Go to Beacon",
-        hint: "g n",
+        hint: "g b",
         icon: <Bell />,
-        keywords: ["notify", "notification", "alert", "ntfy", "provider", "beacon"],
-        perform: () => setTab("notify"),
+        keywords: ["beacon", "notification", "alert", "ntfy", "provider", "beacon"],
+        perform: () => setTab("beacon"),
       },
       {
         id: "notify.test",
@@ -85,7 +85,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         keywords: ["test", "ping"],
         perform: () => {
           void fetch("/api/notify/test", { method: "POST" });
-          setTab("notify");
+          setTab("beacon");
         },
       },
       {
@@ -103,7 +103,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         keywords: ["block", "denied"],
         perform: () => {
           setPendingFilter({ kind: "action", value: "block" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -113,7 +113,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Filter />,
         perform: () => {
           setPendingFilter({ kind: "action", value: "confirm" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -123,7 +123,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Filter />,
         perform: () => {
           setPendingFilter({ kind: "action", value: "allow" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -133,7 +133,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Filter />,
         perform: () => {
           setPendingFilter({ kind: "action", value: "observe" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -143,7 +143,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Filter />,
         perform: () => {
           setPendingFilter({ kind: "tool", value: "shell" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -153,7 +153,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Filter />,
         perform: () => {
           setPendingFilter({ kind: "tool", value: "file_edit" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -163,7 +163,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Filter />,
         perform: () => {
           setPendingFilter({ kind: "tool", value: "file_read" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -173,7 +173,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Search />,
         perform: () => {
           setPendingFilter({ kind: "time", value: "5m" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -183,7 +183,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Search />,
         perform: () => {
           setPendingFilter({ kind: "time", value: "15m" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -193,7 +193,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Search />,
         perform: () => {
           setPendingFilter({ kind: "time", value: "1h" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -203,7 +203,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Search />,
         perform: () => {
           setPendingFilter({ kind: "time", value: "6h" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -213,7 +213,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Search />,
         perform: () => {
           setPendingFilter({ kind: "time", value: "24h" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -223,7 +223,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Search />,
         perform: () => {
           setPendingFilter({ kind: "time", value: "7d" });
-          setTab("events");
+          setTab("logbook");
         },
       },
       {
@@ -233,7 +233,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <Search />,
         perform: () => {
           setPendingFilter({ kind: "time", value: "30d" });
-          setTab("events");
+          setTab("logbook");
         },
       },
     ],
@@ -274,7 +274,7 @@ function AppShell() {
   const counts = useDashboardCounts();
   const openBookmark = useCallback(
     (qs: string) => {
-      window.history.pushState(null, "", "/events" + (qs ? "?" + qs : ""));
+      window.history.pushState(null, "", "/logbook" + (qs ? "?" + qs : ""));
       window.dispatchEvent(new Event("parry:urlchange"));
     },
     [],
@@ -295,11 +295,11 @@ function AppShell() {
   const queueFilter = useCallback((f: QuickFilter) => setPendingFilter(f), []);
 
   useKeyboardNav({
-    onGoBridge: () => setTab("bridge"),
-    onGoEvents: () => setTab("events"),
-    onGoSolar: () => setTab("solar"),
-    onGoPolicy: () => setTab("policy"),
-    onGoNotify: () => setTab("notify"),
+    onGoHelm: () => setTab("bridge"),
+    onGoLogbook: () => setTab("logbook"),
+    onGoOrrery: () => setTab("orrery"),
+    onGoCharter: () => setTab("charter"),
+    onGoBeacon: () => setTab("beacon"),
     onOpenPalette: () => setPaletteOpen((v) => !v),
     onFocusSearch: focusSearch,
     onShowHelp: openShortcuts,
@@ -334,14 +334,14 @@ function AppShell() {
             {tab === "bridge" && (
               <BridgePage
                 overview={overview}
-                onEventClick={() => setTab("events")}
+                onEventClick={() => setTab("logbook")}
                 onFilterBinary={(b) => {
                   setBinaryParam(b);
-                  setTab("events");
+                  setTab("logbook");
                 }}
               />
             )}
-            {tab === "events" && (
+            {tab === "logbook" && (
               <EventsPage
                 onCountChange={setEventCount}
                 onLiveChange={setLive}
@@ -352,10 +352,10 @@ function AppShell() {
                 }}
               />
             )}
-            {tab === "solar" && <SolarSystemPage />}
-            {tab === "policy" && <PolicyPage {...overview} />}
-            {tab === "notify" && (
-              <NotifyPage overview={overview} onGoToEvents={() => setTab("events")} />
+            {tab === "orrery" && <SolarSystemPage />}
+            {tab === "charter" && <PolicyPage {...overview} />}
+            {tab === "beacon" && (
+              <NotifyPage overview={overview} onGoToEvents={() => setTab("logbook")} />
             )}
           </div>
         </main>

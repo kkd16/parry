@@ -3,11 +3,11 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 type Handler = () => void;
 
 interface Handlers {
-  onGoBridge?: Handler;
-  onGoEvents?: Handler;
-  onGoSolar?: Handler;
-  onGoPolicy?: Handler;
-  onGoNotify?: Handler;
+  onGoHelm?: Handler;
+  onGoLogbook?: Handler;
+  onGoOrrery?: Handler;
+  onGoCharter?: Handler;
+  onGoBeacon?: Handler;
   onOpenPalette?: Handler;
   onFocusSearch?: Handler;
   onShowHelp?: Handler;
@@ -67,11 +67,11 @@ export function useKeyboardNav(handlers: Handlers) {
       }
 
       if (leader) {
-        if (e.key === "b") ref.current.onGoBridge?.();
-        else if (e.key === "e") ref.current.onGoEvents?.();
-        else if (e.key === "s") ref.current.onGoSolar?.();
-        else if (e.key === "p") ref.current.onGoPolicy?.();
-        else if (e.key === "n") ref.current.onGoNotify?.();
+        if (e.key === "h") ref.current.onGoHelm?.();
+        else if (e.key === "l") ref.current.onGoLogbook?.();
+        else if (e.key === "o") ref.current.onGoOrrery?.();
+        else if (e.key === "c") ref.current.onGoCharter?.();
+        else if (e.key === "b") ref.current.onGoBeacon?.();
         resetLeader();
         return;
       }

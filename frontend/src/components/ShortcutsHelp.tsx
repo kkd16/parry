@@ -14,11 +14,11 @@ const GROUPS: ShortcutGroup[] = [
   {
     title: "Navigation",
     items: [
-      { keys: ["g", "b"], label: "Go to Bridge" },
-      { keys: ["g", "e"], label: "Go to Logbook" },
-      { keys: ["g", "s"], label: "Go to Orrery" },
-      { keys: ["g", "p"], label: "Go to Charter" },
-      { keys: ["g", "n"], label: "Go to Beacon" },
+      { keys: ["g", "h"], label: "Go to Bridge" },
+      { keys: ["g", "l"], label: "Go to Logbook" },
+      { keys: ["g", "o"], label: "Go to Orrery" },
+      { keys: ["g", "c"], label: "Go to Charter" },
+      { keys: ["g", "b"], label: "Go to Beacon" },
     ],
   },
   {
