@@ -3,8 +3,7 @@ export interface Event {
   timestamp: string;
   tool_name: string;
   tool_input: Record<string, unknown>;
-  tier: number;
-  action: "allow" | "block" | "observe";
+  action: "allow" | "block" | "confirm" | "observe";
   session: string;
   mode: "observe" | "enforce";
   raw_name: string;
@@ -22,12 +21,9 @@ export interface EventsResponse {
 }
 
 export interface Rule {
-  default_tier?: number;
-  tier_1?: string[];
-  tier_2?: string[];
-  tier_3?: string[];
-  tier_4?: string[];
-  tier_5?: string[];
+  default_action?: string;
+  allow?: string[];
+  confirm?: string[];
   block?: string[];
 }
 
@@ -55,8 +51,7 @@ export interface Policy {
   version: number;
   mode: string;
   check_mode_confirm: string;
-  default_tier: number;
-  tiers: Record<string, string>;
+  default_action: string;
   parry_paths?: string[];
   protected_paths?: string[];
   rules: Record<string, Rule>;

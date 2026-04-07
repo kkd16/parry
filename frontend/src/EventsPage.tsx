@@ -10,7 +10,6 @@ type ColKey =
   | "binary"
   | "subcommand"
   | "action"
-  | "tier"
   | "mode"
   | "session"
   | "workdir"
@@ -32,7 +31,6 @@ const ALL_COLUMNS: ColDef[] = [
   { key: "binary", label: "Binary", sortable: true },
   { key: "subcommand", label: "Subcmd", sortable: true },
   { key: "action", label: "Action", sortable: true },
-  { key: "tier", label: "Tier", sortable: true },
   { key: "mode", label: "Mode", sortable: true },
   { key: "workdir", label: "Directory", sortable: true },
   { key: "session", label: "Session", sortable: false },
@@ -46,7 +44,6 @@ const DEFAULT_VISIBLE: ColKey[] = [
   "binary",
   "file",
   "action",
-  "tier",
   "mode",
   "workdir",
 ];
@@ -70,6 +67,8 @@ function actionClass(action: string): string {
   switch (action) {
     case "allow":
       return "badge badge-allow";
+    case "confirm":
+      return "badge badge-confirm";
     case "block":
       return "badge badge-block";
     case "observe":
@@ -107,8 +106,6 @@ function renderCell(ev: Event, col: ColKey): React.ReactNode {
       return ev.subcommand ? <span className="mono">{ev.subcommand}</span> : <span className="muted">-</span>;
     case "action":
       return <span className={actionClass(ev.action)}>{ev.action}</span>;
-    case "tier":
-      return <span className="center">T{ev.tier}</span>;
     case "mode":
       return ev.mode;
     case "workdir":
@@ -132,7 +129,6 @@ export default function EventsPage() {
   const [offset, setOffset] = useState(0);
   const [actionFilter, setActionFilter] = useState("");
   const [toolFilter, setToolFilter] = useState("");
-  const [tierFilter, setTierFilter] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [sortCol, setSortCol] = useState<SortCol>("");
@@ -153,7 +149,6 @@ export default function EventsPage() {
     });
     if (actionFilter) params.set("action", actionFilter);
     if (toolFilter) params.set("tool", toolFilter);
-    if (tierFilter) params.set("tier", tierFilter);
     if (search) params.set("search", search);
     if (sortCol) {
       params.set("sort", sortCol);
@@ -174,7 +169,7 @@ export default function EventsPage() {
     } finally {
       setLoading(false);
     }
-  }, [offset, actionFilter, toolFilter, tierFilter, search, sortCol, sortOrder]);
+  }, [offset, actionFilter, toolFilter, search, sortCol, sortOrder]);
 
   useEffect(() => {
     fetchEvents();
@@ -253,6 +248,7 @@ export default function EventsPage() {
           <select value={actionFilter} onChange={handleFilterChange(setActionFilter)}>
             <option value="">All</option>
             <option value="allow">Allow</option>
+            <option value="confirm">Confirm</option>
             <option value="block">Block</option>
             <option value="observe">Observe</option>
           </select>
@@ -265,17 +261,6 @@ export default function EventsPage() {
             <option value="file_edit">File Edit</option>
             <option value="file_read">File Read</option>
             <option value="unknown">Unknown</option>
-          </select>
-        </label>
-        <label>
-          Tier:
-          <select value={tierFilter} onChange={handleFilterChange(setTierFilter)}>
-            <option value="">All</option>
-            <option value="1">T1</option>
-            <option value="2">T2</option>
-            <option value="3">T3</option>
-            <option value="4">T4</option>
-            <option value="5">T5</option>
           </select>
         </label>
         <div className="col-toggle" ref={colMenuRef}>

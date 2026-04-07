@@ -103,9 +103,8 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	sort := q.Get("sort")
 	order := q.Get("order")
 	search := q.Get("search")
-	tier := intParam(q.Get("tier"), 0, 0, 5)
 
-	events, total, err := s.store.ListEvents(limit, offset, action, tool, sort, order, search, tier)
+	events, total, err := s.store.ListEvents(limit, offset, action, tool, sort, order, search)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return

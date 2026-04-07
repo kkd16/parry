@@ -53,7 +53,7 @@ export default function PolicyOverviewBar({
         </span>
         <span className="navbar-overview-item">
           <span className="navbar-overview-label">Default</span>
-          <span className="navbar-overview-value">T{policy.default_tier}</span>
+          {actionBadge(policy.default_action)}
         </span>
         <span className="navbar-overview-item">
           <span className="navbar-overview-label">Confirm</span>

@@ -9,7 +9,6 @@ type ConfirmRequest struct {
 	Tool    string
 	RawName string
 	Command string
-	Tier    int
 }
 
 type Confirmer interface {

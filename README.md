@@ -37,17 +37,15 @@ echo '{"tool_name":"Bash","tool_input":{"command":"rm -rf /"}}' | parry check
 # exit code 2 → blocked
 ```
 
-## Blast-Radius Classification (T1-T5)
+## Actions: allow / confirm / block
 
-| Tier | Name | Examples | Default |
-|------|------|----------|---------|
-| T1 | Observe | `file.list`, `git.status` | Allow silently |
-| T2 | Local Write | `file.write`, `git.branch` | Allow + log |
-| T3 | Destructive | `file.delete`, `rm -rf` | Confirm above threshold |
-| T4 | External Comms | `gmail.send`, `slack.post`, `git.push` | Confirm if external |
-| T5 | Credential/System | `sudo`, `oauth.token`, `ssh` | Block by default |
+Every tool call resolves to one of three actions:
 
-Unknown tools default to T3 (configurable via `default_tier`).
+- **allow** — run silently, log the event.
+- **confirm** — pause and prompt via a notifier; falls back to `check_mode_confirm` (default: `block`) when no notifier is configured.
+- **block** — refuse and log.
+
+Unmatched tools fall back to `default_action` (default: `confirm`).
 
 ## Policy
 
@@ -60,24 +58,22 @@ mode: observe  # observe | enforce
 # block = fail-closed (default). allow = trust and permit.
 check_mode_confirm: block
 
-tiers:
-  T1_observe:     allow
-  T2_local_write: allow
-  T3_destructive: confirm
-  T4_external:    confirm
-  T5_credential:  block
+default_action: confirm
 
 rules:
-  gmail.delete:   { tier: T3 }
-  gmail.send:     { tier: T4, block_when: { recipients_count: "> 10" } }
-  Bash:           { tier: T3, allow_list: ["git *", "npm *", "ls *"],
-                   block_list: ["rm -rf *", "sudo *", "curl * | sh"] }
-  Edit:           { tier: T2, block_when: { path_matches: ["/etc/*", "~/.ssh/*"] } }
+  shell:
+    default_action: confirm
+    allow:   [ls, cat, grep, "git status", "git log", cp, mv, "git add", "git commit"]
+    confirm: [rm, chmod, curl, wget, "git push"]
+    block:   [sudo, su, doas]
+  file_edit:
+    default_action: allow
+  file_read:
+    default_action: allow
 
-rate_limits:
-  - { scope: "gmail.*",     max: 50, window: "5m", on_exceed: block_and_alert }
-  - { scope: "gmail.delete", max: 5, window: "1m", on_exceed: confirm }
-  - { scope: "Bash",        max: 10, window: "1m", on_exceed: block_and_alert }
+rate_limit:
+  window: 3m
+  max: 50
 ```
 
 ## Integrations
@@ -109,7 +105,7 @@ parry setup claude
 
 1. **Deterministic enforcement.** The policy engine makes binary decisions. No LLM in the enforcement path.
 2. **Observe before enforce.** New installs start in observe mode. Build trust with data.
-3. **Classify by consequence.** The blast-radius tiers classify by what happens if it goes wrong, not what the action is called.
+3. **Classify by consequence.** Policies are written in terms of what happens if a call goes wrong, not what the tool is called.
 4. **External enforcement.** Out-of-process. The agent can't override it.
 5. **Local-first.** All data, models, and enforcement stay on your machine. Nothing leaves.
 6. **Fail closed.** If Parry crashes, tool calls are blocked via a non-zero exit code.

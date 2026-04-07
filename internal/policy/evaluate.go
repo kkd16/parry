@@ -3,84 +3,62 @@ package policy
 import (
 	"fmt"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/shellparse"
 )
 
-func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (Action, Tier, error) {
+func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (Action, error) {
 	if e.policy == nil {
-		return Block, 0, fmt.Errorf("no policy loaded")
+		return Block, fmt.Errorf("no policy loaded")
 	}
 
-	maxTier := e.policy.MaxTier()
 	rule, hasRule := e.policy.Rules[string(tool)]
 
-	tier := e.policy.DefaultTier
-	if hasRule && rule.DefaultTier != 0 {
-		tier = rule.DefaultTier
+	action := e.policy.DefaultAction
+	if hasRule && rule.DefaultAction != "" {
+		action = rule.DefaultAction
 	}
 
 	switch tool {
 	case check.ToolShell:
 		cmd, _ := toolInput["command"].(string)
 		if cmd == "" {
-			return e.actionForTier(tier), tier, nil
+			return action, nil
 		}
 
 		cmds := shellparse.Parse(cmd)
 
 		if shellparse.HasUnresolved(cmds) {
-			return Block, maxTier, nil
-		}
-
-		if hasRule {
-			for _, c := range cmds {
-				if isBlocked(c.Binary, rule.Block) {
-					return Block, maxTier, nil
-				}
-			}
+			return Block, nil
 		}
 
 		args := shellparse.ExtractArgs(cmds)
 		if e.anyPathProtected(args) {
-			return Block, maxTier, nil
+			return Block, nil
 		}
 
-		highest := Tier(0)
-		if hasRule {
+		if hasRule && len(cmds) > 0 {
+			var worst Action
 			for _, c := range cmds {
-				t := lookupBinaryTier(c, rule.Binaries, tier)
-				if t > highest {
-					highest = t
-				}
+				worst = strictest(worst, lookupBinaryAction(c, rule.Binaries, action))
 			}
-		}
-		if highest > 0 {
-			tier = highest
+			action = worst
 		}
 
 	case check.ToolFileEdit, check.ToolFileRead:
 		path, _ := toolInput["path"].(string)
 		if path != "" && e.anyPathProtected([]string{path}) {
-			return Block, maxTier, nil
+			return Block, nil
 		}
 		glob, _ := toolInput["glob"].(string)
 		if glob != "" && e.anyPathProtected([]string{glob}) {
-			return Block, maxTier, nil
+			return Block, nil
 		}
 	}
 
-	return e.actionForTier(tier), tier, nil
-}
-
-func (e *Engine) actionForTier(tier Tier) Action {
-	if action, ok := e.policy.Tiers[tier]; ok {
-		return action
-	}
-	return Block
+	return action, nil
 }
 
 func (e *Engine) allProtectedPaths() []string {
@@ -128,21 +106,17 @@ func containsGlobMeta(path string) bool {
 	return strings.ContainsAny(path, "*?[")
 }
 
-func lookupBinaryTier(cmd shellparse.Command, binaries map[string]Tier, fallback Tier) Tier {
+func lookupBinaryAction(cmd shellparse.Command, binaries map[string]Action, fallback Action) Action {
 	if binaries == nil {
 		return fallback
 	}
 	if cmd.Subcommand != "" {
-		if t, ok := binaries[cmd.Binary+" "+cmd.Subcommand]; ok {
-			return t
+		if a, ok := binaries[cmd.Binary+" "+cmd.Subcommand]; ok {
+			return a
 		}
 	}
-	if t, ok := binaries[cmd.Binary]; ok {
-		return t
+	if a, ok := binaries[cmd.Binary]; ok {
+		return a
 	}
 	return fallback
-}
-
-func isBlocked(binary string, blockList []string) bool {
-	return slices.Contains(blockList, binary)
 }

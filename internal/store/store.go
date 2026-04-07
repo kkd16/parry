@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS events (
 	timestamp  TEXT    NOT NULL,
 	tool_name  TEXT    NOT NULL,
 	tool_input TEXT    NOT NULL,
-	tier       INTEGER NOT NULL,
 	action     TEXT    NOT NULL,
 	session    TEXT    NOT NULL,
 	mode       TEXT    NOT NULL,
@@ -40,7 +39,6 @@ type Store struct {
 type Event struct {
 	ToolName   string
 	ToolInput  map[string]any
-	Tier       int
 	Action     string
 	Session    string
 	Mode       string
@@ -83,12 +81,11 @@ func (s *Store) RecordEvent(e Event) error {
 	}
 
 	_, err = s.db.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand, file, workdir)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
-		e.Tier,
 		e.Action,
 		e.Session,
 		e.Mode,
@@ -138,12 +135,11 @@ func (s *Store) CountAndRecord(session string, since time.Time, e Event) (int, e
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand, file, workdir)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
-		e.Tier,
 		e.Action,
 		e.Session,
 		e.Mode,
@@ -172,7 +168,6 @@ type EventRow struct {
 	Timestamp  string         `json:"timestamp"`
 	ToolName   string         `json:"tool_name"`
 	ToolInput  map[string]any `json:"tool_input"`
-	Tier       int            `json:"tier"`
 	Action     string         `json:"action"`
 	Session    string         `json:"session"`
 	Mode       string         `json:"mode"`
@@ -188,7 +183,6 @@ var allowedSortCols = map[string]string{
 	"timestamp":  "timestamp",
 	"tool_name":  "tool_name",
 	"action":     "action",
-	"tier":       "tier",
 	"mode":       "mode",
 	"raw_name":   "raw_name",
 	"binary":     "binary",
@@ -197,7 +191,7 @@ var allowedSortCols = map[string]string{
 	"workdir":    "workdir",
 }
 
-func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, search string, tier int) ([]EventRow, int, error) {
+func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, search string) ([]EventRow, int, error) {
 	where := ""
 	var args []any
 
@@ -208,10 +202,6 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 	if tool != "" {
 		where += " AND tool_name = ?"
 		args = append(args, tool)
-	}
-	if tier > 0 {
-		where += " AND tier = ?"
-		args = append(args, tier)
 	}
 	if search != "" {
 		where += " AND (tool_input LIKE ? OR tool_name LIKE ? OR session LIKE ?)"
@@ -234,7 +224,7 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 		orderClause = col + " " + dir + ", id " + dir
 	}
 
-	q := "SELECT id, timestamp, tool_name, tool_input, tier, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
+	q := "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
 	rowArgs := append(args, limit, offset)
 	rows, err := s.db.Query(q, rowArgs...)
 	if err != nil {
@@ -246,7 +236,7 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 	for rows.Next() {
 		var ev EventRow
 		var inputJSON string
-		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Tier, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.Subcommand, &ev.File, &ev.Workdir); err != nil {
+		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.Subcommand, &ev.File, &ev.Workdir); err != nil {
 			return nil, 0, fmt.Errorf("scanning event: %w", err)
 		}
 		if err := json.Unmarshal([]byte(inputJSON), &ev.ToolInput); err != nil {

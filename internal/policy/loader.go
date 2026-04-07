@@ -60,23 +60,15 @@ func (p *Policy) validate() error {
 	if p.CheckModeConfirm == Confirm {
 		return fmt.Errorf("check_mode_confirm cannot be \"confirm\" — must resolve to allow or block")
 	}
-	if !validTier(p.DefaultTier) {
-		return fmt.Errorf("invalid default_tier %d: must be >= 1", p.DefaultTier)
-	}
-	for tier, action := range p.Tiers {
-		if !validTier(tier) {
-			return fmt.Errorf("invalid tier %d: must be >= 1", tier)
-		}
-		if !validActions[action] {
-			return fmt.Errorf("invalid action %q for tier %d", action, tier)
-		}
+	if !validActions[p.DefaultAction] {
+		return fmt.Errorf("invalid default_action %q: must be allow, confirm, or block", p.DefaultAction)
 	}
 	for name, rule := range p.Rules {
 		if !validRuleKeys[name] {
 			return fmt.Errorf("unknown rule key %q: must be one of shell, file_edit, file_read", name)
 		}
-		if rule.DefaultTier != 0 && !validTier(rule.DefaultTier) {
-			return fmt.Errorf("rule %q: invalid default_tier %d", name, rule.DefaultTier)
+		if rule.DefaultAction != "" && !validActions[rule.DefaultAction] {
+			return fmt.Errorf("rule %q: invalid default_action %q", name, rule.DefaultAction)
 		}
 	}
 	for _, pattern := range p.ParryPaths {

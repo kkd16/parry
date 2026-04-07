@@ -102,7 +102,7 @@ func (n *NtfyConfirmer) Confirm(ctx context.Context, req ConfirmRequest) (bool, 
 }
 
 func (n *NtfyConfirmer) publish(ctx context.Context, reqID string, req ConfirmRequest) error {
-	body := fmt.Sprintf("%s (T%d)", req.Command, req.Tier)
+	body := req.Command
 
 	approveAction := fmt.Sprintf("http, Approve, %s, method=POST, body=approve:%s", n.topicURL(), reqID)
 	denyAction := fmt.Sprintf("http, Deny, %s, method=POST, body=deny:%s", n.topicURL(), reqID)

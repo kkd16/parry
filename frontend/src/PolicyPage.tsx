@@ -2,20 +2,12 @@ import { actionBadge } from "./policyBadges";
 import type { Rule } from "./types";
 import type { PolicyOverviewState } from "./usePolicyOverview";
 
-function tierRows(tiers: Record<string, string>): [number, string][] {
-  return Object.entries(tiers)
-    .map(([k, v]) => [Number(k), v] as [number, string])
-    .sort((a, b) => a[0] - b[0]);
-}
-
-function ruleBindings(rule: Rule): { tier: number; binaries: string[] }[] {
-  const tiers: { tier: number; binaries: string[] }[] = [];
-  if (rule.tier_1?.length) tiers.push({ tier: 1, binaries: rule.tier_1 });
-  if (rule.tier_2?.length) tiers.push({ tier: 2, binaries: rule.tier_2 });
-  if (rule.tier_3?.length) tiers.push({ tier: 3, binaries: rule.tier_3 });
-  if (rule.tier_4?.length) tiers.push({ tier: 4, binaries: rule.tier_4 });
-  if (rule.tier_5?.length) tiers.push({ tier: 5, binaries: rule.tier_5 });
-  return tiers;
+function ruleBindings(rule: Rule): { action: string; binaries: string[] }[] {
+  const rows: { action: string; binaries: string[] }[] = [];
+  if (rule.allow?.length) rows.push({ action: "allow", binaries: rule.allow });
+  if (rule.confirm?.length) rows.push({ action: "confirm", binaries: rule.confirm });
+  if (rule.block?.length) rows.push({ action: "block", binaries: rule.block });
+  return rows;
 }
 
 export default function PolicyPage({
@@ -34,52 +26,38 @@ export default function PolicyPage({
   return (
     <div className="policy-grid">
       <div className="policy-card">
-        <h2>Tier Actions</h2>
-        <table className="policy-table">
-          <thead>
-            <tr>
-              <th>Tier</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tierRows(policy.tiers).map(([tier, action]) => (
-              <tr key={tier}>
-                <td>T{tier}</td>
-                <td>{actionBadge(action)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <h2>Defaults</h2>
+        <div className="policy-field">
+          <span className="policy-label">Default Action</span>
+          <span className="policy-value">{actionBadge(policy.default_action)}</span>
+        </div>
+        <div className="policy-field">
+          <span className="policy-label">Check-Mode Confirm</span>
+          <span className="policy-value">{actionBadge(policy.check_mode_confirm)}</span>
+        </div>
       </div>
 
       {shell && (
         <div className="policy-card full-width">
           <h2>Shell Rules</h2>
           <div className="policy-field">
-            <span className="policy-label">Default Tier</span>
-            <span className="policy-value">T{shell.default_tier ?? policy.default_tier}</span>
+            <span className="policy-label">Default Action</span>
+            <span className="policy-value">{actionBadge(shell.default_action ?? policy.default_action)}</span>
           </div>
           <table className="policy-table">
             <thead>
               <tr>
-                <th>Tier</th>
+                <th>Action</th>
                 <th>Binaries</th>
               </tr>
             </thead>
             <tbody>
-              {ruleBindings(shell).map(({ tier, binaries }) => (
-                <tr key={tier}>
-                  <td>T{tier}</td>
+              {ruleBindings(shell).map(({ action, binaries }) => (
+                <tr key={action}>
+                  <td>{actionBadge(action)}</td>
                   <td><span className="mono">{binaries.join(", ")}</span></td>
                 </tr>
               ))}
-              {shell.block && shell.block.length > 0 && (
-                <tr>
-                  <td><span className="badge badge-block">block</span></td>
-                  <td><span className="mono">{shell.block.join(", ")}</span></td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -89,11 +67,11 @@ export default function PolicyPage({
         <h2>File Rules</h2>
         <div className="policy-field">
           <span className="policy-label">file_edit default</span>
-          <span className="policy-value">T{fileEdit?.default_tier ?? policy.default_tier}</span>
+          <span className="policy-value">{actionBadge(fileEdit?.default_action ?? policy.default_action)}</span>
         </div>
         <div className="policy-field">
           <span className="policy-label">file_read default</span>
-          <span className="policy-value">T{fileRead?.default_tier ?? policy.default_tier}</span>
+          <span className="policy-value">{actionBadge(fileRead?.default_action ?? policy.default_action)}</span>
         </div>
       </div>
 

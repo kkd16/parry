@@ -95,7 +95,7 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
-	action, tier, err := engine.Evaluate(tc.Tool, tc.ToolInput)
+	action, err := engine.Evaluate(tc.Tool, tc.ToolInput)
 	if err != nil {
 		fatal(err)
 	}
@@ -104,7 +104,7 @@ func (c *CheckCmd) Run() error {
 
 	var v verdict
 	if action == policy.Confirm && p.NotificationsEnabled() && p.Mode == "enforce" {
-		v = confirmViaNotify(p, tc, tier)
+		v = confirmViaNotify(p, tc)
 	} else {
 		v = resolveVerdict(p, action)
 	}
@@ -113,7 +113,7 @@ func (c *CheckCmd) Run() error {
 		if s, err := openStore(); err == nil {
 			defer func() { _ = s.Close() }()
 			window := p.RateLimit.ParseWindow()
-			event := buildEvent(tc, int(tier), v.action, p.Mode)
+			event := buildEvent(tc, v.action, p.Mode)
 			count, err := s.CountAndRecord(store.Session(), time.Now().UTC().Add(-window), event)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
@@ -125,10 +125,10 @@ func (c *CheckCmd) Run() error {
 				}
 			}
 		} else {
-			recordEvent(tc, int(tier), v.action, p.Mode)
+			recordEvent(tc, v.action, p.Mode)
 		}
 	} else {
-		recordEvent(tc, int(tier), v.action, p.Mode)
+		recordEvent(tc, v.action, p.Mode)
 	}
 
 	cmd, _ := tc.ToolInput["command"].(string)
@@ -136,7 +136,7 @@ func (c *CheckCmd) Run() error {
 		cmd = tc.RawName
 	}
 
-	ui.LogCheck(v.action, cmd, int(tier))
+	ui.LogCheck(v.action, cmd)
 	if err := agent.Respond(os.Stdout, check.Result{Decision: v.respond, Message: v.message}); err != nil {
 		fmt.Fprintf(os.Stderr, "parry: encoding response: %v\n", err)
 		os.Exit(check.ExitBlock)
@@ -152,11 +152,10 @@ func openStore() (*store.Store, error) {
 	return store.Open(filepath.Join(dir, "parry.db"))
 }
 
-func buildEvent(tc *check.ToolCall, tier int, action, mode string) store.Event {
+func buildEvent(tc *check.ToolCall, action, mode string) store.Event {
 	e := store.Event{
 		ToolName:  string(tc.Tool),
 		ToolInput: tc.ToolInput,
-		Tier:      tier,
 		Action:    action,
 		Session:   store.Session(),
 		Mode:      mode,
@@ -176,20 +175,20 @@ func buildEvent(tc *check.ToolCall, tier int, action, mode string) store.Event {
 	return e
 }
 
-func recordEventWithStore(s *store.Store, tc *check.ToolCall, tier int, action, mode string) {
-	if err := s.RecordEvent(buildEvent(tc, tier, action, mode)); err != nil {
+func recordEventWithStore(s *store.Store, tc *check.ToolCall, action, mode string) {
+	if err := s.RecordEvent(buildEvent(tc, action, mode)); err != nil {
 		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
 	}
 }
 
-func recordEvent(tc *check.ToolCall, tier int, action, mode string) {
+func recordEvent(tc *check.ToolCall, action, mode string) {
 	s, err := openStore()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
 		return
 	}
 	defer func() { _ = s.Close() }()
-	recordEventWithStore(s, tc, tier, action, mode)
+	recordEventWithStore(s, tc, action, mode)
 }
 
 type InitCmd struct{}
@@ -572,7 +571,7 @@ func (v *ValidateCmd) Run() error {
 	return nil
 }
 
-func confirmViaNotify(p *policy.Policy, tc *check.ToolCall, tier policy.Tier) verdict {
+func confirmViaNotify(p *policy.Policy, tc *check.ToolCall) verdict {
 	prov, ok := notify.GetProvider(p.Notifications.Provider)
 	if !ok {
 		fmt.Fprintf(os.Stderr, "parry: unknown notification provider %q\n", p.Notifications.Provider)
@@ -600,7 +599,6 @@ func confirmViaNotify(p *policy.Policy, tc *check.ToolCall, tier policy.Tier) ve
 		Tool:    string(tc.Tool),
 		RawName: tc.RawName,
 		Command: cmd,
-		Tier:    int(tier),
 	})
 
 	if err != nil {

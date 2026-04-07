@@ -2,12 +2,6 @@ package policy
 
 import "time"
 
-type Tier int
-
-func validTier(t Tier) bool {
-	return t >= 1
-}
-
 type Action string
 
 const (
@@ -24,33 +18,45 @@ var validRuleKeys = map[string]bool{
 	"shell": true, "file_edit": true, "file_read": true,
 }
 
+// strictest returns whichever of a, b is more restrictive.
+// Ordering: block > confirm > allow > "" (unset).
+func strictest(a, b Action) Action {
+	rank := func(x Action) int {
+		switch x {
+		case Block:
+			return 3
+		case Confirm:
+			return 2
+		case Allow:
+			return 1
+		default:
+			return 0
+		}
+	}
+	if rank(a) >= rank(b) {
+		return a
+	}
+	return b
+}
+
 type Rule struct {
-	DefaultTier Tier            `yaml:"default_tier,omitempty" json:"default_tier,omitempty"`
-	Tier1       []string        `yaml:"tier_1,omitempty" json:"tier_1,omitempty"`
-	Tier2       []string        `yaml:"tier_2,omitempty" json:"tier_2,omitempty"`
-	Tier3       []string        `yaml:"tier_3,omitempty" json:"tier_3,omitempty"`
-	Tier4       []string        `yaml:"tier_4,omitempty" json:"tier_4,omitempty"`
-	Tier5       []string        `yaml:"tier_5,omitempty" json:"tier_5,omitempty"`
-	Block       []string        `yaml:"block,omitempty" json:"block,omitempty"`
-	Binaries    map[string]Tier `yaml:"-" json:"-"`
+	DefaultAction Action            `yaml:"default_action,omitempty" json:"default_action,omitempty"`
+	Allow         []string          `yaml:"allow,omitempty" json:"allow,omitempty"`
+	Confirm       []string          `yaml:"confirm,omitempty" json:"confirm,omitempty"`
+	Block         []string          `yaml:"block,omitempty" json:"block,omitempty"`
+	Binaries      map[string]Action `yaml:"-" json:"-"`
 }
 
 func (r *Rule) buildBinaries() {
-	r.Binaries = make(map[string]Tier)
-	for _, b := range r.Tier1 {
-		r.Binaries[b] = 1
+	r.Binaries = make(map[string]Action)
+	for _, b := range r.Allow {
+		r.Binaries[b] = Allow
 	}
-	for _, b := range r.Tier2 {
-		r.Binaries[b] = 2
+	for _, b := range r.Confirm {
+		r.Binaries[b] = Confirm
 	}
-	for _, b := range r.Tier3 {
-		r.Binaries[b] = 3
-	}
-	for _, b := range r.Tier4 {
-		r.Binaries[b] = 4
-	}
-	for _, b := range r.Tier5 {
-		r.Binaries[b] = 5
+	for _, b := range r.Block {
+		r.Binaries[b] = Block
 	}
 }
 
@@ -94,8 +100,7 @@ type Policy struct {
 	Version          int              `yaml:"version" json:"version"`
 	Mode             string           `yaml:"mode" json:"mode"`
 	CheckModeConfirm Action           `yaml:"check_mode_confirm" json:"check_mode_confirm"`
-	DefaultTier      Tier             `yaml:"default_tier" json:"default_tier"`
-	Tiers            map[Tier]Action  `yaml:"tiers" json:"tiers"`
+	DefaultAction    Action           `yaml:"default_action" json:"default_action"`
 	ParryPaths       []string         `yaml:"parry_paths,omitempty" json:"parry_paths,omitempty"`
 	ProtectedPaths   []string         `yaml:"protected_paths,omitempty" json:"protected_paths,omitempty"`
 	Rules            map[string]*Rule `yaml:"rules" json:"rules"`
@@ -105,14 +110,4 @@ type Policy struct {
 
 func (p *Policy) NotificationsEnabled() bool {
 	return p.Notifications != nil && p.Notifications.Provider != ""
-}
-
-func (p *Policy) MaxTier() Tier {
-	var max Tier
-	for t := range p.Tiers {
-		if t > max {
-			max = t
-		}
-	}
-	return max
 }

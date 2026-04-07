@@ -91,12 +91,10 @@ func Separator() {
 	}
 }
 
-func LogCheck(action, command string, tier int) {
+func LogCheck(action, command string) {
 	if !errTTY {
 		return
 	}
-
-	tierLabel := fmt.Sprintf("T%d", tier)
 
 	var color, symbol string
 	switch action {
@@ -115,22 +113,9 @@ func LogCheck(action, command string, tier int) {
 		cmd = cmd[:57] + "..."
 	}
 
-	var tierColor string
-	switch {
-	case tier <= 1:
-		tierColor = green
-	case tier <= 2:
-		tierColor = blue
-	case tier <= 4:
-		tierColor = yellow
-	default:
-		tierColor = red
-	}
-
-	_, _ = fmt.Fprintf(errW, " %s%s%s %-8s %s%s%s  %s%s%s\n",
+	_, _ = fmt.Fprintf(errW, " %s%s%s %-8s %s%s%s\n",
 		color, symbol, reset,
 		action,
 		dim, cmd, reset,
-		tierColor, tierLabel, reset,
 	)
 }

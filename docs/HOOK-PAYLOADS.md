@@ -86,7 +86,7 @@ Tool input varies by tool:
 ```
 
 ```json
-{"decision": "block", "reason": "Blocked by Parry: tier 5 command"}
+{"decision": "block", "reason": "Blocked by Parry"}
 ```
 
 Exit codes: 0 = success (parse stdout JSON), 2 = blocking error (stderr becomes error message).
