@@ -1169,7 +1169,7 @@ a { color: var(--brass); }
 .heatmap-canvas {
   position: relative;
   width: 100%;
-  height: calc(100vh - 220px);
+  height: calc(100vh - 260px);
   min-height: 520px;
   background: radial-gradient(ellipse at center, #060912 0%, #000000 100%);
   border: 1px solid var(--rule);
@@ -1177,6 +1177,8 @@ a { color: var(--brass); }
   overflow: hidden;
   cursor: grab;
   user-select: none;
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 
 .heatmap-canvas:active { cursor: grabbing; }

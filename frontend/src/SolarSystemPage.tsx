@@ -123,6 +123,15 @@ export default function SolarSystemPage() {
   const flyRaf = useRef<number | null>(null);
 
   useEffect(() => {
+    const main = document.querySelector(".shell-main") as HTMLElement | null;
+    const prev = main?.style.overflow ?? "";
+    if (main) main.style.overflow = "hidden";
+    return () => {
+      if (main) main.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
     fetch("/api/heatmap")
       .then((r) => r.json())
       .then((json: HeatmapResponse | { error: string }) => {
@@ -238,11 +247,40 @@ export default function SolarSystemPage() {
     dragState.current = null;
   };
 
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.shiftKey ? 1 / 1.8 : 1.8);
+  };
+
+  const zoomAt = useCallback((mx: number, my: number, factor: number) => {
+    setView((v) => {
+      const next = Math.min(8, Math.max(0.1, v.scale * factor));
+      const ratio = next / v.scale;
+      return {
+        scale: next,
+        tx: mx - (mx - v.tx) * ratio,
+        ty: my - (my - v.ty) * ratio,
+      };
+    });
+  }, []);
+
+  const zoomCentered = useCallback(
+    (factor: number) => {
+      const el = containerRef.current;
+      if (!el) return;
+      zoomAt(el.clientWidth / 2, el.clientHeight / 2, factor);
+    },
+    [zoomAt],
+  );
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const handler = (e: WheelEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       const rect = el.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
@@ -250,22 +288,23 @@ export default function SolarSystemPage() {
       let delta = e.deltaY;
       if (e.deltaMode === 1) delta *= 16;
       else if (e.deltaMode === 2) delta *= 100;
-      // trackpad pinch sends ctrlKey + small deltas; mouse wheel sends bigger discrete deltas
-      const intensity = e.ctrlKey ? 0.012 : 0.0035;
+      // device detection:
+      //  - pinch zoom: ctrlKey true (browsers synthesize this for two-finger pinch)
+      //  - trackpad scroll: small fractional deltas, no ctrlKey
+      //  - mouse wheel: large integer deltas (often multiples of 100)
+      const isPinch = e.ctrlKey;
+      // trackpad two-finger scroll: small deltas (<50). mouse wheel: ~100+ per click.
+      const isTrackpadScroll = !isPinch && Math.abs(delta) < 50;
+      let intensity: number;
+      if (isPinch) intensity = 0.012;
+      else if (isTrackpadScroll) intensity = 0.015;
+      else intensity = 0.0025;
       const factor = Math.exp(-delta * intensity);
-      setView((v) => {
-        const next = Math.min(8, Math.max(0.1, v.scale * factor));
-        const ratio = next / v.scale;
-        return {
-          scale: next,
-          tx: mx - (mx - v.tx) * ratio,
-          ty: my - (my - v.ty) * ratio,
-        };
-      });
+      zoomAt(mx, my, factor);
     };
     el.addEventListener("wheel", handler, { passive: false });
     return () => el.removeEventListener("wheel", handler);
-  }, []);
+  }, [zoomAt, data]);
 
   const stats = useMemo(() => {
     if (!data) return null;
@@ -335,6 +374,7 @@ export default function SolarSystemPage() {
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
+        onDoubleClick={onDoubleClick}
       >
         <svg width="100%" height="100%">
           <defs>
@@ -486,6 +526,24 @@ export default function SolarSystemPage() {
         )}
 
         <div className="heatmap-overlay controls">
+          <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+            <button
+              className="btn"
+              style={{ flex: 1 }}
+              onClick={() => zoomCentered(1.4)}
+              title="zoom in"
+            >
+              +
+            </button>
+            <button
+              className="btn"
+              style={{ flex: 1 }}
+              onClick={() => zoomCentered(1 / 1.4)}
+              title="zoom out"
+            >
+              −
+            </button>
+          </div>
           {filterProject && (
             <button
               className="btn"
