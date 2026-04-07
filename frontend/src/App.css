@@ -2432,6 +2432,80 @@ body.solar-mode .shell-main-inner {
   color: var(--ink-mute);
 }
 
+/* ─── about dialog ──────────────────────────────────────────────── */
+
+.about-title {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.about-version {
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.78rem;
+  color: var(--brass);
+  letter-spacing: 0.04em;
+}
+.about-body {
+  display: block;
+  padding: 18px 28px 14px 28px;
+}
+.about-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  border-bottom: 1px dashed var(--rule);
+}
+.about-row:last-child { border-bottom: none; }
+.about-row-label {
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.62rem;
+}
+.about-row-value {
+  color: var(--ink-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-align: right;
+  word-break: break-all;
+}
+.about-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.about-tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--ink-dim);
+}
+
+.sidebar-brand-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s ease;
+}
+.sidebar-brand-button:hover { color: var(--brass); }
+
+.events-table tbody tr.is-fresh {
+  animation: row-fresh-pulse 3s ease-out forwards;
+}
+@keyframes row-fresh-pulse {
+  0% { background: rgba(212, 161, 74, 0.28); box-shadow: inset 3px 0 0 var(--brass-bright); }
+  100% { background: transparent; box-shadow: inset 3px 0 0 transparent; }
+}
+
 /* error */
 .error {
   background: var(--block-bg);

@@ -145,10 +145,14 @@ var allowedSortCols = map[string]string{
 	"workdir":    "workdir",
 }
 
-func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, search string) ([]EventRow, int, error) {
+func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, sortOrder, search string) ([]EventRow, int, error) {
 	where := ""
 	var args []any
 
+	if sinceID > 0 {
+		where += " AND id > ?"
+		args = append(args, sinceID)
+	}
 	if action != "" {
 		where += " AND action = ?"
 		args = append(args, action)
@@ -178,8 +182,16 @@ func (s *Store) ListEvents(limit, offset int, action, tool, sortCol, sortOrder, 
 		orderClause = col + " " + dir + ", id " + dir
 	}
 
-	q := "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
-	rowArgs := append(args, limit, offset)
+	var q string
+	var rowArgs []any
+	if sinceID > 0 {
+		// incremental tail: oldest-new first, no offset
+		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
+		rowArgs = append(args, limit)
+	} else {
+		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
+		rowArgs = append(args, limit, offset)
+	}
 	rows, err := s.db.Query(q, rowArgs...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("querying events: %w", err)
@@ -344,7 +356,7 @@ func (s *Store) Overview() (*Overview, error) {
 	}
 
 	// recent blocks (last 5)
-	blocks, _, err := s.ListEvents(5, 0, "block", "", "timestamp", "desc", "")
+	blocks, _, err := s.ListEvents(5, 0, 0, "block", "", "timestamp", "desc", "")
 	if err != nil {
 		return nil, fmt.Errorf("recent blocks: %w", err)
 	}

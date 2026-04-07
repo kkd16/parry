@@ -13,6 +13,7 @@ interface Props {
   eventCount: number;
   live: boolean;
   onShowHelp: () => void;
+  onShowAbout: () => void;
   bookmarks: BookmarksApi;
   counts: DashboardCounts;
   onOpenBookmark: (qs: string) => void;
@@ -34,6 +35,7 @@ export default function Sidebar({
   eventCount,
   live,
   onShowHelp,
+  onShowAbout,
   bookmarks,
   counts,
   onOpenBookmark,
@@ -92,7 +94,14 @@ export default function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="sidebar-brand-title">Parry</div>
+        <button
+          type="button"
+          className="sidebar-brand-title sidebar-brand-button"
+          onClick={onShowAbout}
+          title="about parry"
+        >
+          Parry
+        </button>
       </div>
 
       <nav className="sidebar-nav">

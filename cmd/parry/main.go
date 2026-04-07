@@ -13,6 +13,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/kkd16/parry/configs"
 	_ "github.com/kkd16/parry/internal/agents"
+	"github.com/kkd16/parry/internal/buildinfo"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/dashboard"
 	"github.com/kkd16/parry/internal/eval"
@@ -24,8 +25,6 @@ import (
 	"github.com/kkd16/parry/internal/ui"
 	"golang.org/x/term"
 )
-
-var version = "dev"
 
 func parryDir() (string, error) {
 	home, err := os.UserHomeDir()
@@ -809,7 +808,7 @@ func (m *ConfigModeCmd) Run() error {
 type VersionCmd struct{}
 
 func (v *VersionCmd) Run() error {
-	fmt.Printf("\n %s parry %s\n\n", ui.Bluef("⟐"), ui.Boldf("v%s", version))
+	fmt.Printf("\n %s parry %s\n\n", ui.Bluef("⟐"), ui.Boldf("v%s", buildinfo.Version))
 	return nil
 }
 
