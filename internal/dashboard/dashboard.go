@@ -58,6 +58,7 @@ func (s *Server) Run() error {
 	mux.HandleFunc("GET /api/events", s.handleEvents)
 	mux.HandleFunc("GET /api/policy", s.handlePolicy)
 	mux.HandleFunc("GET /api/notify/health", s.handleNotifyHealth)
+	mux.HandleFunc("GET /api/heatmap", s.handleHeatmap)
 	mux.Handle("/", s.spaHandler())
 
 	var handler http.Handler = mux
@@ -116,6 +117,45 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		"limit":  limit,
 		"offset": offset,
 	})
+}
+
+type heatmapFile struct {
+	Path  string `json:"path"`
+	Count int    `json:"count"`
+}
+
+type heatmapProject struct {
+	Workdir string         `json:"workdir"`
+	Files   []heatmapFile  `json:"files"`
+	Total   int            `json:"total"`
+}
+
+func (s *Server) handleHeatmap(w http.ResponseWriter, r *http.Request) {
+	rows, err := s.store.FileHeatmap(20)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	projectsByDir := make(map[string]*heatmapProject)
+	var order []string
+	for _, fh := range rows {
+		p, ok := projectsByDir[fh.Workdir]
+		if !ok {
+			p = &heatmapProject{Workdir: fh.Workdir}
+			projectsByDir[fh.Workdir] = p
+			order = append(order, fh.Workdir)
+		}
+		p.Files = append(p.Files, heatmapFile{Path: fh.Path, Count: fh.Count})
+		p.Total += fh.Count
+	}
+
+	projects := make([]*heatmapProject, 0, len(order))
+	for _, wd := range order {
+		projects = append(projects, projectsByDir[wd])
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"projects": projects})
 }
 
 func (s *Server) spaHandler() http.Handler {

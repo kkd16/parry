@@ -1,10 +1,11 @@
 import { useState } from "react";
 import EventsPage from "./EventsPage";
+import SolarSystemPage from "./SolarSystemPage";
 import PolicyOverviewBar from "./PolicyOverviewBar";
 import PolicyPage from "./PolicyPage";
 import { usePolicyOverview } from "./usePolicyOverview";
 
-type Tab = "events" | "policy";
+type Tab = "events" | "solar" | "policy";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("events");
@@ -23,6 +24,12 @@ export default function App() {
             Events
           </button>
           <button
+            className={`navbar-tab${tab === "solar" ? " active" : ""}`}
+            onClick={() => setTab("solar")}
+          >
+            Solar System
+          </button>
+          <button
             className={`navbar-tab${tab === "policy" ? " active" : ""}`}
             onClick={() => setTab("policy")}
           >
@@ -30,7 +37,9 @@ export default function App() {
           </button>
         </div>
       </nav>
-      {tab === "events" ? <EventsPage /> : <PolicyPage {...overview} />}
+      {tab === "events" && <EventsPage />}
+      {tab === "solar" && <SolarSystemPage />}
+      {tab === "policy" && <PolicyPage {...overview} />}
     </div>
   );
 }
