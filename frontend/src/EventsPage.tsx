@@ -371,6 +371,7 @@ export default function EventsPage({
     enableColumnResizing: true,
   });
 
+  const clientFiltered = !!(workdirFilter || binaryFilter || timeFilter);
   const page = Math.floor(offset / PAGE_SIZE) + 1;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -586,27 +587,30 @@ export default function EventsPage({
 
       <div className="pagination">
         <span>
-          showing {filteredEvents.length} of {total.toLocaleString()}
+          showing {filteredEvents.length}
+          {clientFiltered ? " filtered" : ""} of {total.toLocaleString()}
         </span>
-        <div className="pagination-controls">
-          <button
-            className="btn"
-            disabled={offset === 0}
-            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-          >
-            prev
-          </button>
-          <span>
-            page {page} / {totalPages}
-          </span>
-          <button
-            className="btn"
-            disabled={offset + PAGE_SIZE >= total}
-            onClick={() => setOffset(offset + PAGE_SIZE)}
-          >
-            next
-          </button>
-        </div>
+        {!clientFiltered && (
+          <div className="pagination-controls">
+            <button
+              className="btn"
+              disabled={offset === 0}
+              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
+            >
+              prev
+            </button>
+            <span>
+              page {page} / {totalPages}
+            </span>
+            <button
+              className="btn"
+              disabled={offset + PAGE_SIZE >= total}
+              onClick={() => setOffset(offset + PAGE_SIZE)}
+            >
+              next
+            </button>
+          </div>
+        )}
       </div>
 
       <EventDrawer event={selected} onClose={() => setSelected(null)} />
