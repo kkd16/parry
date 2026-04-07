@@ -17,6 +17,7 @@ import { actionBadge } from "./policyBadges";
 import EventDrawer from "./components/EventDrawer";
 import PageHeader from "./components/PageHeader";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useUrlNumber, useUrlParam } from "./hooks/useUrlState";
 
 const PAGE_SIZE = 100;
 
@@ -118,15 +119,34 @@ export default function EventsPage({
 }: Props) {
   const [events, setEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [actionFilter, setActionFilter] = useState("");
-  const [toolFilter, setToolFilter] = useState("");
-  const [workdirFilter, setWorkdirFilter] = useState("");
-  const [binaryFilter, setBinaryFilter] = useState("");
-  const [timeFilter, setTimeFilter] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [sorting, setSorting] = useState<SortingState>([{ id: "timestamp", desc: true }]);
+  const [offset, setOffset] = useUrlNumber("offset", 0);
+  const [actionFilter, setActionFilter] = useUrlParam("action", "");
+  const [toolFilter, setToolFilter] = useUrlParam("tool", "");
+  const [workdirFilter, setWorkdirFilter] = useUrlParam("workdir", "");
+  const [binaryFilter, setBinaryFilter] = useUrlParam("binary", "");
+  const [timeFilter, setTimeFilter] = useUrlParam("time", "");
+  const [search, setSearch] = useUrlParam("q", "");
+  const [searchInput, setSearchInput] = useState(search);
+  const [sortId, setSortId] = useUrlParam("sort", "timestamp");
+  const [sortOrder, setSortOrder] = useUrlParam("order", "desc");
+  const sorting: SortingState = useMemo(
+    () => [{ id: sortId, desc: sortOrder !== "asc" }],
+    [sortId, sortOrder],
+  );
+  const setSorting = useCallback(
+    (updater: SortingState | ((old: SortingState) => SortingState)) => {
+      const next = typeof updater === "function" ? updater(sorting) : updater;
+      const first = next[0];
+      if (!first) {
+        setSortId("timestamp");
+        setSortOrder("desc");
+        return;
+      }
+      setSortId(first.id);
+      setSortOrder(first.desc ? "desc" : "asc");
+    },
+    [sorting, setSortId, setSortOrder],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
@@ -171,7 +191,7 @@ export default function EventsPage({
     if (pendingFilter.kind === "time") setTimeFilter(pendingFilter.value);
     setOffset(0);
     consumePendingFilter();
-  }, [pendingFilter, consumePendingFilter]);
+  }, [pendingFilter, consumePendingFilter, setActionFilter, setToolFilter, setTimeFilter, setOffset]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);

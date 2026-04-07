@@ -4,6 +4,7 @@ import PageHeader from "./components/PageHeader";
 import { actionBadge } from "./policyBadges";
 import type { Rule } from "./types";
 import type { PolicyOverviewState } from "./usePolicyOverview";
+import { useUrlParam } from "./hooks/useUrlState";
 
 function ruleBindings(rule: Rule): { action: string; binaries: string[] }[] {
   const rows: { action: string; binaries: string[] }[] = [];
@@ -48,7 +49,7 @@ function Section({ title, count, defaultOpen = true, children }: SectionProps) {
 }
 
 export default function PolicyPage({ policy, loading, error }: PolicyOverviewState) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useUrlParam("q", "");
 
   const matchesQuery = (s: string | undefined | null) =>
     !query || (s ?? "").toLowerCase().includes(query.toLowerCase());

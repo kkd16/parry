@@ -8,11 +8,14 @@ import CommandPalette from "./components/CommandPalette";
 import type { QuickFilter } from "./components/CommandPalette";
 import { usePolicyOverview } from "./usePolicyOverview";
 import { useKeyboardNav } from "./hooks/useKeyboardNav";
+import { usePath } from "./hooks/useUrlState";
 
 export type Tab = "events" | "solar" | "policy";
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("events");
+  const [path, setPath] = usePath();
+  const tab = path.slice(1) as Tab;
+  const setTab = useCallback((t: Tab) => setPath("/" + t), [setPath]);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingFilter, setPendingFilter] = useState<QuickFilter | null>(null);
   const [eventCount, setEventCount] = useState(0);

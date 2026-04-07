@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import PageHeader from "./components/PageHeader";
+import { useUrlParam } from "./hooks/useUrlState";
 
 interface HeatmapFile {
   path: string;
@@ -117,7 +118,7 @@ export default function SolarSystemPage() {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState({ tx: 0, ty: 0, scale: 1 });
   const [hover, setHover] = useState<Hover | null>(null);
-  const [filterProject, setFilterProject] = useState<string>("");
+  const [filterProject, setFilterProject] = useUrlParam("project", "");
   const containerRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const flyRaf = useRef<number | null>(null);
