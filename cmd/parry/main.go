@@ -51,7 +51,6 @@ type CLI struct {
 	Check     CheckCmd     `cmd:"" help:"Evaluate a tool call from stdin against policy."`
 	Init      InitCmd      `cmd:"" help:"Initialize Parry configuration."`
 	Config    ConfigCmd    `cmd:"" help:"View and manage Parry configuration."`
-	Report    ReportCmd    `cmd:"" help:"Show observe mode report."`
 	Validate  ValidateCmd  `cmd:"" help:"Validate policy YAML for errors."`
 	Dashboard DashboardCmd `cmd:"" help:"Start the web dashboard."`
 	Nuke      NukeCmd      `cmd:"" help:"Remove all Parry config, data, and policy."`
@@ -531,85 +530,6 @@ func (n *NukeCmd) Run() error {
 
 	ui.Success("nuked — clean slate")
 	ui.Detail("removed", dir)
-	ui.Break()
-	return nil
-}
-
-type ReportCmd struct{}
-
-func (r *ReportCmd) Run() error {
-	dir, err := parryDir()
-	if err != nil {
-		return err
-	}
-	dbPath := filepath.Join(dir, "parry.db")
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		ui.Info("no data yet — run some commands with " + ui.Boldf("parry check") + " first")
-		ui.Break()
-		return nil
-	}
-
-	s, err := store.Open(dbPath)
-	if err != nil {
-		return fmt.Errorf("opening database: %w", err)
-	}
-	defer func() { _ = s.Close() }()
-
-	sum, err := s.Report()
-	if err != nil {
-		return fmt.Errorf("generating report: %w", err)
-	}
-
-	ui.Info(fmt.Sprintf("report — %d events recorded", sum.Total))
-	ui.Break()
-
-	ui.SectionHeader("Actions")
-	for _, action := range []string{"observe", "allow", "block"} {
-		if c, ok := sum.ByAction[action]; ok {
-			var val string
-			switch action {
-			case "allow":
-				val = ui.Greenf("%d", c)
-			case "block":
-				val = ui.Redf("%d", c)
-			case "observe":
-				val = ui.Yellowf("%d", c)
-			}
-			ui.Detail("  "+action, val)
-		}
-	}
-
-	ui.Separator()
-	ui.SectionHeader("Tiers")
-	for tier := 1; tier <= 5; tier++ {
-		if c, ok := sum.ByTier[tier]; ok {
-			var val string
-			switch {
-			case tier <= 1:
-				val = ui.Greenf("%d", c)
-			case tier <= 2:
-				val = ui.Bluef("%d", c)
-			case tier <= 4:
-				val = ui.Yellowf("%d", c)
-			default:
-				val = ui.Redf("%d", c)
-			}
-			ui.Detail(fmt.Sprintf("  T%d", tier), val)
-		}
-	}
-
-	if len(sum.TopCommands) > 0 {
-		ui.Separator()
-		ui.SectionHeader("Top Commands")
-		for _, tc := range sum.TopCommands {
-			cmd := tc.Command
-			if len(cmd) > 50 {
-				cmd = cmd[:47] + "..."
-			}
-			ui.Detail("  "+cmd, fmt.Sprintf("×%d", tc.Count))
-		}
-	}
-
 	ui.Break()
 	return nil
 }

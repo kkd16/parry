@@ -102,7 +102,7 @@ parry setup claude
 
 1. **Initialize**. `parry init` creates `~/.parry/policy.yaml` (defaults to observe).
 2. **Install hooks**. `parry setup cursor` or `parry setup claude`.
-3. **Review**. Use `parry report` and `parry dashboard` to see what’s happening.
+3. **Review**. Use `parry dashboard` to see what’s happening.
 4. **Enforce**. Set `mode: enforce` in the policy when you’re ready.
 
 ## Design Principles
