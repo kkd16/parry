@@ -15,6 +15,7 @@ import (
 	_ "github.com/kkd16/parry/internal/agents"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/dashboard"
+	"github.com/kkd16/parry/internal/eval"
 	"github.com/kkd16/parry/internal/notify"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/setup"
@@ -53,6 +54,7 @@ type CLI struct {
 	Config    ConfigCmd    `cmd:"" help:"View and manage Parry configuration."`
 	Validate  ValidateCmd  `cmd:"" help:"Validate policy YAML for errors."`
 	Dashboard DashboardCmd `cmd:"" help:"Start the web dashboard."`
+	Eval      EvalCmd      `cmd:"" help:"Run the adversarial corpus against the embedded default policy."`
 	Nuke      NukeCmd      `cmd:"" help:"Remove all Parry config, data, and policy."`
 	Version   VersionCmd   `cmd:"" help:"Print version."`
 }
@@ -528,6 +530,32 @@ func (n *NukeCmd) Run() error {
 	ui.Success("nuked — clean slate")
 	ui.Detail("removed", dir)
 	ui.Break()
+	return nil
+}
+
+type EvalCmd struct {
+	Corpus string `name:"corpus" help:"Path to corpus directory" default:"testdata/eval"`
+}
+
+func (e *EvalCmd) Run() error {
+	engine := policy.NewEngine()
+	if err := engine.LoadBytes(configs.DefaultPolicy); err != nil {
+		return fmt.Errorf("loading embedded default policy: %w", err)
+	}
+
+	entries, err := eval.Load(e.Corpus)
+	if err != nil {
+		ui.Error(err.Error())
+		ui.Break()
+		return err
+	}
+
+	summary := eval.Run(engine, entries)
+	eval.Print(summary, os.Stdout)
+
+	if summary.Fail > 0 || summary.Errored > 0 {
+		return fmt.Errorf("eval: %d failed, %d errored", summary.Fail, summary.Errored)
+	}
 	return nil
 }
 

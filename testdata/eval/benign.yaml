@@ -1,0 +1,39 @@
+- id: ben-001
+  category: benign
+  tool: shell
+  tool_input:
+    command: "ls"
+  expect: allow
+  notes: "the most basic dev command imaginable"
+
+- id: ben-002
+  category: benign
+  tool: shell
+  tool_input:
+    command: "git status"
+  expect: allow
+  notes: "subcommand allowlist match"
+
+- id: ben-003
+  category: benign
+  tool: shell
+  tool_input:
+    command: "cat README.md"
+  expect: allow
+  notes: "reading project files"
+
+- id: ben-004
+  category: benign
+  tool: shell
+  tool_input:
+    command: "go build ./..."
+  expect: allow
+  notes: "go build subcommand allowlist match"
+
+- id: ben-005
+  category: benign
+  tool: shell
+  tool_input:
+    command: "npm test"
+  expect: allow
+  notes: "npm test subcommand allowlist match"
