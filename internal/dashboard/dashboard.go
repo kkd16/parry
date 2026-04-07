@@ -14,6 +14,7 @@ import (
 
 	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/frontend"
+	"github.com/kkd16/parry/internal/notify"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/store"
 )
@@ -58,6 +59,7 @@ func (s *Server) Run() error {
 	mux.HandleFunc("GET /api/events", s.handleEvents)
 	mux.HandleFunc("GET /api/policy", s.handlePolicy)
 	mux.HandleFunc("GET /api/notify/health", s.handleNotifyHealth)
+	mux.HandleFunc("POST /api/notify/test", s.handleNotifyTest)
 	mux.HandleFunc("GET /api/heatmap", s.handleHeatmap)
 	mux.HandleFunc("GET /api/overview", s.handleOverview)
 	mux.Handle("/", s.spaHandler())
@@ -259,6 +261,47 @@ func (s *Server) handleNotifyHealth(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, result)
+}
+
+func (s *Server) handleNotifyTest(w http.ResponseWriter, _ *http.Request) {
+	p, err := s.loadPolicy()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	if !p.NotificationsEnabled() {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "no notification provider configured",
+		})
+		return
+	}
+
+	provider, ok := notify.GetProvider(p.Notifications.Provider)
+	if !ok {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":    false,
+			"error": "unknown provider: " + p.Notifications.Provider,
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := provider.SendTest(ctx, p.Notifications.ProviderConfig()); err != nil {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":      false,
+			"error":   err.Error(),
+			"sent_at": time.Now().UTC().Format(time.RFC3339),
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":      true,
+		"sent_at": time.Now().UTC().Format(time.RFC3339),
+	})
 }
 
 func (s *Server) handlePolicy(w http.ResponseWriter, _ *http.Request) {

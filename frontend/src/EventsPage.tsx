@@ -19,10 +19,12 @@ import PageHeader from "./components/PageHeader";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useUrlNumber, useUrlParam } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
-import { Eraser, RotateCcw } from "lucide-react";
+import { Eraser, RotateCcw, Star } from "lucide-react";
 import EventsTimeline from "./components/EventsTimeline";
 import FilterChips from "./components/FilterChips";
 import { useToast } from "./components/Toasts";
+import { useBookmarks } from "./hooks/useBookmarks";
+import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
 
 const PAGE_SIZE = 100;
 
@@ -123,6 +125,12 @@ export default function EventsPage({
   registerSearchFocus,
 }: Props) {
   const toast = useToast();
+  const bookmarks = useBookmarks();
+  const nowTick = useNowTick(30_000);
+  const [density, setDensity] = useLocalStorage<"compact" | "normal" | "comfortable">(
+    "parry-density",
+    "normal",
+  );
   const [events, setEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useUrlNumber("offset", 0);
@@ -284,8 +292,15 @@ export default function EventsPage({
       {
         accessorKey: "timestamp",
         header: "Time",
-        size: 170,
-        cell: (c) => <span className="mono">{new Date(c.getValue<string>()).toLocaleString()}</span>,
+        size: 150,
+        cell: (c) => {
+          const v = c.getValue<string>();
+          return (
+            <span className="mono" title={formatAbsolute(v)}>
+              {formatRelative(v, nowTick)}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "raw_name",
@@ -304,7 +319,19 @@ export default function EventsPage({
         size: 110,
         cell: (c) => {
           const v = c.getValue<string>();
-          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
+          if (!v) return <span className="muted">—</span>;
+          return (
+            <button
+              className="cell-link mono"
+              onClick={(e) => {
+                e.stopPropagation();
+                setBinaryFilter(v);
+                setOffset(0);
+              }}
+            >
+              {v}
+            </button>
+          );
         },
       },
       {
@@ -333,7 +360,19 @@ export default function EventsPage({
         size: 240,
         cell: (c) => {
           const v = c.getValue<string>();
-          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
+          if (!v) return <span className="muted">—</span>;
+          return (
+            <button
+              className="cell-link mono"
+              onClick={(e) => {
+                e.stopPropagation();
+                setWorkdirFilter(v);
+                setOffset(0);
+              }}
+            >
+              {v}
+            </button>
+          );
         },
       },
       {
@@ -360,7 +399,7 @@ export default function EventsPage({
         cell: (c) => <span className="mono muted">{shortJson(c.getValue())}</span>,
       },
     ],
-    [],
+    [nowTick, setBinaryFilter, setWorkdirFilter, setOffset],
   );
 
   const table = useReactTable({
@@ -455,8 +494,26 @@ export default function EventsPage({
         icon: <Eraser />,
         perform: clearAllFilters,
       },
+      {
+        id: "events.density.compact",
+        group: "Logbook",
+        label: "Density: compact",
+        perform: () => setDensity("compact"),
+      },
+      {
+        id: "events.density.normal",
+        group: "Logbook",
+        label: "Density: normal",
+        perform: () => setDensity("normal"),
+      },
+      {
+        id: "events.density.comfortable",
+        group: "Logbook",
+        label: "Density: comfortable",
+        perform: () => setDensity("comfortable"),
+      },
     ],
-    [autoRefresh, fetchEvents, filteredEvents, clearAllFilters],
+    [autoRefresh, fetchEvents, filteredEvents, clearAllFilters, setDensity],
   );
   useRegisterCommands(eventsCommands, [eventsCommands]);
 
@@ -634,6 +691,23 @@ export default function EventsPage({
         >
           <FileJson /> json
         </button>
+        <button
+          className="btn"
+          onClick={() => {
+            const params = new URLSearchParams();
+            if (actionFilter) params.set("action", actionFilter);
+            if (toolFilter) params.set("tool", toolFilter);
+            if (workdirFilter) params.set("workdir", workdirFilter);
+            if (binaryFilter) params.set("binary", binaryFilter);
+            if (timeFilter) params.set("time", timeFilter);
+            if (search) params.set("q", search);
+            const bm = bookmarks.add(params.toString());
+            toast.success("bookmark saved", bm.name);
+          }}
+          title="save current filters as a bookmark"
+        >
+          <Star /> save
+        </button>
         <div className="toolbar-group" ref={colMenuRef} style={{ position: "relative" }}>
           <button className="btn" onClick={() => setColMenuOpen((v) => !v)}>
             <Columns3 /> cols
@@ -681,7 +755,11 @@ export default function EventsPage({
 
       <div className={`table-wrap${loading ? " loading" : ""}`}>
         {loading && <div className="loading-bar" />}
-        <table className="events-table" style={{ width: table.getCenterTotalSize() }}>
+        <table
+          className="events-table"
+          data-density={density}
+          style={{ width: table.getCenterTotalSize() }}
+        >
           <thead>
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
@@ -782,7 +860,15 @@ export default function EventsPage({
         )}
       </div>
 
-      <EventDrawer event={selected} onClose={() => setSelected(null)} />
+      <EventDrawer
+        event={selected}
+        onClose={() => setSelected(null)}
+        onApplyFilter={(key, value) => {
+          if (key === "binary") setBinaryFilter(value);
+          else if (key === "workdir") setWorkdirFilter(value);
+          setOffset(0);
+        }}
+      />
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>

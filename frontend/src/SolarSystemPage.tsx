@@ -129,8 +129,10 @@ export default function SolarSystemPage() {
     const main = document.querySelector(".shell-main") as HTMLElement | null;
     const prev = main?.style.overflow ?? "";
     if (main) main.style.overflow = "hidden";
+    document.body.classList.add("solar-mode");
     return () => {
       if (main) main.style.overflow = prev;
+      document.body.classList.remove("solar-mode");
     };
   }, []);
 
@@ -433,8 +435,16 @@ export default function SolarSystemPage() {
   const showLabels = view.scale > 0.7;
 
   return (
-    <>
-      <div className="orrery-header-row">
+    <div
+      className="heatmap-canvas orrery-fullscreen"
+      ref={containerRef}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onDoubleClick={onDoubleClick}
+    >
+      <div className="orrery-header-overlay">
         <PageHeader
           eyebrow="instrument · 02"
           title="Orrery"
@@ -468,16 +478,7 @@ export default function SolarSystemPage() {
         )}
       </div>
 
-      <div
-        className="heatmap-canvas"
-        ref={containerRef}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
-        onDoubleClick={onDoubleClick}
-      >
-        <svg width="100%" height="100%">
+      <svg width="100%" height="100%">
           <defs>
             <filter id="bodyGlow" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -632,16 +633,15 @@ export default function SolarSystemPage() {
           </button>
         </div>
 
-        {hover && (
-          <div
-            className="heatmap-tooltip"
-            style={{ left: hover.x + 12, top: hover.y + 12 }}
-          >
-            <div className="heatmap-tooltip-path">{hover.body.path}</div>
-            <div className="heatmap-tooltip-count">{hover.body.count} events</div>
-          </div>
-        )}
-      </div>
-    </>
+      {hover && (
+        <div
+          className="heatmap-tooltip"
+          style={{ left: hover.x + 12, top: hover.y + 12 }}
+        >
+          <div className="heatmap-tooltip-path">{hover.body.path}</div>
+          <div className="heatmap-tooltip-count">{hover.body.count} events</div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { BookOpen, Filter, Gauge, Orbit, ScrollText, Search } from "lucide-react";
+import { Bell, BookOpen, Bookmark, Filter, Gauge, Orbit, ScrollText, Search } from "lucide-react";
 import BridgePage from "./BridgePage";
 import EventsPage from "./EventsPage";
 import SolarSystemPage from "./SolarSystemPage";
 import PolicyPage from "./PolicyPage";
+import NotifyPage from "./NotifyPage";
 import Sidebar from "./components/Sidebar";
 import CommandPalette from "./components/CommandPalette";
 import ShortcutsHelp from "./components/ShortcutsHelp";
@@ -11,6 +12,8 @@ import { ToastsProvider } from "./components/Toasts";
 import { usePolicyOverview } from "./usePolicyOverview";
 import { useKeyboardNav } from "./hooks/useKeyboardNav";
 import { usePath, useUrlParam } from "./hooks/useUrlState";
+import { useBookmarks, type BookmarksApi } from "./hooks/useBookmarks";
+import { useDashboardCounts } from "./hooks/useDashboardCounts";
 import {
   CommandsProvider,
   useRegisterCommands,
@@ -18,7 +21,7 @@ import {
   type QuickFilter,
 } from "./commands";
 
-export type Tab = "bridge" | "events" | "solar" | "policy";
+export type Tab = "bridge" | "events" | "solar" | "policy" | "notify";
 
 interface ShellState {
   setTab: (t: Tab) => void;
@@ -64,6 +67,26 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
         icon: <BookOpen />,
         keywords: ["policy", "rules"],
         perform: () => setTab("policy"),
+      },
+      {
+        id: "nav.notify",
+        group: "Navigate",
+        label: "Go to Beacon",
+        hint: "g n",
+        icon: <Bell />,
+        keywords: ["notify", "notification", "alert", "ntfy", "provider", "beacon"],
+        perform: () => setTab("notify"),
+      },
+      {
+        id: "notify.test",
+        group: "Beacon",
+        label: "Send a test notification",
+        icon: <Bell />,
+        keywords: ["test", "ping"],
+        perform: () => {
+          void fetch("/api/notify/test", { method: "POST" });
+          setTab("notify");
+        },
       },
       {
         id: "help.shortcuts",
@@ -220,10 +243,42 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts }: ShellState)
   return null;
 }
 
+function BookmarkCommands({
+  bookmarks,
+  onOpen,
+}: {
+  bookmarks: BookmarksApi;
+  onOpen: (qs: string) => void;
+}) {
+  const cmds = useMemo<Command[]>(
+    () =>
+      bookmarks.bookmarks.map((b) => ({
+        id: `bookmark.${b.id}`,
+        group: "Saved",
+        label: b.name,
+        icon: <Bookmark />,
+        keywords: ["bookmark", "saved", b.qs],
+        perform: () => onOpen(b.qs),
+      })),
+    [bookmarks.bookmarks, onOpen],
+  );
+  useRegisterCommands(cmds, [cmds]);
+  return null;
+}
+
 function AppShell() {
   const [path, setPath] = usePath();
   const tab = path.slice(1) as Tab;
   const setTab = useCallback((t: Tab) => setPath("/" + t), [setPath]);
+  const bookmarks = useBookmarks();
+  const counts = useDashboardCounts();
+  const openBookmark = useCallback(
+    (qs: string) => {
+      window.history.pushState(null, "", "/events" + (qs ? "?" + qs : ""));
+      window.dispatchEvent(new Event("parry:urlchange"));
+    },
+    [],
+  );
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [pendingFilter, setPendingFilter] = useState<QuickFilter | null>(null);
@@ -244,6 +299,7 @@ function AppShell() {
     onGoEvents: () => setTab("events"),
     onGoSolar: () => setTab("solar"),
     onGoPolicy: () => setTab("policy"),
+    onGoNotify: () => setTab("notify"),
     onOpenPalette: () => setPaletteOpen((v) => !v),
     onFocusSearch: focusSearch,
     onShowHelp: openShortcuts,
@@ -260,6 +316,7 @@ function AppShell() {
         setPendingFilter={queueFilter}
         openShortcuts={openShortcuts}
       />
+      <BookmarkCommands bookmarks={bookmarks} onOpen={openBookmark} />
       <div className="shell">
         <Sidebar
           tab={tab}
@@ -268,6 +325,9 @@ function AppShell() {
           eventCount={eventCount}
           live={live}
           onShowHelp={openShortcuts}
+          bookmarks={bookmarks}
+          counts={counts}
+          onOpenBookmark={openBookmark}
         />
         <main className="shell-main">
           <div className="shell-main-inner">
@@ -294,6 +354,9 @@ function AppShell() {
             )}
             {tab === "solar" && <SolarSystemPage />}
             {tab === "policy" && <PolicyPage {...overview} />}
+            {tab === "notify" && (
+              <NotifyPage overview={overview} onGoToEvents={() => setTab("events")} />
+            )}
           </div>
         </main>
         <CommandPalette open={paletteOpen} onClose={closePalette} />

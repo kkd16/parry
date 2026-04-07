@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "./components/PageHeader";
+import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
 import { actionBadge } from "./policyBadges";
 import type { Event } from "./types";
 import type { PolicyOverviewState } from "./usePolicyOverview";
@@ -165,6 +166,7 @@ function ActionBar({ actions }: { actions: Record<string, number> }) {
 export default function BridgePage({ overview, onEventClick, onFilterBinary }: Props) {
   const [data, setData] = useState<OverviewResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const nowTick = useNowTick(30_000);
 
   useEffect(() => {
     fetch("/api/overview")
@@ -309,8 +311,8 @@ export default function BridgePage({ overview, onEventClick, onFilterBinary }: P
                 <tbody>
                   {data.recent_blocks.map((e) => (
                     <tr key={e.id} onClick={() => onEventClick(e)}>
-                      <td className="mono nowrap">
-                        {new Date(e.timestamp).toLocaleTimeString()}
+                      <td className="mono nowrap" title={formatAbsolute(e.timestamp)}>
+                        {formatRelative(e.timestamp, nowTick)}
                       </td>
                       <td>{actionBadge(e.action)}</td>
                       <td className="mono">{e.binary || e.tool_name}</td>

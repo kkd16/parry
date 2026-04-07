@@ -7,6 +7,7 @@ interface Handlers {
   onGoEvents?: Handler;
   onGoSolar?: Handler;
   onGoPolicy?: Handler;
+  onGoNotify?: Handler;
   onOpenPalette?: Handler;
   onFocusSearch?: Handler;
   onShowHelp?: Handler;
@@ -70,6 +71,7 @@ export function useKeyboardNav(handlers: Handlers) {
         else if (e.key === "e") ref.current.onGoEvents?.();
         else if (e.key === "s") ref.current.onGoSolar?.();
         else if (e.key === "p") ref.current.onGoPolicy?.();
+        else if (e.key === "n") ref.current.onGoNotify?.();
         resetLeader();
         return;
       }

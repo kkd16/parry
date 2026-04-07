@@ -4,7 +4,7 @@ import PageHeader from "./components/PageHeader";
 import { actionBadge } from "./policyBadges";
 import type { Rule } from "./types";
 import type { PolicyOverviewState } from "./usePolicyOverview";
-import { useUrlParam } from "./hooks/useUrlState";
+import { useUrlParam, usePath } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
 
 function ruleBindings(rule: Rule): { action: string; binaries: string[] }[] {
@@ -51,6 +51,14 @@ function Section({ title, count, defaultOpen = true, children }: SectionProps) {
 
 export default function PolicyPage({ policy, loading, error }: PolicyOverviewState) {
   const [query, setQuery] = useUrlParam("q", "");
+  const [, setPath] = usePath();
+
+  const goBinary = (b: string) => {
+    const params = new URLSearchParams();
+    params.set("binary", b);
+    window.history.replaceState(null, "", "?" + params.toString());
+    setPath("/events");
+  };
 
   const charterCommands = useMemo<Command[]>(
     () => [
@@ -170,7 +178,9 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
                       {binaries.map((b, i) => (
                         <span key={b}>
                           {i > 0 && ", "}
-                          {highlight(b, query)}
+                          <button className="cell-link mono" onClick={() => goBinary(b)}>
+                            {highlight(b, query)}
+                          </button>
                         </span>
                       ))}
                     </td>

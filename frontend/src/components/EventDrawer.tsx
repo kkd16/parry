@@ -6,6 +6,7 @@ import { actionBadge } from "../policyBadges";
 interface Props {
   event: Event | null;
   onClose: () => void;
+  onApplyFilter?: (key: "binary" | "workdir" | "session", value: string) => void;
 }
 
 function highlightJson(value: unknown): string {
@@ -54,7 +55,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function EventDrawer({ event, onClose }: Props) {
+export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
   return (
     <AnimatePresence>
       {event && (
@@ -105,6 +106,32 @@ export default function EventDrawer({ event, onClose }: Props) {
               <CopyField label="file" value={event.file} />
               <CopyField label="workdir" value={event.workdir} />
               <CopyField label="session" value={event.session} />
+              {onApplyFilter && (
+                <div className="drawer-actions">
+                  {event.binary && (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        onApplyFilter("binary", event.binary);
+                        onClose();
+                      }}
+                    >
+                      events for {event.binary}
+                    </button>
+                  )}
+                  {event.workdir && (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        onApplyFilter("workdir", event.workdir);
+                        onClose();
+                      }}
+                    >
+                      events in this directory
+                    </button>
+                  )}
+                </div>
+              )}
               <div
                 className="drawer-json"
                 dangerouslySetInnerHTML={{ __html: highlightJson(event.tool_input) }}

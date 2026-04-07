@@ -462,12 +462,14 @@ func (d *DashboardCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	dbPath := filepath.Join(dir, "parry.db")
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		ui.Info("no data yet — run some commands with " + ui.Boldf("parry check") + " first")
+	policyPath := filepath.Join(dir, "policy.yaml")
+	if _, err := os.Stat(policyPath); os.IsNotExist(err) {
+		ui.Warn("parry is not initialized")
+		ui.Info("run " + ui.Boldf("parry init") + " before starting the dashboard")
 		ui.Break()
-		return nil
+		return fmt.Errorf("parry not initialized: missing %s", policyPath)
 	}
+	dbPath := filepath.Join(dir, "parry.db")
 
 	opts := []dashboard.Option{dashboard.WithPolicyDir(dir)}
 	if d.Debug {
