@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/kkd16/parry/configs"
@@ -19,9 +17,8 @@ import (
 	"github.com/kkd16/parry/internal/eval"
 	"github.com/kkd16/parry/internal/notify"
 	"github.com/kkd16/parry/internal/policy"
+	"github.com/kkd16/parry/internal/runtime"
 	"github.com/kkd16/parry/internal/setup"
-	"github.com/kkd16/parry/internal/shellparse"
-	"github.com/kkd16/parry/internal/store"
 	"github.com/kkd16/parry/internal/ui"
 	"golang.org/x/term"
 )
@@ -63,26 +60,6 @@ func fatal(err error) {
 	os.Exit(check.ExitBlock)
 }
 
-type verdict struct {
-	action  string
-	respond string
-	message string
-}
-
-func resolveVerdict(p *policy.Policy, action policy.Action) verdict {
-	if p.Mode == "observe" {
-		return verdict{"observe", "allow", ""}
-	}
-	switch action {
-	case policy.Allow:
-		return verdict{"allow", "allow", ""}
-	case policy.Confirm:
-		return resolveVerdict(p, p.CheckModeConfirm)
-	default:
-		return verdict{"block", "deny", "Blocked by Parry"}
-	}
-}
-
 type CheckCmd struct{}
 
 func (c *CheckCmd) Run() error {
@@ -96,96 +73,24 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
-	action, err := engine.Evaluate(tc.Tool, tc.ToolInput)
+	dir, err := parryDir()
 	if err != nil {
 		fatal(err)
 	}
-
-	p := engine.Policy()
-
-	var v verdict
-	if action == policy.Confirm && p.NotificationsEnabled() && p.Mode == "enforce" {
-		v = confirmViaNotify(p, tc)
-	} else {
-		v = resolveVerdict(p, action)
-	}
-
-	if v.respond != "deny" && p.RateLimit != nil && p.Mode == "enforce" {
-		if s, err := openStore(); err == nil {
-			window := p.RateLimit.ParseWindow()
-			count, err := s.CountSince(store.Session(), time.Now().UTC().Add(-window))
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
-			} else if count >= p.RateLimit.Max {
-				v = verdict{
-					action:  string(p.RateLimit.OnExceed),
-					respond: "deny",
-					message: fmt.Sprintf("Rate limit exceeded: %d/%d in %s", count, p.RateLimit.Max, p.RateLimit.Window),
-				}
-			}
-			_ = s.Close()
-		}
-	}
-	recordEvent(tc, v.action, p.Mode)
+	rt := runtime.New(engine, filepath.Join(dir, "parry.db"))
+	v := rt.Decide(context.Background(), tc)
 
 	cmd, _ := tc.ToolInput["command"].(string)
 	if cmd == "" {
 		cmd = tc.RawName
 	}
 
-	ui.LogCheck(v.action, cmd)
-	if err := agent.Respond(os.Stdout, check.Result{Decision: v.respond, Message: v.message}); err != nil {
+	ui.LogCheck(v.Action, cmd)
+	if err := agent.Respond(os.Stdout, check.Result{Decision: v.Respond, Message: v.Message}); err != nil {
 		fmt.Fprintf(os.Stderr, "parry: encoding response: %v\n", err)
 		os.Exit(check.ExitBlock)
 	}
 	return nil
-}
-
-func openStore() (*store.Store, error) {
-	dir, err := parryDir()
-	if err != nil {
-		return nil, err
-	}
-	return store.Open(filepath.Join(dir, "parry.db"))
-}
-
-func buildEvent(tc *check.ToolCall, action, mode string) store.Event {
-	e := store.Event{
-		ToolName:  string(tc.Tool),
-		ToolInput: tc.ToolInput,
-		Action:    action,
-		Session:   store.Session(),
-		Mode:      mode,
-		RawName:   tc.RawName,
-		Workdir:   store.Workdir(),
-	}
-	if cmd, ok := tc.ToolInput["command"].(string); ok && cmd != "" {
-		cmds := shellparse.Parse(cmd)
-		if len(cmds) > 0 {
-			e.Binary = cmds[0].Binary
-			e.Subcommand = cmds[0].Subcommand
-		}
-	}
-	if p, ok := tc.ToolInput["path"].(string); ok {
-		e.File = p
-	}
-	return e
-}
-
-func recordEventWithStore(s *store.Store, tc *check.ToolCall, action, mode string) {
-	if err := s.RecordEvent(buildEvent(tc, action, mode)); err != nil {
-		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
-	}
-}
-
-func recordEvent(tc *check.ToolCall, action, mode string) {
-	s, err := openStore()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
-		return
-	}
-	defer func() { _ = s.Close() }()
-	recordEventWithStore(s, tc, action, mode)
 }
 
 type InitCmd struct{}
@@ -592,50 +497,6 @@ func (v *ValidateCmd) Run() error {
 	ui.Detail("user paths", fmt.Sprintf("%d protected", len(p.ProtectedPaths)))
 	ui.Break()
 	return nil
-}
-
-func confirmViaNotify(p *policy.Policy, tc *check.ToolCall) verdict {
-	prov, ok := notify.GetProvider(p.Notifications.Provider)
-	if !ok {
-		fmt.Fprintf(os.Stderr, "parry: unknown notification provider %q\n", p.Notifications.Provider)
-		return resolveVerdict(p, p.CheckModeConfirm)
-	}
-
-	confirmer, err := prov.NewConfirmer(p.Notifications.ProviderConfig())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "parry: notify: %v\n", err)
-		return resolveVerdict(p, p.CheckModeConfirm)
-	}
-
-	timeout := p.Notifications.ParseTimeout()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	cmd, _ := tc.ToolInput["command"].(string)
-	if cmd == "" {
-		cmd = tc.RawName
-	}
-
-	ui.Info(fmt.Sprintf("waiting for confirmation (%s timeout)...", timeout))
-
-	approved, err := confirmer.Confirm(ctx, notify.ConfirmRequest{
-		Tool:    string(tc.Tool),
-		RawName: tc.RawName,
-		Command: cmd,
-	})
-
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) {
-			ui.Warn(fmt.Sprintf("confirmation timed out after %s", timeout))
-		} else {
-			fmt.Fprintf(os.Stderr, "parry: notify: %v\n", err)
-		}
-		return resolveVerdict(p, p.CheckModeConfirm)
-	}
-	if approved {
-		return verdict{"allow", "allow", ""}
-	}
-	return verdict{"block", "deny", "Denied via notification"}
 }
 
 type ConfigNotifyCmd struct {
