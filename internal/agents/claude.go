@@ -8,11 +8,6 @@ import (
 	"github.com/kkd16/parry/internal/setup"
 )
 
-func init() {
-	check.Register(claudeAgent)
-	setup.Register(claudeConfigurer)
-}
-
 type claudeHookOutput struct {
 	HookEventName            string `json:"hookEventName"`
 	PermissionDecision       string `json:"permissionDecision"`

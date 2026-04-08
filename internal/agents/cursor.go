@@ -8,11 +8,6 @@ import (
 	"github.com/kkd16/parry/internal/setup"
 )
 
-func init() {
-	check.Register(cursorAgent)
-	setup.Register(cursorConfigurer)
-}
-
 type cursorResponse struct {
 	Permission   string `json:"permission"`
 	UserMessage  string `json:"user_message,omitempty"`

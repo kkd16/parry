@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
-	_ "github.com/kkd16/parry/internal/agents"
+	"github.com/kkd16/parry/internal/agents"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/policy"
@@ -31,6 +31,8 @@ type CLI struct {
 }
 
 func main() {
+	agents.Register()
+
 	var cli CLI
 	ctx := kong.Parse(&cli,
 		kong.Name("parry"),
