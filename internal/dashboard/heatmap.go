@@ -8,13 +8,14 @@ type heatmapFile struct {
 }
 
 type heatmapProject struct {
-	Workdir string        `json:"workdir"`
-	Files   []heatmapFile `json:"files"`
-	Total   int           `json:"total"`
+	Workdir   string        `json:"workdir"`
+	Files     []heatmapFile `json:"files"`
+	Total     int           `json:"total"`
+	FileCount int           `json:"fileCount"`
 }
 
 func (s *Server) handleHeatmap(w http.ResponseWriter, _ *http.Request) {
-	rows, err := s.store.FileHeatmap(20)
+	rows, totals, err := s.store.FileHeatmap(20)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -30,12 +31,16 @@ func (s *Server) handleHeatmap(w http.ResponseWriter, _ *http.Request) {
 			order = append(order, fh.Workdir)
 		}
 		p.Files = append(p.Files, heatmapFile{Path: fh.Path, Count: fh.Count})
-		p.Total += fh.Count
 	}
 
 	projects := make([]*heatmapProject, 0, len(order))
 	for _, wd := range order {
-		projects = append(projects, projectsByDir[wd])
+		p := projectsByDir[wd]
+		if t, ok := totals[wd]; ok {
+			p.Total = t.Events
+			p.FileCount = t.Files
+		}
+		projects = append(projects, p)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"projects": projects})

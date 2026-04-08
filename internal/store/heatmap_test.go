@@ -3,6 +3,7 @@ package store_test
 import (
 	"testing"
 
+	"github.com/kkd16/parry/internal/store"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,7 +13,7 @@ func TestFileHeatmap_BasicGrouping(t *testing.T) {
 	seedEvent(t, s, makeEvent(withWorkdir("/proj/a"), withFile("util.go")))
 	seedN(t, s, 2, withWorkdir("/proj/b"), withFile("lib.go"))
 
-	rows, err := s.FileHeatmap(0)
+	rows, totals, err := s.FileHeatmap(0)
 	require.NoError(t, err)
 	require.Len(t, rows, 3)
 
@@ -27,6 +28,9 @@ func TestFileHeatmap_BasicGrouping(t *testing.T) {
 	require.Equal(t, "/proj/b", rows[2].Workdir)
 	require.Equal(t, "lib.go", rows[2].Path)
 	require.Equal(t, 2, rows[2].Count)
+
+	require.Equal(t, store.ProjectTotals{Events: 4, Files: 2}, totals["/proj/a"])
+	require.Equal(t, store.ProjectTotals{Events: 2, Files: 1}, totals["/proj/b"])
 }
 
 func TestFileHeatmap_PerProjectLimit(t *testing.T) {
@@ -37,7 +41,7 @@ func TestFileHeatmap_PerProjectLimit(t *testing.T) {
 	seedN(t, s, 2, withWorkdir("/proj/a"), withFile("cold.go"))
 	seedN(t, s, 6, withWorkdir("/proj/b"), withFile("only.go"))
 
-	rows, err := s.FileHeatmap(2)
+	rows, totals, err := s.FileHeatmap(2)
 	require.NoError(t, err)
 	require.Len(t, rows, 3)
 
@@ -47,6 +51,9 @@ func TestFileHeatmap_PerProjectLimit(t *testing.T) {
 	require.Equal(t, "warm.go", rows[1].Path)
 	require.Equal(t, "/proj/b", rows[2].Workdir)
 	require.Equal(t, "only.go", rows[2].Path)
+
+	require.Equal(t, store.ProjectTotals{Events: 14, Files: 4}, totals["/proj/a"])
+	require.Equal(t, store.ProjectTotals{Events: 6, Files: 1}, totals["/proj/b"])
 }
 
 func TestFileHeatmap_FiltersEmptyFileAndWorkdir(t *testing.T) {
@@ -56,7 +63,7 @@ func TestFileHeatmap_FiltersEmptyFileAndWorkdir(t *testing.T) {
 	seedEvent(t, s, makeEvent(withWorkdir(""), withFile("orphan.go")))
 	seedEvent(t, s, makeEvent())
 
-	rows, err := s.FileHeatmap(0)
+	rows, _, err := s.FileHeatmap(0)
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
 	require.Equal(t, "/proj/a", rows[0].Workdir)
@@ -65,7 +72,8 @@ func TestFileHeatmap_FiltersEmptyFileAndWorkdir(t *testing.T) {
 
 func TestFileHeatmap_EmptyDB(t *testing.T) {
 	s := openTempStore(t)
-	rows, err := s.FileHeatmap(10)
+	rows, totals, err := s.FileHeatmap(10)
 	require.NoError(t, err)
 	require.Empty(t, rows)
+	require.Empty(t, totals)
 }

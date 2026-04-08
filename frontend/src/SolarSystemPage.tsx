@@ -13,6 +13,7 @@ interface HeatmapProject {
   workdir: string;
   files: HeatmapFile[];
   total: number;
+  fileCount: number;
 }
 
 interface HeatmapResponse {
@@ -389,7 +390,7 @@ export default function SolarSystemPage() {
     let topProject = { workdir: "", count: 0 };
     for (const p of data.projects) {
       totalEvents += p.total;
-      totalFiles += p.files.length;
+      totalFiles += p.fileCount;
       if (p.total > topProject.count) topProject = { workdir: p.workdir, count: p.total };
       for (const f of p.files) {
         if (f.count > topFile.count) topFile = { path: f.path, count: f.count };
