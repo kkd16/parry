@@ -32,7 +32,12 @@ jobs:
       - run: cd frontend && npm run lint
       - run: cd frontend && npm run build
 
-      - run: go test ./... -race -count=1
+      - run: go test ./... -race -count=1 -coverprofile=coverage.txt
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - uses: golangci/golangci-lint-action@v9
         with:
