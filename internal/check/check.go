@@ -1,5 +1,7 @@
 package check
 
+//go:generate mockgen -destination=mocks/agent.go -package=mocks github.com/kkd16/parry/internal/check Agent
+
 import (
 	"encoding/json"
 	"fmt"
