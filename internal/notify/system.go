@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/kkd16/parry/internal/policyfile"
+	"github.com/kkd16/parry/internal/policy"
 )
 
 func init() {
@@ -50,7 +50,7 @@ func (p *systemProvider) RunSetup(policyPath string) (SetupResult, error) {
 		return SetupResult{}, fmt.Errorf("system notifier unavailable: %w (install zenity on Linux or run on macOS)", err)
 	}
 
-	if err := policyfile.SetProvider(policyPath, "system"); err != nil {
+	if err := policy.SetProvider(policyPath, "system"); err != nil {
 		return SetupResult{}, fmt.Errorf("configuring notifications: %w", err)
 	}
 
@@ -68,7 +68,7 @@ func (p *systemProvider) RunSetup(policyPath string) (SetupResult, error) {
 }
 
 type systemBackend struct {
-	kind string // "osascript" | "zenity" | "kdialog"
+	kind string
 	bin  string
 }
 
@@ -145,7 +145,6 @@ func (s *SystemConfirmer) buildCommand(ctx context.Context, title, body string) 
 	return exec.CommandContext(ctx, "false")
 }
 
-// osaQuote escapes a string for inclusion as an AppleScript literal.
 func osaQuote(s string) string {
 	return `"` + strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `"`, `\"`) + `"`
 }

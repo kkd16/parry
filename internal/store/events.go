@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/kkd16/parry/internal/check"
+	"github.com/kkd16/parry/internal/shellparse"
 )
 
 type Event struct {
@@ -35,7 +38,29 @@ type EventRow struct {
 	Workdir    string         `json:"workdir"`
 }
 
-// allowedSortCols is the whitelist of columns that can be sorted on.
+func NewEvent(tc *check.ToolCall, action, mode string) Event {
+	e := Event{
+		ToolName:  string(tc.Tool),
+		ToolInput: tc.ToolInput,
+		Action:    action,
+		Session:   Session(),
+		Mode:      mode,
+		RawName:   tc.RawName,
+		Workdir:   Workdir(),
+	}
+	if cmd, ok := tc.ToolInput["command"].(string); ok && cmd != "" {
+		cmds := shellparse.Parse(cmd)
+		if len(cmds) > 0 {
+			e.Binary = cmds[0].Binary
+			e.Subcommand = cmds[0].Subcommand
+		}
+	}
+	if p, ok := tc.ToolInput["path"].(string); ok {
+		e.File = p
+	}
+	return e
+}
+
 var allowedSortCols = map[string]string{
 	"timestamp":  "timestamp",
 	"tool_name":  "tool_name",
@@ -127,7 +152,6 @@ func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, so
 	var q string
 	var rowArgs []any
 	if sinceID > 0 {
-		// incremental tail: oldest-new first, no offset
 		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
 		rowArgs = append(args, limit)
 	} else {

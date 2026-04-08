@@ -9,6 +9,7 @@ import (
 	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/internal/notify"
 	"github.com/kkd16/parry/internal/setup"
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/ui"
 	"golang.org/x/term"
 )
@@ -16,7 +17,7 @@ import (
 type InitCmd struct{}
 
 func (i *InitCmd) Run() error {
-	dir, err := parryDir()
+	dir, err := paths.Dir()
 	if err != nil {
 		return err
 	}

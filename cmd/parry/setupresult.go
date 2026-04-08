@@ -7,8 +7,6 @@ import (
 	"github.com/kkd16/parry/internal/ui"
 )
 
-// renderSetupResult prints a notify.SetupResult using the CLI UI helpers.
-// Providers themselves return structured data and never import ui.
 func renderSetupResult(r notify.SetupResult) {
 	if r.TestErr != nil {
 		ui.Warn(fmt.Sprintf("test failed: %v", r.TestErr))

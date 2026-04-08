@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/ui"
 )
 
@@ -12,7 +13,7 @@ type NukeCmd struct {
 }
 
 func (n *NukeCmd) Run() error {
-	dir, err := parryDir()
+	dir, err := paths.Dir()
 	if err != nil {
 		return err
 	}

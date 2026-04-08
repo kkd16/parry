@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/kkd16/parry/internal/policyfile"
+	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/setup"
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/ui"
 	"golang.org/x/term"
 )
@@ -22,7 +23,7 @@ type ConfigCmd struct {
 type ConfigStatusCmd struct{}
 
 func (c *ConfigStatusCmd) Run() error {
-	engine, err := loadPolicy()
+	engine, err := paths.LoadPolicy()
 	if err != nil {
 		ui.Warn("policy not found")
 		ui.Info("run " + ui.Boldf("parry init") + " to get started")
@@ -137,7 +138,7 @@ type ConfigModeCmd struct {
 
 func (m *ConfigModeCmd) Run() error {
 	if m.Mode == "" {
-		engine, err := loadPolicy()
+		engine, err := paths.LoadPolicy()
 		if err != nil {
 			return err
 		}
@@ -151,11 +152,11 @@ func (m *ConfigModeCmd) Run() error {
 		return fmt.Errorf("invalid mode %q: must be \"observe\" or \"enforce\"", m.Mode)
 	}
 
-	dir, err := parryDir()
+	dir, err := paths.Dir()
 	if err != nil {
 		return err
 	}
-	if err := policyfile.SetMode(filepath.Join(dir, "policy.yaml"), m.Mode); err != nil {
+	if err := policy.SetMode(filepath.Join(dir, "policy.yaml"), m.Mode); err != nil {
 		return err
 	}
 

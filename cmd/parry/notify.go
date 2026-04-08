@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/kkd16/parry/internal/notify"
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/ui"
 	"golang.org/x/term"
 )
@@ -22,7 +23,7 @@ type ConfigNotifySetupCmd struct {
 }
 
 func (n *ConfigNotifySetupCmd) Run() error {
-	engine, err := loadPolicy()
+	engine, err := paths.LoadPolicy()
 	if err != nil {
 		return err
 	}
@@ -78,7 +79,7 @@ func (n *ConfigNotifySetupCmd) Run() error {
 		}
 	}
 
-	dir, err := parryDir()
+	dir, err := paths.Dir()
 	if err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func (n *ConfigNotifySetupCmd) Run() error {
 type ConfigNotifyTestCmd struct{}
 
 func (n *ConfigNotifyTestCmd) Run() error {
-	engine, err := loadPolicy()
+	engine, err := paths.LoadPolicy()
 	if err != nil {
 		return err
 	}

@@ -6,13 +6,8 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/kkd16/parry/internal/agents"
 	"github.com/kkd16/parry/internal/check"
-	"github.com/kkd16/parry/internal/paths"
-	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/ui"
 )
-
-func parryDir() (string, error)       { return paths.Dir() }
-func loadPolicy() (*policy.Engine, error) { return paths.LoadPolicy() }
 
 func fatal(err error) {
 	ui.Error(err.Error())

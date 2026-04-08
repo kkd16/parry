@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/kkd16/parry/internal/dashboard"
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/ui"
 )
 
@@ -16,7 +17,7 @@ type DashboardCmd struct {
 }
 
 func (d *DashboardCmd) Run() error {
-	dir, err := parryDir()
+	dir, err := paths.Dir()
 	if err != nil {
 		return err
 	}

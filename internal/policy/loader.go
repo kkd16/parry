@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kkd16/parry/internal/notify"
 	"go.yaml.in/yaml/v4"
 )
 
@@ -81,19 +80,13 @@ func (p *Policy) validate() error {
 			return fmt.Errorf("invalid protected_paths pattern %q: %w", pattern, err)
 		}
 	}
-	if n := p.Notifications; n != nil && n.Provider != "" {
-		if _, ok := notify.GetProvider(n.Provider); !ok {
-			return fmt.Errorf("notifications.provider %q: unknown (available: %s)",
-				n.Provider, strings.Join(notify.ProviderNames(), ", "))
+	if n := p.Notifications; n != nil && n.ConfirmationTimeout != "" {
+		d, err := time.ParseDuration(n.ConfirmationTimeout)
+		if err != nil {
+			return fmt.Errorf("notifications.confirmation_timeout %q: %w", n.ConfirmationTimeout, err)
 		}
-		if n.ConfirmationTimeout != "" {
-			d, err := time.ParseDuration(n.ConfirmationTimeout)
-			if err != nil {
-				return fmt.Errorf("notifications.confirmation_timeout %q: %w", n.ConfirmationTimeout, err)
-			}
-			if d <= 0 {
-				return fmt.Errorf("notifications.confirmation_timeout must be positive")
-			}
+		if d <= 0 {
+			return fmt.Errorf("notifications.confirmation_timeout must be positive")
 		}
 	}
 	if rl := p.RateLimit; rl != nil {

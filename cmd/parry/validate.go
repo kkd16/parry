@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 
 	"github.com/kkd16/parry/internal/policy"
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/ui"
 )
 
 type ValidateCmd struct{}
 
 func (v *ValidateCmd) Run() error {
-	dir, err := parryDir()
+	dir, err := paths.Dir()
 	if err != nil {
 		return err
 	}

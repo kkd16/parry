@@ -2,8 +2,6 @@ package policy
 
 import "github.com/kkd16/parry/internal/shellparse"
 
-// strictest returns whichever of a, b is more restrictive.
-// Ordering: block > confirm > allow > "" (unset).
 func strictest(a, b Action) Action {
 	rank := func(x Action) int {
 		switch x {

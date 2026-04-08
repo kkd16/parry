@@ -8,6 +8,7 @@ import (
 
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/runtime"
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/ui"
 )
 
@@ -19,12 +20,12 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
-	engine, err := loadPolicy()
+	engine, err := paths.LoadPolicy()
 	if err != nil {
 		fatal(err)
 	}
 
-	dir, err := parryDir()
+	dir, err := paths.Dir()
 	if err != nil {
 		fatal(err)
 	}

@@ -1,7 +1,4 @@
-// Package policyfile provides targeted, line-level edits to a policy YAML
-// file. It is separate from internal/policy to avoid an import cycle with
-// internal/notify (which policy uses for validation).
-package policyfile
+package policy
 
 import (
 	"fmt"
@@ -10,7 +7,6 @@ import (
 	"strings"
 )
 
-// SetMode rewrites the top-level `mode:` field in a policy YAML file.
 func SetMode(path, mode string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -38,9 +34,6 @@ func SetMode(path, mode string) error {
 	return nil
 }
 
-// SetNotificationProvider rewrites the notifications.provider field and any
-// provider-specific subfields passed in providerCfg. Only leaf string fields
-// indented 4 spaces deep are rewritten; unknown keys are ignored.
 func SetNotificationProvider(path, provider string, providerCfg map[string]string) error {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -58,8 +51,6 @@ func SetNotificationProvider(path, provider string, providerCfg map[string]strin
 	return nil
 }
 
-// SetProvider rewrites only the provider field, leaving any existing
-// provider-specific config untouched.
 func SetProvider(path, provider string) error {
 	return SetNotificationProvider(path, provider, nil)
 }

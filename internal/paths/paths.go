@@ -1,4 +1,3 @@
-// Package paths centralises the on-disk conventions for ~/.parry.
 package paths
 
 import (
@@ -34,8 +33,6 @@ func DBFile() (string, error) {
 	return filepath.Join(dir, "parry.db"), nil
 }
 
-// LoadPolicy loads ~/.parry/policy.yaml if it exists, otherwise the embedded
-// default policy.
 func LoadPolicy() (*policy.Engine, error) {
 	engine := policy.NewEngine()
 	path, err := PolicyFile()

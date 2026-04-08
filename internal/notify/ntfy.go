@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kkd16/parry/internal/policyfile"
+	"github.com/kkd16/parry/internal/policy"
 )
 
 func init() {
@@ -44,7 +44,7 @@ func (p *ntfyProvider) RunSetup(policyPath string) (SetupResult, error) {
 	topic := "parry-" + uuid.NewString()[:8]
 	server := "https://ntfy.sh"
 
-	if err := policyfile.SetNotificationProvider(policyPath, "ntfy", map[string]string{
+	if err := policy.SetNotificationProvider(policyPath, "ntfy", map[string]string{
 		"topic":  topic,
 		"server": server,
 	}); err != nil {

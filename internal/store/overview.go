@@ -54,7 +54,6 @@ func (s *Store) Overview() (*Overview, error) {
 		return nil, fmt.Errorf("counting today: %w", err)
 	}
 
-	// last 7 days bucketed by date (UTC)
 	dayMap := make(map[string]int)
 	startOf7d := startOfToday.AddDate(0, 0, -6)
 	rows, err := s.db.Query(
@@ -79,7 +78,6 @@ func (s *Store) Overview() (*Overview, error) {
 		o.Last7d = append(o.Last7d, DayBucket{Date: d, Count: dayMap[d]})
 	}
 
-	// action distribution
 	rows, err = s.db.Query("SELECT action, COUNT(*) FROM events GROUP BY action ORDER BY 2 DESC")
 	if err != nil {
 		return nil, fmt.Errorf("querying actions: %w", err)
@@ -94,7 +92,6 @@ func (s *Store) Overview() (*Overview, error) {
 	}
 	_ = rows.Close()
 
-	// top 5 binaries with action mix
 	rows, err = s.db.Query(
 		"SELECT binary, action, COUNT(*) FROM events WHERE binary != '' GROUP BY binary, action",
 	)
@@ -128,7 +125,6 @@ func (s *Store) Overview() (*Overview, error) {
 		o.TopBinaries = o.TopBinaries[:5]
 	}
 
-	// most active project
 	var topWd string
 	var topCount int
 	if err := s.db.QueryRow(
@@ -139,7 +135,6 @@ func (s *Store) Overview() (*Overview, error) {
 		return nil, fmt.Errorf("querying top project: %w", err)
 	}
 
-	// recent blocks (last 5)
 	blocks, _, err := s.ListEvents(5, 0, 0, "block", "", "timestamp", "desc", "")
 	if err != nil {
 		return nil, fmt.Errorf("recent blocks: %w", err)

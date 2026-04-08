@@ -1,7 +1,3 @@
-// Package runtime is the core enforcement pipeline: evaluate a tool call
-// against policy, optionally request a confirmation, apply rate limits, and
-// record the event. It is the reusable heart of `parry check` and (later) the
-// MCP proxy mode.
 package runtime
 
 import (
