@@ -2,7 +2,7 @@
 
 BINARY := parry
 VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS := -ldflags "-X main.version=$(VERSION)"
+LDFLAGS := -ldflags "-X github.com/kkd16/parry/internal/buildinfo.Version=$(VERSION)"
 
 build: frontend
 	@echo "=== Building $(BINARY) ==="
