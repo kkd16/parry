@@ -1,38 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/alecthomas/kong"
-	"github.com/kkd16/parry/configs"
 	_ "github.com/kkd16/parry/internal/agents"
 	"github.com/kkd16/parry/internal/check"
+	"github.com/kkd16/parry/internal/paths"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/ui"
 )
 
-func parryDir() (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("finding home directory: %w", err)
-	}
-	return filepath.Join(home, ".parry"), nil
-}
-
-func loadPolicy() (*policy.Engine, error) {
-	engine := policy.NewEngine()
-	dir, err := parryDir()
-	if err != nil {
-		return nil, err
-	}
-	path := filepath.Join(dir, "policy.yaml")
-	if _, err := os.Stat(path); err == nil {
-		return engine, engine.Load(path)
-	}
-	return engine, engine.LoadBytes(configs.DefaultPolicy)
-}
+func parryDir() (string, error)       { return paths.Dir() }
+func loadPolicy() (*policy.Engine, error) { return paths.LoadPolicy() }
 
 func fatal(err error) {
 	ui.Error(err.Error())
