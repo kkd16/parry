@@ -1,5 +1,7 @@
 package notify
 
+//go:generate mockgen -destination=mocks/provider.go -package=mocks github.com/kkd16/parry/internal/notify Provider,Confirmer
+
 import (
 	"context"
 	"sort"
