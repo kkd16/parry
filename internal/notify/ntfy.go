@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/kkd16/parry/internal/policyfile"
-	"github.com/kkd16/parry/internal/ui"
 )
 
 func init() {
@@ -41,7 +40,7 @@ func (p *ntfyProvider) SendTest(ctx context.Context, cfg map[string]any) error {
 	return c.(*NtfyConfirmer).SendTest(ctx)
 }
 
-func (p *ntfyProvider) RunSetup(policyPath string) error {
+func (p *ntfyProvider) RunSetup(policyPath string) (SetupResult, error) {
 	topic := "parry-" + uuid.NewString()[:8]
 	server := "https://ntfy.sh"
 
@@ -49,26 +48,26 @@ func (p *ntfyProvider) RunSetup(policyPath string) error {
 		"topic":  topic,
 		"server": server,
 	}); err != nil {
-		ui.Error(fmt.Sprintf("configuring notifications: %v", err))
-		return err
+		return SetupResult{}, fmt.Errorf("configuring notifications: %w", err)
 	}
 
 	confirmer := &NtfyConfirmer{Server: server, Topic: topic}
-	if err := confirmer.SendTest(context.Background()); err != nil {
-		ui.Warn(fmt.Sprintf("test notification failed: %v", err))
-		ui.Info("notifications configured, but verify your connection")
-	} else {
-		ui.Success("test notification sent")
-	}
+	testErr := confirmer.SendTest(context.Background())
 
-	ui.Detail("topic", topic)
-	ui.Detail("server", server)
-	ui.Break()
-	ui.Info("subscribe on your phone:")
-	ui.Detail("1", "Install ntfy (Android/iOS)")
-	ui.Detail("2", fmt.Sprintf("Subscribe to topic: %s", topic))
-	ui.Break()
-	return nil
+	return SetupResult{
+		Provider: "ntfy",
+		Details: [][2]string{
+			{"topic", topic},
+			{"server", server},
+		},
+		Instructions: []string{
+			"subscribe on your phone:",
+			"  1. Install ntfy (Android/iOS)",
+			"  2. Subscribe to topic: " + topic,
+		},
+		TestSent: testErr == nil,
+		TestErr:  testErr,
+	}, nil
 }
 
 type NtfyConfirmer struct {

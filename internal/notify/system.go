@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/kkd16/parry/internal/policyfile"
-	"github.com/kkd16/parry/internal/ui"
 )
 
 func init() {
@@ -46,29 +45,26 @@ func (p *systemProvider) SendTest(ctx context.Context, _ map[string]any) error {
 	return nil
 }
 
-func (p *systemProvider) RunSetup(policyPath string) error {
+func (p *systemProvider) RunSetup(policyPath string) (SetupResult, error) {
 	if _, err := detectSystemBackend(); err != nil {
-		ui.Error(fmt.Sprintf("system notifier unavailable: %v", err))
-		ui.Info("install zenity (Linux) or run on macOS, then re-run setup")
-		return err
+		return SetupResult{}, fmt.Errorf("system notifier unavailable: %w (install zenity on Linux or run on macOS)", err)
 	}
 
 	if err := policyfile.SetProvider(policyPath, "system"); err != nil {
-		ui.Error(fmt.Sprintf("configuring notifications: %v", err))
-		return err
+		return SetupResult{}, fmt.Errorf("configuring notifications: %w", err)
 	}
 
-	if err := p.SendTest(context.Background(), nil); err != nil {
-		ui.Warn(fmt.Sprintf("test dialog failed: %v", err))
-		ui.Info("notifications configured, but verify your display setup")
-	} else {
-		ui.Success("test dialog approved")
-	}
+	testErr := p.SendTest(context.Background(), nil)
 
-	ui.Detail("provider", "system")
-	ui.Detail("setup", "none required")
-	ui.Break()
-	return nil
+	return SetupResult{
+		Provider: "system",
+		Details: [][2]string{
+			{"provider", "system"},
+			{"setup", "none required"},
+		},
+		TestSent: testErr == nil,
+		TestErr:  testErr,
+	}, nil
 }
 
 type systemBackend struct {

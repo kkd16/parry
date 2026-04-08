@@ -84,9 +84,11 @@ func (n *ConfigNotifySetupCmd) Run() error {
 	}
 	policyPath := filepath.Join(dir, "policy.yaml")
 
-	if err := prov.RunSetup(policyPath); err != nil {
+	result, err := prov.RunSetup(policyPath)
+	if err != nil {
 		return err
 	}
+	renderSetupResult(result)
 
 	ui.Success("notifications configured")
 	ui.Break()

@@ -154,7 +154,10 @@ func wizardNotifications(policyPath string) {
 		return
 	}
 
-	if err := providers[idx-1].RunSetup(policyPath); err != nil {
+	result, err := providers[idx-1].RunSetup(policyPath)
+	if err != nil {
 		ui.Error(fmt.Sprintf("notification setup failed: %v", err))
+		return
 	}
+	renderSetupResult(result)
 }

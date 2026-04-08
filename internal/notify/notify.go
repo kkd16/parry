@@ -19,7 +19,7 @@ type Provider interface {
 	Name() string
 	NewConfirmer(cfg map[string]any) (Confirmer, error)
 	SendTest(ctx context.Context, cfg map[string]any) error
-	RunSetup(policyPath string) error
+	RunSetup(policyPath string) (SetupResult, error)
 }
 
 var providers = map[string]Provider{}
