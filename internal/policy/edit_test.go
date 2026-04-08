@@ -60,20 +60,19 @@ func TestSetMode(t *testing.T) {
 			require.NoError(t, policy.SetMode(path, tc.newMode))
 
 			out := readFile(t, path)
-			require.Contains(t, out, tc.wantLine)
 
-			e := policy.NewEngine()
-			require.NoError(t, e.LoadBytes([]byte(out)))
+			e := loadEngine(t, out)
 			require.Equal(t, tc.newMode, e.Policy().Mode)
 
-			inLines := strings.Split(tc.input, "\n")
-			outLines := strings.Split(out, "\n")
-			require.Equal(t, len(inLines), len(outLines), "line count changed")
-			for i := range inLines {
-				if strings.Contains(inLines[i], "mode:") {
-					continue
+			expected := strings.Split(tc.input, "\n")
+			for i, line := range expected {
+				if strings.HasPrefix(strings.TrimLeft(line, " \t"), "mode:") {
+					expected[i] = tc.wantLine
+					break
 				}
-				require.Equal(t, inLines[i], outLines[i], "line %d unexpectedly changed", i)
+			}
+			if diff := cmp.Diff(expected, strings.Split(out, "\n")); diff != "" {
+				t.Fatalf("file mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -120,8 +119,7 @@ func TestSetNotificationProvider(t *testing.T) {
 		out := readFile(t, path)
 		require.Contains(t, out, "  provider: system")
 
-		e := policy.NewEngine()
-		require.NoError(t, e.LoadBytes([]byte(out)))
+		e := loadEngine(t, out)
 		require.Equal(t, "system", e.Policy().Notifications.Provider)
 	})
 
@@ -137,8 +135,7 @@ func TestSetNotificationProvider(t *testing.T) {
 		require.Contains(t, out, "    topic: abc")
 		require.Contains(t, out, "    server: https://example.com")
 
-		e := policy.NewEngine()
-		require.NoError(t, e.LoadBytes([]byte(out)))
+		e := loadEngine(t, out)
 		require.Equal(t, "ntfy", e.Policy().Notifications.Provider)
 	})
 

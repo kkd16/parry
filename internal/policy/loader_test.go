@@ -7,16 +7,12 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLoadBytes_DefaultPolicy(t *testing.T) {
-	e := policy.NewEngine()
-	require.NoError(t, e.LoadBytes(configs.DefaultPolicy))
-
-	p := e.Policy()
+	p := defaultEngine(t).Policy()
 	require.NotNil(t, p)
 
 	shell := p.Rules["shell"]
@@ -41,8 +37,7 @@ rules:
     confirm: [rm]
     block: [sudo]
 `
-	e := policy.NewEngine()
-	require.NoError(t, e.LoadBytes([]byte(yamlDoc)))
+	e := loadEngine(t, yamlDoc)
 
 	want := map[string]policy.Action{
 		"ls":   policy.Allow,
@@ -184,15 +179,12 @@ func TestValidate(t *testing.T) {
 
 func TestValidate_Defaults(t *testing.T) {
 	t.Run("rate_limit on_exceed defaults to block", func(t *testing.T) {
-		yamlDoc := validBaseYAML + "rate_limit:\n  window: 1m\n  max: 5\n"
-		e := policy.NewEngine()
-		require.NoError(t, e.LoadBytes([]byte(yamlDoc)))
+		e := loadEngine(t, validBaseYAML+"rate_limit:\n  window: 1m\n  max: 5\n")
 		require.Equal(t, policy.Block, e.Policy().RateLimit.OnExceed)
 	})
 
 	t.Run("no notifications block is fine", func(t *testing.T) {
-		e := policy.NewEngine()
-		require.NoError(t, e.LoadBytes([]byte(validBaseYAML)))
+		e := loadEngine(t, validBaseYAML)
 		require.Nil(t, e.Policy().Notifications)
 	})
 }
@@ -208,10 +200,7 @@ protected_paths:
   - "~/.ssh/*"
   - "/etc/shadow"
 `
-	e := policy.NewEngine()
-	require.NoError(t, e.LoadBytes([]byte(yamlDoc)))
-
-	p := e.Policy()
+	p := loadEngine(t, yamlDoc).Policy()
 	require.Equal(t, filepath.Join(home, ".parry/*"), p.ParryPaths[0])
 	require.Equal(t, "/literal/parry", p.ParryPaths[1])
 	require.Equal(t, filepath.Join(home, ".ssh/*"), p.ProtectedPaths[0])
