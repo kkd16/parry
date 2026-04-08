@@ -5,25 +5,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kkd16/parry/configs"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/stretchr/testify/require"
 )
-
-func loadEngine(tb testing.TB, yamlDoc string) *policy.Engine {
-	tb.Helper()
-	e := policy.NewEngine()
-	require.NoError(tb, e.LoadBytes([]byte(yamlDoc)))
-	return e
-}
-
-func defaultEngine(tb testing.TB) *policy.Engine {
-	tb.Helper()
-	e := policy.NewEngine()
-	require.NoError(tb, e.LoadBytes(configs.DefaultPolicy))
-	return e
-}
 
 const baselineShellYAML = `version: 1
 mode: enforce
