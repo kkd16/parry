@@ -102,7 +102,7 @@ func normalizeValue(v reflect.Value) {
 	}
 }
 
-func intParam(s string, fallback, min, max int) int {
+func intParam(s string, fallback, lo, hi int) int {
 	if s == "" {
 		return fallback
 	}
@@ -110,11 +110,11 @@ func intParam(s string, fallback, min, max int) int {
 	if err != nil {
 		return fallback
 	}
-	if v < min {
-		return min
+	if v < lo {
+		return lo
 	}
-	if v > max {
-		return max
+	if v > hi {
+		return hi
 	}
 	return v
 }
