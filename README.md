@@ -1,5 +1,7 @@
 # Parry
 
+[![codecov](https://codecov.io/gh/kkd16/parry/branch/main/graph/badge.svg)](https://codecov.io/gh/kkd16/parry)
+
 **Your agent decides. Parry enforces.**
 
 Runtime security for AI agents and coding tools. One binary. Policy-driven enforcement.
