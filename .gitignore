@@ -41,6 +41,11 @@ go.work.sum
 # goreleaser
 /dist/
 
+# codecov CLI downloaded by codecov-action during CI
+/codecov
+/codecov.SHA256SUM
+/codecov.SHA256SUM.sig
+
 # Frontend
 frontend/node_modules/
 frontend/dist/*
