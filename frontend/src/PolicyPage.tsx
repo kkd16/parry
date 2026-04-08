@@ -129,7 +129,7 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
       <PageHeader
         eyebrow="instrument · 03"
         title="Charter"
-        sub="rules of engagement for the watching"
+        sub="your policy.yaml"
       />
 
       <input

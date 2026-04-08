@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import PageHeader from "./components/PageHeader";
 import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
 import { actionBadge } from "./policyBadges";
@@ -184,21 +184,9 @@ export default function BridgePage({ overview, onEventClick, onFilterBinary }: P
   const policy = overview.policy;
   const health = overview.health;
 
-  const greeting = useMemo(() => {
-    const h = new Date().getHours();
-    if (h < 5) return "still observing";
-    if (h < 12) return "good morning";
-    if (h < 18) return "good afternoon";
-    return "good evening";
-  }, []);
-
   return (
     <>
-      <PageHeader
-        eyebrow="instrument · 00"
-        title="Bridge"
-        sub={`${greeting}, watcher`}
-      />
+      <PageHeader eyebrow="instrument · 00" title="Bridge" />
 
       {error && <div className="error">{error}</div>}
       {!data ? (

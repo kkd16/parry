@@ -170,7 +170,7 @@ export default function NotifyPage({ overview, onGoToEvents }: Props) {
         <PageHeader
           eyebrow="instrument · 04"
           title="Beacon"
-          sub="signal channel for confirmations"
+          sub="push approvals for risky tool calls"
         />
         <div className="notify-hero-status">
           <div className={`notify-orb ${orbClass}`}>

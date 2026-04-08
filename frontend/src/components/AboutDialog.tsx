@@ -106,7 +106,7 @@ export default function AboutDialog({ open, onClose }: Props) {
               </div>
             </div>
             <div className="shortcuts-footer about-footer">
-              <span className="about-tagline">watching the watchers</span>
+              <span className="about-tagline">your agent decides · parry enforces</span>
               <a href="https://github.com/kkd16/parry" target="_blank" rel="noreferrer">
                 github.com/kkd16/parry
               </a>

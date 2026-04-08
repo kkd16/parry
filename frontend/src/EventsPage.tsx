@@ -584,7 +584,7 @@ export default function EventsPage({
       <PageHeader
         eyebrow="instrument · 01"
         title="Logbook"
-        sub={`${total.toLocaleString()} entries observed${autoRefresh ? " · live" : ""}`}
+        sub={`${total.toLocaleString()} events${autoRefresh ? " · live" : ""}`}
       />
 
       <EventsTimeline events={filteredEvents} />
