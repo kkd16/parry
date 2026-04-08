@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/kkd16/parry/internal/check"
-	"github.com/kkd16/parry/internal/runtime"
 	"github.com/kkd16/parry/internal/paths"
+	"github.com/kkd16/parry/internal/runtime"
 	"github.com/kkd16/parry/internal/ui"
 )
 
@@ -25,11 +24,11 @@ func (c *CheckCmd) Run() error {
 		fatal(err)
 	}
 
-	dir, err := paths.Dir()
+	dbPath, err := paths.DBFile()
 	if err != nil {
 		fatal(err)
 	}
-	rt := runtime.New(engine, filepath.Join(dir, "parry.db"))
+	rt := runtime.New(engine, dbPath)
 	v := rt.Decide(context.Background(), tc)
 
 	cmd, _ := tc.ToolInput["command"].(string)

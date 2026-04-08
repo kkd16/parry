@@ -3,21 +3,19 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/paths"
+	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/ui"
 )
 
 type ValidateCmd struct{}
 
 func (v *ValidateCmd) Run() error {
-	dir, err := paths.Dir()
+	path, err := paths.PolicyFile()
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(dir, "policy.yaml")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		ui.Error("no policy found — run " + ui.Boldf("parry init") + " first")
 		ui.Break()

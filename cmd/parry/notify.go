@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/kkd16/parry/internal/notify"
@@ -79,11 +78,10 @@ func (n *ConfigNotifySetupCmd) Run() error {
 		}
 	}
 
-	dir, err := paths.Dir()
+	policyPath, err := paths.PolicyFile()
 	if err != nil {
 		return err
 	}
-	policyPath := filepath.Join(dir, "policy.yaml")
 
 	result, err := prov.RunSetup(policyPath)
 	if err != nil {

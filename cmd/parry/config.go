@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/kkd16/parry/internal/policy"
@@ -152,11 +151,11 @@ func (m *ConfigModeCmd) Run() error {
 		return fmt.Errorf("invalid mode %q: must be \"observe\" or \"enforce\"", m.Mode)
 	}
 
-	dir, err := paths.Dir()
+	path, err := paths.PolicyFile()
 	if err != nil {
 		return err
 	}
-	if err := policy.SetMode(filepath.Join(dir, "policy.yaml"), m.Mode); err != nil {
+	if err := policy.SetMode(path, m.Mode); err != nil {
 		return err
 	}
 

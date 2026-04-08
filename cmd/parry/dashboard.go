@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/kkd16/parry/internal/dashboard"
 	"github.com/kkd16/parry/internal/paths"
@@ -17,20 +16,22 @@ type DashboardCmd struct {
 }
 
 func (d *DashboardCmd) Run() error {
-	dir, err := paths.Dir()
+	policyPath, err := paths.PolicyFile()
 	if err != nil {
 		return err
 	}
-	policyPath := filepath.Join(dir, "policy.yaml")
 	if _, err := os.Stat(policyPath); os.IsNotExist(err) {
 		ui.Warn("parry is not initialized")
 		ui.Info("run " + ui.Boldf("parry init") + " before starting the dashboard")
 		ui.Break()
 		return fmt.Errorf("parry not initialized: missing %s", policyPath)
 	}
-	dbPath := filepath.Join(dir, "parry.db")
+	dbPath, err := paths.DBFile()
+	if err != nil {
+		return err
+	}
 
-	opts := []dashboard.Option{dashboard.WithPolicyDir(dir)}
+	var opts []dashboard.Option
 	if d.Debug {
 		opts = append(opts, dashboard.WithLogger(log.New(os.Stderr, "dashboard: ", log.LstdFlags)))
 	}

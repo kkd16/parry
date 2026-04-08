@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Server) handleNotifyHealth(w http.ResponseWriter, _ *http.Request) {
-	p, err := s.loadPolicy()
+	p, err := loadPolicy()
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -76,7 +76,7 @@ func (s *Server) handleNotifyHealth(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (s *Server) handleNotifyTest(w http.ResponseWriter, _ *http.Request) {
-	p, err := s.loadPolicy()
+	p, err := loadPolicy()
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/kkd16/parry/configs"
@@ -25,7 +24,10 @@ func (i *InitCmd) Run() error {
 		return fmt.Errorf("creating config dir: %w", err)
 	}
 
-	policyPath := filepath.Join(dir, "policy.yaml")
+	policyPath, err := paths.PolicyFile()
+	if err != nil {
+		return err
+	}
 	if _, err := os.Stat(policyPath); err == nil {
 		ui.Info("already set up")
 		ui.Detail("policy", policyPath)

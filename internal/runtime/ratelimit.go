@@ -9,13 +9,7 @@ import (
 	"github.com/kkd16/parry/internal/store"
 )
 
-func (e *Engine) applyRateLimit(p *policy.Policy, v Verdict) Verdict {
-	s, err := e.openStore()
-	if err != nil {
-		return v
-	}
-	defer func() { _ = s.Close() }()
-
+func applyRateLimit(s *store.Store, p *policy.Policy, v Verdict) Verdict {
 	window := p.RateLimit.ParseWindow()
 	count, err := s.CountSince(store.Session(), time.Now().UTC().Add(-window))
 	if err != nil {

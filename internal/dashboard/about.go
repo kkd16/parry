@@ -6,9 +6,11 @@ import (
 	"runtime/debug"
 
 	"github.com/kkd16/parry/internal/buildinfo"
+	"github.com/kkd16/parry/internal/paths"
 )
 
 func (s *Server) handleAbout(w http.ResponseWriter, _ *http.Request) {
+	dir, _ := paths.Dir()
 	commit := ""
 	built := ""
 	if info, ok := debug.ReadBuildInfo(); ok {
@@ -31,6 +33,6 @@ func (s *Server) handleAbout(w http.ResponseWriter, _ *http.Request) {
 		"commit":     commit,
 		"built":      built,
 		"platform":   runtime.GOOS + "/" + runtime.GOARCH,
-		"data_dir":   s.policyDir,
+		"data_dir":   dir,
 	})
 }

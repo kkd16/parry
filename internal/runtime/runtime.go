@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/policy"
@@ -18,8 +19,6 @@ func New(pol *policy.Engine, dbPath string) *Engine {
 	return &Engine{policy: pol, dbPath: dbPath}
 }
 
-func (e *Engine) Policy() *policy.Policy { return e.policy.Policy() }
-
 func (e *Engine) Decide(ctx context.Context, tc *check.ToolCall) Verdict {
 	action, err := e.policy.Evaluate(tc.Tool, tc.ToolInput)
 	if err != nil {
@@ -34,11 +33,19 @@ func (e *Engine) Decide(ctx context.Context, tc *check.ToolCall) Verdict {
 		v = resolveVerdict(p, action)
 	}
 
-	if v.Respond != "deny" && p.RateLimit != nil && p.Mode == "enforce" {
-		v = e.applyRateLimit(p, v)
+	s, err := e.openStore()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
+		return v
 	}
+	defer func() { _ = s.Close() }()
 
-	e.record(tc, v.Action, p.Mode)
+	if v.Respond != "deny" && p.RateLimit != nil && p.Mode == "enforce" {
+		v = applyRateLimit(s, p, v)
+	}
+	if err := s.RecordEvent(store.NewEvent(tc, v.Action, p.Mode)); err != nil {
+		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
+	}
 	return v
 }
 
@@ -48,4 +55,3 @@ func (e *Engine) openStore() (*store.Store, error) {
 	}
 	return store.Open(e.dbPath)
 }
-

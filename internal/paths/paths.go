@@ -1,7 +1,9 @@
 package paths
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -39,8 +41,11 @@ func LoadPolicy() (*policy.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := os.Stat(path); err == nil {
-		return engine, engine.Load(path)
+	if err := engine.Load(path); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return engine, engine.LoadBytes(configs.DefaultPolicy)
+		}
+		return nil, err
 	}
-	return engine, engine.LoadBytes(configs.DefaultPolicy)
+	return engine, nil
 }

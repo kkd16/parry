@@ -12,21 +12,16 @@ import (
 )
 
 type Server struct {
-	store     *store.Store
-	addr      string
-	frontend  fs.FS
-	logger    *log.Logger
-	policyDir string
+	store    *store.Store
+	addr     string
+	frontend fs.FS
+	logger   *log.Logger
 }
 
 type Option func(*Server)
 
 func WithLogger(l *log.Logger) Option {
 	return func(s *Server) { s.logger = l }
-}
-
-func WithPolicyDir(dir string) Option {
-	return func(s *Server) { s.policyDir = dir }
 }
 
 func New(dbPath, addr string, opts ...Option) (*Server, error) {

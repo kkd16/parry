@@ -50,7 +50,7 @@ func (p *systemProvider) RunSetup(policyPath string) (SetupResult, error) {
 		return SetupResult{}, fmt.Errorf("system notifier unavailable: %w (install zenity on Linux or run on macOS)", err)
 	}
 
-	if err := policy.SetProvider(policyPath, "system"); err != nil {
+	if err := policy.SetNotificationProvider(policyPath, "system", nil); err != nil {
 		return SetupResult{}, fmt.Errorf("configuring notifications: %w", err)
 	}
 
