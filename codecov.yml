@@ -1,4 +1,5 @@
 ignore:
+  - "**/mocks/**"
+  - "cmd/**"
   - "frontend/**"
   - "testdata/**"
-  - "cmd/**"
