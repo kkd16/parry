@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"unicode/utf8"
 
 	"golang.org/x/term"
 )
@@ -91,6 +92,17 @@ func Separator() {
 	}
 }
 
+func Truncate(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	cut := n - 3
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+	return s[:cut] + "..."
+}
+
 func LogCheck(action, command string) {
 	if !errTTY {
 		return
@@ -108,10 +120,7 @@ func LogCheck(action, command string) {
 		color, symbol = blue, "→"
 	}
 
-	cmd := command
-	if len(cmd) > 60 {
-		cmd = cmd[:57] + "..."
-	}
+	cmd := Truncate(command, 60)
 
 	_, _ = fmt.Fprintf(errW, " %s%s%s %-8s %s%s%s\n",
 		color, symbol, reset,

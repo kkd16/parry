@@ -2,7 +2,6 @@ package eval
 
 import (
 	"fmt"
-	"unicode/utf8"
 
 	"github.com/kkd16/parry/internal/ui"
 )
@@ -73,21 +72,11 @@ func Print(s Summary) {
 
 func inputPreview(e Entry) string {
 	if cmd, ok := e.ToolInput["command"].(string); ok && cmd != "" {
-		return truncate(cmd, 50)
+		return ui.Truncate(cmd, 50)
 	}
 	if path, ok := e.ToolInput["path"].(string); ok && path != "" {
-		return truncate(path, 50)
+		return ui.Truncate(path, 50)
 	}
 	return ""
 }
 
-func truncate(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	cut := n - 3
-	for cut > 0 && !utf8.RuneStart(s[cut]) {
-		cut--
-	}
-	return s[:cut] + "..."
-}

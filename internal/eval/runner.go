@@ -37,7 +37,6 @@ func Run(engine *policy.Engine, entries []Entry) Summary {
 			s.Pass++
 		case e.Bypass:
 			s.Bypasses++
-			r.Pass = true
 		default:
 			s.Fail++
 		}
