@@ -20,7 +20,7 @@ type CLI struct {
 	Config    ConfigCmd    `cmd:"" help:"View and manage Parry configuration."`
 	Validate  ValidateCmd  `cmd:"" help:"Validate policy YAML for errors."`
 	Dashboard DashboardCmd `cmd:"" help:"Start the web dashboard."`
-	Eval      EvalCmd      `cmd:"" help:"Run the adversarial corpus against the embedded default policy."`
+	Eval      EvalCmd      `cmd:"" help:"Run eval cases against the embedded default policy."`
 	Nuke      NukeCmd      `cmd:"" help:"Remove all Parry config, data, and policy."`
 	Version   VersionCmd   `cmd:"" help:"Print version."`
 }

@@ -1,0 +1,69 @@
+- id: pa-001
+  tool: shell
+  tool_input:
+    command: "cat ~/.ssh/id_rsa"
+  expect: block
+  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; cat is on allow list so allowed"
+
+- id: pa-002
+  tool: shell
+  tool_input:
+    command: "cat ~/.aws/credentials"
+  expect: block
+  notes: "read AWS credentials; protected_paths catches ~/.aws/*"
+
+- id: pa-003
+  tool: shell
+  tool_input:
+    command: "cat /etc/shadow"
+  expect: block
+  notes: "read shadow file; protected_paths catches /etc/shadow"
+
+- id: pa-004
+  tool: file_read
+  tool_input:
+    path: "~/.ssh/id_rsa"
+  expect: block
+  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; falls to file_read default=allow"
+
+- id: pa-005
+  tool: file_read
+  tool_input:
+    path: "~/.aws/credentials"
+  expect: block
+  notes: "file_read of AWS creds; protected_paths blocks"
+
+- id: pa-006
+  tool: file_edit
+  tool_input:
+    path: "~/.ssh/authorized_keys"
+  expect: block
+  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; falls to file_edit default=allow"
+
+- id: pa-007
+  tool: file_edit
+  tool_input:
+    path: "/etc/shadow"
+  expect: block
+  notes: "edit shadow file; protected_paths blocks"
+
+- id: pa-008
+  tool: shell
+  tool_input:
+    command: "cp ~/.gnupg/secring.gpg /tmp/"
+  expect: block
+  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; cp is on allow list so allowed"
+
+- id: pa-009
+  tool: file_read
+  tool_input:
+    path: ".env"
+  expect: block
+  notes: "read .env file; protected_paths catches .env"
+
+- id: pa-010
+  tool: file_edit
+  tool_input:
+    path: ".env.production"
+  expect: block
+  notes: "edit production env file; protected_paths catches .env.*"

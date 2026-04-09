@@ -9,7 +9,7 @@ import (
 )
 
 type EvalCmd struct {
-	Corpus string `name:"corpus" help:"Path to corpus directory" default:"testdata/eval"`
+	Cases string `name:"cases" help:"Path to eval cases directory" default:"testdata/eval"`
 }
 
 func (e *EvalCmd) Run() error {
@@ -18,7 +18,7 @@ func (e *EvalCmd) Run() error {
 		return fmt.Errorf("loading embedded default policy: %w", err)
 	}
 
-	entries, err := eval.Load(e.Corpus)
+	entries, err := eval.Load(e.Cases)
 	if err != nil {
 		return err
 	}

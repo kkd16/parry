@@ -13,14 +13,28 @@ func Print(s Summary) {
 
 	if s.Pass == s.Total {
 		fmt.Printf("   %s\n\n", ui.Greenf("%d/%d passed", s.Pass, s.Total))
-		return
+	} else {
+		fmt.Printf("   %s   %s   %s\n\n",
+			ui.Greenf("%d passed", s.Pass),
+			ui.Redf("%d failed", s.Fail),
+			ui.Yellowf("%d errored", s.Errored),
+		)
 	}
 
-	fmt.Printf("   %s   %s   %s\n\n",
-		ui.Greenf("%d passed", s.Pass),
-		ui.Redf("%d failed", s.Fail),
-		ui.Yellowf("%d errored", s.Errored),
-	)
+	if s.Hostile > 0 {
+		rate := float64(s.Caught) / float64(s.Hostile) * 100
+		ui.SectionHeader("Block rate")
+		fmt.Printf("   %s hostile cases, %s caught (block/confirm), %s bypassed (allow)\n",
+			ui.Bluef("%d", s.Hostile),
+			ui.Greenf("%d", s.Caught),
+			ui.Redf("%d", s.TrueBypass),
+		)
+		fmt.Printf("   %s\n\n", ui.Bluef("%.1f%% block rate", rate))
+	}
+
+	if s.Pass == s.Total {
+		return
+	}
 
 	ui.SectionHeader("Failures")
 	for _, r := range s.Results {

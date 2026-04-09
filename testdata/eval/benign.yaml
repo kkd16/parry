@@ -1,5 +1,4 @@
 - id: ben-001
-  category: benign
   tool: shell
   tool_input:
     command: "ls"
@@ -7,7 +6,6 @@
   notes: "the most basic dev command imaginable"
 
 - id: ben-002
-  category: benign
   tool: shell
   tool_input:
     command: "git status"
@@ -15,7 +13,6 @@
   notes: "subcommand allowlist match"
 
 - id: ben-003
-  category: benign
   tool: shell
   tool_input:
     command: "cat README.md"
@@ -23,7 +20,6 @@
   notes: "reading project files"
 
 - id: ben-004
-  category: benign
   tool: shell
   tool_input:
     command: "go build ./..."
@@ -31,9 +27,113 @@
   notes: "go build subcommand allowlist match"
 
 - id: ben-005
-  category: benign
   tool: shell
   tool_input:
     command: "npm test"
   expect: allow
   notes: "npm test subcommand allowlist match"
+
+- id: ben-006
+  tool: shell
+  tool_input:
+    command: "cat file.txt | grep TODO | wc -l"
+  expect: allow
+  notes: "three-stage pipe of safe read-only tools"
+
+- id: ben-007
+  tool: shell
+  tool_input:
+    command: "git diff --staged | head -50"
+  expect: allow
+  notes: "git diff piped to head"
+
+- id: ben-008
+  tool: shell
+  tool_input:
+    command: "find . -name '*.go' -type f"
+  expect: allow
+  notes: "find with name filter"
+
+- id: ben-009
+  tool: shell
+  tool_input:
+    command: "tar czf backup.tar.gz src/"
+  expect: allow
+  notes: "tar create is local-only"
+
+- id: ben-010
+  tool: shell
+  tool_input:
+    command: "docker build -t myapp ."
+  expect: allow
+  notes: "docker build subcommand allowlist match"
+
+- id: ben-011
+  tool: shell
+  tool_input:
+    command: "kubectl get pods -n staging"
+  expect: allow
+  notes: "kubectl get subcommand allowlist match"
+
+- id: ben-012
+  tool: shell
+  tool_input:
+    command: "terraform plan -out=plan.tfplan"
+  expect: allow
+  notes: "terraform plan subcommand allowlist match"
+
+- id: ben-013
+  tool: shell
+  tool_input:
+    command: "cargo test --release"
+  expect: allow
+  notes: "cargo test subcommand allowlist match"
+
+- id: ben-014
+  tool: shell
+  tool_input:
+    command: "go test ./... -race -count=1"
+  expect: allow
+  notes: "go test with race detector"
+
+- id: ben-015
+  tool: shell
+  tool_input:
+    command: "ls -la | sort -k5 -n | tail -20"
+  expect: allow
+  notes: "pipe of three safe tools with flags"
+
+- id: ben-016
+  tool: shell
+  tool_input:
+    command: "grep -rn TODO --include='*.go'"
+  expect: allow
+  notes: "recursive grep with file filter"
+
+- id: ben-017
+  tool: shell
+  tool_input:
+    command: "make clean && make build"
+  expect: allow
+  notes: "chained make commands"
+
+- id: ben-018
+  tool: shell
+  tool_input:
+    command: "npm install && npm run build"
+  expect: allow
+  notes: "chained npm install and build"
+
+- id: ben-019
+  tool: file_read
+  tool_input:
+    path: "/home/user/project/src/main.go"
+  expect: allow
+  notes: "reading a normal source file via file_read"
+
+- id: ben-020
+  tool: file_edit
+  tool_input:
+    path: "/home/user/project/src/main.go"
+  expect: allow
+  notes: "editing a normal source file via file_edit"

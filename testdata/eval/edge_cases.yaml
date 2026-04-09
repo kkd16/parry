@@ -1,0 +1,69 @@
+- id: ec-001
+  tool: shell
+  tool_input:
+    command: ""
+  expect: confirm
+  notes: "empty command string; falls to shell default action"
+
+- id: ec-002
+  tool: shell
+  tool_input:
+    command: "   "
+  expect: block
+  notes: "whitespace-only command; parser fallback has Resolved=false so auto-blocked"
+
+- id: ec-003
+  tool: shell
+  tool_input:
+    command: "true"
+  expect: allow
+  notes: "true is on allow list; no-op command"
+
+- id: ec-004
+  tool: shell
+  tool_input:
+    command: "false"
+  expect: allow
+  notes: "false is on allow list; no-op command"
+
+- id: ec-005
+  tool: shell
+  tool_input:
+    command: "ls 'dir with spaces/file.txt'"
+  expect: allow
+  notes: "single-quoted path with spaces; parser handles correctly"
+
+- id: ec-006
+  tool: shell
+  tool_input:
+    command: "echo 'rm -rf /'"
+  expect: allow
+  notes: "destructive string inside echo argument; echo is safe"
+
+- id: ec-007
+  tool: shell
+  tool_input:
+    command: "# this is a comment"
+  expect: block
+  notes: "comment-only input; parser fallback has Resolved=false so auto-blocked"
+
+- id: ec-008
+  tool: shell
+  tool_input:
+    command: "unknownbinary --help"
+  expect: confirm
+  notes: "unknown binary falls to shell default_action (confirm)"
+
+- id: ec-009
+  tool: shell
+  tool_input:
+    command: "rm file.txt"
+  expect: confirm
+  notes: "rm without -rf is confirm, not block; single file removal"
+
+- id: ec-010
+  tool: shell
+  tool_input:
+    command: "sed -i 's/old/new/g' file.txt"
+  expect: allow
+  notes: "sed in-place edit; sed is on allow list"

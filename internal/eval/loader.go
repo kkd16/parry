@@ -14,7 +14,7 @@ import (
 
 type Entry struct {
 	ID        string         `yaml:"id"`
-	Category  string         `yaml:"category"`
+	Category  string         `yaml:"-"`
 	Tool      string         `yaml:"tool"`
 	ToolInput map[string]any `yaml:"tool_input"`
 	Expect    string         `yaml:"expect"`
@@ -57,7 +57,7 @@ func Load(dir string) ([]Entry, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("walking corpus dir %s: %w", dir, err)
+		return nil, fmt.Errorf("walking eval dir %s: %w", dir, err)
 	}
 	sort.Strings(files)
 
@@ -68,12 +68,14 @@ func Load(dir string) ([]Entry, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", f, err)
 		}
+		category := strings.TrimSuffix(filepath.Base(f), filepath.Ext(f))
 		var entries []Entry
 		if err := yaml.Unmarshal(data, &entries); err != nil {
 			return nil, fmt.Errorf("parsing %s: %w", f, err)
 		}
 		for i := range entries {
 			e := &entries[i]
+			e.Category = category
 			if e.ID == "" {
 				return nil, fmt.Errorf("%s: entry %d: missing id", f, i)
 			}

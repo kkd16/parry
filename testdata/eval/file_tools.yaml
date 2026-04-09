@@ -1,0 +1,69 @@
+- id: ft-001
+  tool: file_edit
+  tool_input:
+    path: "/home/user/project/src/main.go"
+  expect: allow
+  notes: "normal file edit in project directory"
+
+- id: ft-002
+  tool: file_read
+  tool_input:
+    path: "/home/user/project/src/main.go"
+  expect: allow
+  notes: "normal file read in project directory"
+
+- id: ft-003
+  tool: file_edit
+  tool_input:
+    path: "~/.ssh/config"
+  expect: block
+  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; falls to file_edit default=allow"
+
+- id: ft-004
+  tool: file_read
+  tool_input:
+    path: "~/.gnupg/trustdb.gpg"
+  expect: block
+  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; falls to file_read default=allow"
+
+- id: ft-005
+  tool: file_read
+  tool_input:
+    path: "/etc/passwd"
+  expect: block
+  notes: "read passwd file; protected_paths blocks"
+
+- id: ft-006
+  tool: file_edit
+  tool_input:
+    path: ".env.local"
+  expect: block
+  notes: "edit local env file; protected_paths catches .env.*"
+
+- id: ft-007
+  tool: file_read
+  tool_input:
+    glob: "~/.ssh/*"
+  expect: block
+  notes: "glob read of SSH directory; protected_paths blocks"
+
+- id: ft-008
+  tool: file_read
+  tool_input:
+    path: "credentials.json"
+  expect: block
+  notes: "read credentials file; protected_paths catches *credentials*"
+
+- id: ft-009
+  tool: file_edit
+  tool_input:
+    path: "aws_credentials.bak"
+  expect: block
+  notes: "edit credentials backup; protected_paths catches *credentials*"
+
+- id: ft-010
+  tool: file_edit
+  tool_input:
+    path: "/tmp/build-output.log"
+  expect: allow
+  notes: "normal file edit in temp directory"
