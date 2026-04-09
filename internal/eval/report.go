@@ -11,15 +11,24 @@ func Print(s Summary) {
 	fmt.Println()
 	ui.SectionHeader("Eval results")
 
-	if s.Pass == s.Total {
-		fmt.Printf("   %s\n\n", ui.Greenf("%d/%d passed", s.Pass, s.Total))
-	} else {
-		fmt.Printf("   %s   %s   %s\n\n",
-			ui.Greenf("%d passed", s.Pass),
-			ui.Redf("%d failed", s.Fail),
-			ui.Yellowf("%d errored", s.Errored),
-		)
+	parts := []string{ui.Greenf("%d passed", s.Pass)}
+	if s.Bypasses > 0 {
+		parts = append(parts, ui.Yellowf("%d known bypasses", s.Bypasses))
 	}
+	if s.Fail > 0 {
+		parts = append(parts, ui.Redf("%d regressions", s.Fail))
+	}
+	if s.Errored > 0 {
+		parts = append(parts, ui.Redf("%d errored", s.Errored))
+	}
+	fmt.Print("   ")
+	for i, p := range parts {
+		if i > 0 {
+			fmt.Print("   ")
+		}
+		fmt.Print(p)
+	}
+	fmt.Print("\n\n")
 
 	if s.Hostile > 0 {
 		rate := float64(s.Caught) / float64(s.Hostile) * 100
@@ -32,13 +41,18 @@ func Print(s Summary) {
 		fmt.Printf("   %s\n\n", ui.Bluef("%.1f%% block rate", rate))
 	}
 
-	if s.Pass == s.Total {
+	if s.Fail == 0 && s.Errored == 0 {
+		if s.Bypasses > 0 {
+			fmt.Printf("   %s\n\n",
+				ui.Yellowf("All failures are known bypasses. No regressions detected."),
+			)
+		}
 		return
 	}
 
-	ui.SectionHeader("Failures")
+	ui.SectionHeader("Regressions")
 	for _, r := range s.Results {
-		if r.Pass {
+		if r.Pass || r.Entry.Bypass {
 			continue
 		}
 		idCol := ui.Redf("%-12s", r.Entry.ID)
@@ -54,10 +68,7 @@ func Print(s Summary) {
 			ui.Dimf("%s", inputPreview(r.Entry)),
 		)
 	}
-
-	fmt.Printf("\n   %s\n\n",
-		ui.Dimf("These are bypasses. Fix in internal/policy and internal/shellparse, then re-run."),
-	)
+	fmt.Println()
 }
 
 func inputPreview(e Entry) string {

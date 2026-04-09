@@ -18,6 +18,7 @@ type Entry struct {
 	Tool      string         `yaml:"tool"`
 	ToolInput map[string]any `yaml:"tool_input"`
 	Expect    string         `yaml:"expect"`
+	Bypass    bool           `yaml:"bypass,omitempty"`
 	Notes     string         `yaml:"notes,omitempty"`
 
 	expected  policy.Action

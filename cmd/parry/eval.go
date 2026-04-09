@@ -27,7 +27,7 @@ func (e *EvalCmd) Run() error {
 	eval.Print(summary)
 
 	if summary.Fail > 0 || summary.Errored > 0 {
-		return fmt.Errorf("eval: %d failed, %d errored", summary.Fail, summary.Errored)
+		return fmt.Errorf("eval: %d regressions, %d errored", summary.Fail, summary.Errored)
 	}
 	return nil
 }

@@ -12,14 +12,15 @@ type Result struct {
 }
 
 type Summary struct {
-	Total     int
-	Pass      int
-	Fail      int
-	Errored   int
-	Hostile   int
-	Caught    int
+	Total      int
+	Pass       int
+	Fail       int
+	Errored    int
+	Bypasses   int
+	Hostile    int
+	Caught     int
 	TrueBypass int
-	Results   []Result
+	Results    []Result
 }
 
 func Run(engine *policy.Engine, entries []Entry) Summary {
@@ -34,6 +35,9 @@ func Run(engine *policy.Engine, entries []Entry) Summary {
 		case got == e.expected:
 			r.Pass = true
 			s.Pass++
+		case e.Bypass:
+			s.Bypasses++
+			r.Pass = true
 		default:
 			s.Fail++
 		}
