@@ -67,7 +67,7 @@ func (c *ConfigStatusCmd) Run() error {
 	ui.Detail("  rules", fmt.Sprintf("%d", len(p.Rules)))
 	ruleCount := 0
 	for _, r := range p.Rules {
-		ruleCount += len(r.Allow) + len(r.Confirm) + len(r.Block)
+		ruleCount += r.MatcherCount()
 	}
 	ui.Detail("  entries", fmt.Sprintf("%d classified", ruleCount))
 	ui.Break()

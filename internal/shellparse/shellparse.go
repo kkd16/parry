@@ -9,7 +9,6 @@ import (
 
 type Command struct {
 	Binary     string
-	RawBinary  string
 	Positional []string
 	ShortFlags map[string]bool
 	LongFlags  map[string]bool
@@ -20,7 +19,7 @@ func Parse(cmd string) []Command {
 	parser := syntax.NewParser(syntax.KeepComments(false))
 	f, err := parser.Parse(strings.NewReader(cmd), "")
 	if err != nil {
-		return []Command{fallback(firstWord(cmd))}
+		return []Command{{Binary: canonicalBinary(firstWord(cmd))}}
 	}
 
 	var cmds []Command
@@ -58,7 +57,6 @@ func Parse(cmd string) []Command {
 
 		cmds = append(cmds, Command{
 			Binary:     canonicalBinary(rawBinary),
-			RawBinary:  rawBinary,
 			Positional: positional,
 			ShortFlags: short,
 			LongFlags:  long,
@@ -68,16 +66,30 @@ func Parse(cmd string) []Command {
 	})
 
 	if len(cmds) == 0 {
-		return []Command{fallback(firstWord(cmd))}
+		return []Command{{Binary: canonicalBinary(firstWord(cmd))}}
 	}
 	return cmds
 }
 
-// ClassifyFlags splits a post-binary argument list into positional tokens,
-// short flags (bundled -xyz split into x, y, z), and long flags (with `--`
-// prefix stripped; `--name=value` keeps only `name`). Respects POSIX `--`
-// end-of-options: every token after `--` is positional regardless of prefix.
-// A lone `-` is treated as positional (stdin marker).
+func ClassifyFlagForm(form string) (short, long string) {
+	switch {
+	case form == "" || form == "-" || form == "--":
+		return "", ""
+	case strings.HasPrefix(form, "--"):
+		return "", strings.TrimPrefix(form, "--")
+	case strings.HasPrefix(form, "-"):
+		rest := form[1:]
+		if len(rest) == 1 {
+			return rest, ""
+		}
+		return "", rest
+	case len(form) == 1:
+		return form, ""
+	default:
+		return "", form
+	}
+}
+
 func ClassifyFlags(args []string) (positional []string, short map[string]bool, long map[string]bool) {
 	endOfOptions := false
 	for _, arg := range args {
@@ -167,9 +179,6 @@ func extractCArg(args []*syntax.Word) string {
 	return ""
 }
 
-// ExtractArgs collects deduped positional tokens across every parsed command,
-// preserving first-seen order. Used by the policy engine's protected-path
-// checker to test each path argument.
 func ExtractArgs(cmds []Command) []string {
 	seen := make(map[string]bool)
 	var args []string
@@ -192,10 +201,6 @@ func canonicalBinary(raw string) string {
 		return filepath.Base(raw)
 	}
 	return raw
-}
-
-func fallback(word string) Command {
-	return Command{Binary: canonicalBinary(word), RawBinary: word}
 }
 
 func firstWord(cmd string) string {

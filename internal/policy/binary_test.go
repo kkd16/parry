@@ -63,13 +63,13 @@ func TestPositionalPrefix(t *testing.T) {
 func TestRequirementMet(t *testing.T) {
 	recursive := flagRequirement{
 		Name:       "recursive",
-		ShortForms: map[string]bool{"r": true, "R": true},
-		LongForms:  map[string]bool{"recursive": true},
+		ShortForms: []string{"r", "R"},
+		LongForms:  []string{"recursive"},
 	}
 	force := flagRequirement{
 		Name:       "force",
-		ShortForms: map[string]bool{"f": true},
-		LongForms:  map[string]bool{"force": true},
+		ShortForms: []string{"f"},
+		LongForms:  []string{"force"},
 	}
 
 	tests := []struct {
@@ -215,7 +215,6 @@ func TestMatchBinary(t *testing.T) {
 			name: "/bin/rm -rf canonicalized binary matches",
 			cmd: shellparse.Command{
 				Binary:     "rm",
-				RawBinary:  "/bin/rm",
 				Positional: []string{"/tmp/x"},
 				ShortFlags: map[string]bool{"r": true, "f": true},
 			},
@@ -287,7 +286,7 @@ func TestMatchBinary(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, matchBinary(tc.cmd, tc.rule.matchers, tc.fallback))
+			require.Equal(t, tc.want, matchBinary(tc.cmd, tc.rule.byBinary, tc.fallback))
 		})
 	}
 }

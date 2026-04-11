@@ -17,7 +17,7 @@ func TestParse(t *testing.T) {
 		{
 			name:  "bare binary",
 			input: "ls",
-			want:  []Command{{Binary: "ls", RawBinary: "ls", Resolved: true}},
+			want:  []Command{{Binary: "ls", Resolved: true}},
 		},
 		{
 			name:  "flags and path",
@@ -25,7 +25,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "ls",
-					RawBinary:  "ls",
 					Positional: []string{"/tmp"},
 					ShortFlags: map[string]bool{"l": true, "a": true},
 					Resolved:   true,
@@ -46,7 +45,7 @@ func TestParse(t *testing.T) {
 			name:  "git subcommand as positional",
 			input: "git status",
 			want: []Command{
-				{Binary: "git", RawBinary: "git", Positional: []string{"status"}, Resolved: true},
+				{Binary: "git", Positional: []string{"status"}, Resolved: true},
 			},
 		},
 		{
@@ -55,7 +54,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "git",
-					RawBinary:  "git",
 					Positional: []string{"commit", ""},
 					ShortFlags: map[string]bool{"m": true},
 					Resolved:   false,
@@ -66,75 +64,75 @@ func TestParse(t *testing.T) {
 			name:  "docker run alpine",
 			input: "docker run alpine",
 			want: []Command{
-				{Binary: "docker", RawBinary: "docker", Positional: []string{"run", "alpine"}, Resolved: true},
+				{Binary: "docker", Positional: []string{"run", "alpine"}, Resolved: true},
 			},
 		},
 		{
 			name:  "pipe splits into two commands",
 			input: "cat a.txt | grep foo",
 			want: []Command{
-				{Binary: "cat", RawBinary: "cat", Positional: []string{"a.txt"}, Resolved: true},
-				{Binary: "grep", RawBinary: "grep", Positional: []string{"foo"}, Resolved: true},
+				{Binary: "cat", Positional: []string{"a.txt"}, Resolved: true},
+				{Binary: "grep", Positional: []string{"foo"}, Resolved: true},
 			},
 		},
 		{
 			name:  "and-chain",
 			input: "make && make test",
 			want: []Command{
-				{Binary: "make", RawBinary: "make", Resolved: true},
-				{Binary: "make", RawBinary: "make", Positional: []string{"test"}, Resolved: true},
+				{Binary: "make", Resolved: true},
+				{Binary: "make", Positional: []string{"test"}, Resolved: true},
 			},
 		},
 		{
 			name:  "or-chain",
 			input: "false || echo fail",
 			want: []Command{
-				{Binary: "false", RawBinary: "false", Resolved: true},
-				{Binary: "echo", RawBinary: "echo", Positional: []string{"fail"}, Resolved: true},
+				{Binary: "false", Resolved: true},
+				{Binary: "echo", Positional: []string{"fail"}, Resolved: true},
 			},
 		},
 		{
 			name:  "semicolon sequence",
 			input: "cd /tmp; ls",
 			want: []Command{
-				{Binary: "cd", RawBinary: "cd", Positional: []string{"/tmp"}, Resolved: true},
-				{Binary: "ls", RawBinary: "ls", Resolved: true},
+				{Binary: "cd", Positional: []string{"/tmp"}, Resolved: true},
+				{Binary: "ls", Resolved: true},
 			},
 		},
 		{
 			name:  "single-quoted literal stays resolved",
 			input: "echo 'hello world'",
 			want: []Command{
-				{Binary: "echo", RawBinary: "echo", Positional: []string{"hello world"}, Resolved: true},
+				{Binary: "echo", Positional: []string{"hello world"}, Resolved: true},
 			},
 		},
 		{
 			name:  "double-quoted literal is unresolved",
 			input: `echo "static"`,
 			want: []Command{
-				{Binary: "echo", RawBinary: "echo", Positional: []string{""}, Resolved: false},
+				{Binary: "echo", Positional: []string{""}, Resolved: false},
 			},
 		},
 		{
 			name:  "param expansion is unresolved",
 			input: `echo "$HOME"`,
 			want: []Command{
-				{Binary: "echo", RawBinary: "echo", Positional: []string{""}, Resolved: false},
+				{Binary: "echo", Positional: []string{""}, Resolved: false},
 			},
 		},
 		{
 			name:  "command substitution yields outer plus inner",
 			input: "echo $(whoami)",
 			want: []Command{
-				{Binary: "echo", RawBinary: "echo", Positional: []string{""}, Resolved: false},
-				{Binary: "whoami", RawBinary: "whoami", Resolved: true},
+				{Binary: "echo", Positional: []string{""}, Resolved: false},
+				{Binary: "whoami", Resolved: true},
 			},
 		},
 		{
 			name:  "unquoted variable is unresolved",
 			input: "cat $FILE",
 			want: []Command{
-				{Binary: "cat", RawBinary: "cat", Positional: []string{""}, Resolved: false},
+				{Binary: "cat", Positional: []string{""}, Resolved: false},
 			},
 		},
 		{
@@ -143,7 +141,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "rm",
-					RawBinary:  "rm",
 					Positional: []string{"/tmp/x"},
 					ShortFlags: map[string]bool{"r": true, "f": true},
 					Resolved:   true,
@@ -156,7 +153,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "rm",
-					RawBinary:  "rm",
 					Positional: []string{"/tmp/x"},
 					ShortFlags: map[string]bool{"r": true, "f": true},
 					Resolved:   true,
@@ -169,7 +165,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "rm",
-					RawBinary:  "rm",
 					Positional: []string{"/tmp/x"},
 					ShortFlags: map[string]bool{"r": true, "v": true, "f": true},
 					Resolved:   true,
@@ -182,7 +177,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "rm",
-					RawBinary:  "rm",
 					Positional: []string{"/tmp/x"},
 					LongFlags:  map[string]bool{"recursive": true, "force": true},
 					Resolved:   true,
@@ -193,7 +187,7 @@ func TestParse(t *testing.T) {
 			name:  "POSIX end-of-options treats -rf as positional",
 			input: "rm -- -rf",
 			want: []Command{
-				{Binary: "rm", RawBinary: "rm", Positional: []string{"-rf"}, Resolved: true},
+				{Binary: "rm", Positional: []string{"-rf"}, Resolved: true},
 			},
 		},
 		{
@@ -202,7 +196,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "rm",
-					RawBinary:  "/bin/rm",
 					Positional: []string{"/tmp/x"},
 					ShortFlags: map[string]bool{"r": true, "f": true},
 					Resolved:   true,
@@ -215,7 +208,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "rm",
-					RawBinary:  "/usr/bin/rm",
 					Positional: []string{"/tmp/x"},
 					ShortFlags: map[string]bool{"r": true, "f": true},
 					Resolved:   true,
@@ -228,7 +220,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "curl",
-					RawBinary:  "curl",
 					Positional: []string{"https://x"},
 					LongFlags:  map[string]bool{"data-binary": true},
 					Resolved:   true,
@@ -241,7 +232,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "rm",
-					RawBinary:  "rm",
 					Positional: []string{"/tmp/x"},
 					ShortFlags: map[string]bool{"r": true, "f": true},
 					Resolved:   true,
@@ -252,15 +242,15 @@ func TestParse(t *testing.T) {
 			name:  "sh -c with single quotes unwraps",
 			input: `sh -c 'ls'`,
 			want: []Command{
-				{Binary: "ls", RawBinary: "ls", Resolved: true},
+				{Binary: "ls", Resolved: true},
 			},
 		},
 		{
 			name:  "bash -c single-quoted pipe unwraps to both commands",
 			input: `bash -c 'cat a | grep b'`,
 			want: []Command{
-				{Binary: "cat", RawBinary: "cat", Positional: []string{"a"}, Resolved: true},
-				{Binary: "grep", RawBinary: "grep", Positional: []string{"b"}, Resolved: true},
+				{Binary: "cat", Positional: []string{"a"}, Resolved: true},
+				{Binary: "grep", Positional: []string{"b"}, Resolved: true},
 			},
 		},
 		{
@@ -269,7 +259,6 @@ func TestParse(t *testing.T) {
 			want: []Command{
 				{
 					Binary:     "bash",
-					RawBinary:  "bash",
 					Positional: []string{""},
 					ShortFlags: map[string]bool{"c": true},
 					Resolved:   false,
@@ -279,7 +268,7 @@ func TestParse(t *testing.T) {
 		{
 			name:  "syntax error falls back to first word",
 			input: ")",
-			want:  []Command{{Binary: ")", RawBinary: ")"}},
+			want:  []Command{{Binary: ")"}},
 		},
 	}
 
@@ -297,7 +286,6 @@ func TestParseBashCNested(t *testing.T) {
 	got := Parse(`bash -c 'bash -c "echo inner"'`)
 	require.Len(t, got, 1)
 	require.Equal(t, "bash", got[0].Binary)
-	require.Equal(t, "bash", got[0].RawBinary)
 	require.True(t, got[0].ShortFlags["c"])
 	require.False(t, got[0].Resolved)
 }

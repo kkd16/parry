@@ -16,7 +16,7 @@ func TestLoadBytes_DefaultPolicy(t *testing.T) {
 
 	shell := p.Rules["shell"]
 	require.NotNil(t, shell)
-	require.NotEmpty(t, shell.Matchers(), "compile did not run")
+	require.Positive(t, shell.MatcherCount(), "compile did not run")
 	require.True(t, hasBinaryEntry(shell.Allow, "ls"))
 
 	for _, pp := range p.ParryPaths {
@@ -52,9 +52,7 @@ rules:
 	e := loadEngine(t, yamlDoc)
 	shell := e.Policy().Rules["shell"]
 
-	// each rule entry compiles to a matcher with the same action
-	require.Len(t, shell.Matchers(), 4)
-
+	require.Equal(t, 4, shell.MatcherCount())
 	require.True(t, hasBinaryEntry(shell.Allow, "ls"))
 	require.True(t, hasBinaryEntry(shell.Allow, "cat"))
 	require.True(t, hasBinaryEntry(shell.Confirm, "rm"))

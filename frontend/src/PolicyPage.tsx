@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ChevronRight, Eraser, Search } from "lucide-react";
 import PageHeader from "./components/PageHeader";
 import { actionBadge } from "./policyBadges";
@@ -186,17 +186,14 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
                   <tr key={action}>
                     <td>{actionBadge(action)}</td>
                     <td>
-                      {entries.map((e, i) => {
-                        const text = formatEntry(e);
-                        return (
-                          <span key={`${e.binary}-${i}`}>
-                            {i > 0 && ", "}
-                            <button className="cell-link mono" onClick={() => goBinary(e.binary)}>
-                              {highlight(text, query)}
-                            </button>
-                          </span>
-                        );
-                      })}
+                      {entries.map((e, i) => (
+                        <Fragment key={`${e.binary}-${i}`}>
+                          {i > 0 && ", "}
+                          <button className="cell-link mono" onClick={() => goBinary(e.binary)}>
+                            {highlight(formatEntry(e), query)}
+                          </button>
+                        </Fragment>
+                      ))}
                     </td>
                   </tr>
                 ))}

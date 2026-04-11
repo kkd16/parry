@@ -2,8 +2,9 @@ package policy
 
 import (
 	"fmt"
-	"strings"
 	"time"
+
+	"github.com/kkd16/parry/internal/shellparse"
 )
 
 type Action string
@@ -22,17 +23,8 @@ var validRuleKeys = map[string]bool{
 	"shell": true, "file_edit": true, "file_read": true,
 }
 
-// FlagEquivalents maps a per-binary table of semantic flag names to the set of
-// concrete short/long flag forms that satisfy that semantic name. For rm, the
-// semantic name `recursive` might resolve to [r, R, --recursive], meaning any
-// of those forms seen on the command line counts as the rule's `recursive`
-// flag being present.
 type FlagEquivalents map[string]map[string][]string
 
-// RuleEntry is a single structured rule under allow/confirm/block. A rule
-// matches a command when its binary matches, its positional prefix is a prefix
-// of the command's positional args, and every named flag resolves (via
-// FlagEquivalents) to a form present in the command.
 type RuleEntry struct {
 	Binary     string   `yaml:"binary" json:"binary"`
 	Positional []string `yaml:"positional,omitempty" json:"positional,omitempty"`
@@ -46,7 +38,8 @@ type Rule struct {
 	Confirm         []RuleEntry     `yaml:"confirm,omitempty" json:"confirm,omitempty"`
 	Block           []RuleEntry     `yaml:"block,omitempty" json:"block,omitempty"`
 
-	matchers []compiledMatcher `yaml:"-" json:"-"`
+	byBinary map[string][]compiledMatcher `yaml:"-" json:"-"`
+	count    int                          `yaml:"-" json:"-"`
 }
 
 type compiledMatcher struct {
@@ -59,28 +52,34 @@ type compiledMatcher struct {
 
 type flagRequirement struct {
 	Name       string
-	ShortForms map[string]bool
-	LongForms  map[string]bool
+	ShortForms []string
+	LongForms  []string
 }
 
 func (r *Rule) compile() error {
-	r.matchers = r.matchers[:0]
-	groups := []struct {
-		action  Action
-		entries []RuleEntry
-	}{
-		{Allow, r.Allow},
-		{Confirm, r.Confirm},
-		{Block, r.Block},
-	}
-	for _, g := range groups {
-		for i, e := range g.entries {
-			m, err := r.compileEntry(e, g.action)
+	total := len(r.Allow) + len(r.Confirm) + len(r.Block)
+	r.byBinary = make(map[string][]compiledMatcher, total)
+	r.count = 0
+
+	add := func(entries []RuleEntry, action Action) error {
+		for i, e := range entries {
+			m, err := r.compileEntry(e, action)
 			if err != nil {
-				return fmt.Errorf("%s rule %d: %w", g.action, i, err)
+				return fmt.Errorf("%s rule %d: %w", action, i, err)
 			}
-			r.matchers = append(r.matchers, m)
+			r.byBinary[m.Binary] = append(r.byBinary[m.Binary], m)
+			r.count++
 		}
+		return nil
+	}
+	if err := add(r.Allow, Allow); err != nil {
+		return err
+	}
+	if err := add(r.Confirm, Confirm); err != nil {
+		return err
+	}
+	if err := add(r.Block, Block); err != nil {
+		return err
 	}
 	return nil
 }
@@ -91,7 +90,7 @@ func (r *Rule) compileEntry(e RuleEntry, action Action) (compiledMatcher, error)
 	}
 	m := compiledMatcher{
 		Binary:     e.Binary,
-		Positional: append([]string(nil), e.Positional...),
+		Positional: e.Positional,
 		Action:     action,
 	}
 	for _, name := range e.Flags {
@@ -112,22 +111,19 @@ func (r *Rule) resolveFlag(binary, name string) (flagRequirement, error) {
 	}
 	forms, ok := bin[name]
 	if !ok {
-		return flagRequirement{}, fmt.Errorf("rule for %q references unknown flag %q — add it under flag_equivalents.%s", binary, name, binary)
+		return flagRequirement{}, fmt.Errorf("rule for %q references unknown flag %q; add it under flag_equivalents.%s", binary, name, binary)
 	}
-	req := flagRequirement{
-		Name:       name,
-		ShortForms: map[string]bool{},
-		LongForms:  map[string]bool{},
-	}
+	req := flagRequirement{Name: name}
 	for _, f := range forms {
 		if f == "" {
 			continue
 		}
-		trimmed := strings.TrimPrefix(f, "--")
-		if len(trimmed) == 1 && !strings.HasPrefix(f, "--") {
-			req.ShortForms[trimmed] = true
-		} else {
-			req.LongForms[trimmed] = true
+		short, long := shellparse.ClassifyFlagForm(f)
+		if short != "" {
+			req.ShortForms = append(req.ShortForms, short)
+		}
+		if long != "" {
+			req.LongForms = append(req.LongForms, long)
 		}
 	}
 	if len(req.ShortForms) == 0 && len(req.LongForms) == 0 {
@@ -136,10 +132,8 @@ func (r *Rule) resolveFlag(binary, name string) (flagRequirement, error) {
 	return req, nil
 }
 
-// Matchers exposes compiled matchers for test assertions. Not part of the
-// stable API.
-func (r *Rule) Matchers() []compiledMatcher {
-	return r.matchers
+func (r *Rule) MatcherCount() int {
+	return r.count
 }
 
 type RateLimit struct {

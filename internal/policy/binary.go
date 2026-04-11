@@ -21,16 +21,14 @@ func strictest(a, b Action) Action {
 	return b
 }
 
-func matchBinary(cmd shellparse.Command, matchers []compiledMatcher, fallback Action) Action {
-	if len(matchers) == 0 {
+func matchBinary(cmd shellparse.Command, byBinary map[string][]compiledMatcher, fallback Action) Action {
+	bucket := byBinary[cmd.Binary]
+	if len(bucket) == 0 {
 		return fallback
 	}
 	result := fallback
 	bestSpec := -1
-	for _, m := range matchers {
-		if m.Binary != cmd.Binary {
-			continue
-		}
+	for _, m := range bucket {
 		if !positionalPrefix(m.Positional, cmd.Positional) {
 			continue
 		}
@@ -70,12 +68,12 @@ func requirementsMet(reqs []flagRequirement, short, long map[string]bool) bool {
 }
 
 func requirementMet(r flagRequirement, short, long map[string]bool) bool {
-	for f := range r.ShortForms {
+	for _, f := range r.ShortForms {
 		if short[f] {
 			return true
 		}
 	}
-	for f := range r.LongForms {
+	for _, f := range r.LongForms {
 		if long[f] {
 			return true
 		}

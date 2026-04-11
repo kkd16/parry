@@ -37,7 +37,7 @@ func (v *ValidateCmd) Run() error {
 
 	ruleCount := 0
 	for _, r := range p.Rules {
-		ruleCount += len(r.Allow) + len(r.Confirm) + len(r.Block)
+		ruleCount += r.MatcherCount()
 	}
 	ui.Detail("entries", fmt.Sprintf("%d classified", ruleCount))
 	ui.Detail("parry paths", fmt.Sprintf("%d protected", len(p.ParryPaths)))
