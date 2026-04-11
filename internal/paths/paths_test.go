@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kkd16/parry/internal/paths"
+	"github.com/kkd16/parry/internal/policy"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,8 +46,18 @@ default_action: allow
 rules:
   shell:
     default_action: allow
-    allow: [marker_binary]
+    allow:
+      - binary: marker_binary
 `
+
+func hasBinaryRule(rules []policy.RuleEntry, binary string) bool {
+	for _, r := range rules {
+		if r.Binary == binary {
+			return true
+		}
+	}
+	return false
+}
 
 func TestLoadPolicy_FileExists(t *testing.T) {
 	home := tempHome(t)
@@ -58,7 +69,7 @@ func TestLoadPolicy_FileExists(t *testing.T) {
 	engine, err := paths.LoadPolicy()
 	require.NoError(t, err)
 	require.NotNil(t, engine.Policy())
-	require.Contains(t, engine.Policy().Rules["shell"].Binaries, "marker_binary")
+	require.True(t, hasBinaryRule(engine.Policy().Rules["shell"].Allow, "marker_binary"))
 }
 
 func TestLoadPolicy_FileMissing_FallsBackToDefault(t *testing.T) {
@@ -69,7 +80,7 @@ func TestLoadPolicy_FileMissing_FallsBackToDefault(t *testing.T) {
 	p := engine.Policy()
 	require.NotNil(t, p)
 	require.Equal(t, "observe", p.Mode)
-	require.Contains(t, p.Rules["shell"].Binaries, "ls")
+	require.True(t, hasBinaryRule(p.Rules["shell"].Allow, "ls"))
 }
 
 func TestLoadPolicy_DirExistsFileMissing(t *testing.T) {

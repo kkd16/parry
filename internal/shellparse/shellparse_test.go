@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,154 +17,276 @@ func TestParse(t *testing.T) {
 		{
 			name:  "bare binary",
 			input: "ls",
-			want:  []Command{{Binary: "ls", Resolved: true}},
+			want:  []Command{{Binary: "ls", RawBinary: "ls", Resolved: true}},
 		},
 		{
 			name:  "flags and path",
 			input: "ls -la /tmp",
 			want: []Command{
-				{Binary: "ls", Subcommand: "-la", Args: []string{"-la", "/tmp"}, Resolved: true},
+				{
+					Binary:     "ls",
+					RawBinary:  "ls",
+					Positional: []string{"/tmp"},
+					ShortFlags: map[string]bool{"l": true, "a": true},
+					Resolved:   true,
+				},
 			},
 		},
 		{
 			name:  "empty string",
 			input: "",
-			want:  []Command{{Binary: ""}},
+			want:  []Command{{}},
 		},
 		{
 			name:  "whitespace only",
 			input: "   ",
-			want:  []Command{{Binary: ""}},
+			want:  []Command{{}},
 		},
 		{
-			name:  "git subcommand",
+			name:  "git subcommand as positional",
 			input: "git status",
 			want: []Command{
-				{Binary: "git", Subcommand: "status", Args: []string{"status"}, Resolved: true},
+				{Binary: "git", RawBinary: "git", Positional: []string{"status"}, Resolved: true},
 			},
 		},
 		{
 			name:  "git commit with double-quoted message",
 			input: `git commit -m "wip"`,
 			want: []Command{
-				{Binary: "git", Subcommand: "commit", Args: []string{"commit", "-m", ""}, Resolved: false},
+				{
+					Binary:     "git",
+					RawBinary:  "git",
+					Positional: []string{"commit", ""},
+					ShortFlags: map[string]bool{"m": true},
+					Resolved:   false,
+				},
 			},
 		},
 		{
-			name:  "docker run",
+			name:  "docker run alpine",
 			input: "docker run alpine",
 			want: []Command{
-				{Binary: "docker", Subcommand: "run", Args: []string{"run", "alpine"}, Resolved: true},
+				{Binary: "docker", RawBinary: "docker", Positional: []string{"run", "alpine"}, Resolved: true},
 			},
 		},
 		{
 			name:  "pipe splits into two commands",
 			input: "cat a.txt | grep foo",
 			want: []Command{
-				{Binary: "cat", Subcommand: "a.txt", Args: []string{"a.txt"}, Resolved: true},
-				{Binary: "grep", Subcommand: "foo", Args: []string{"foo"}, Resolved: true},
+				{Binary: "cat", RawBinary: "cat", Positional: []string{"a.txt"}, Resolved: true},
+				{Binary: "grep", RawBinary: "grep", Positional: []string{"foo"}, Resolved: true},
 			},
 		},
 		{
 			name:  "and-chain",
 			input: "make && make test",
 			want: []Command{
-				{Binary: "make", Resolved: true},
-				{Binary: "make", Subcommand: "test", Args: []string{"test"}, Resolved: true},
+				{Binary: "make", RawBinary: "make", Resolved: true},
+				{Binary: "make", RawBinary: "make", Positional: []string{"test"}, Resolved: true},
 			},
 		},
 		{
 			name:  "or-chain",
 			input: "false || echo fail",
 			want: []Command{
-				{Binary: "false", Resolved: true},
-				{Binary: "echo", Subcommand: "fail", Args: []string{"fail"}, Resolved: true},
+				{Binary: "false", RawBinary: "false", Resolved: true},
+				{Binary: "echo", RawBinary: "echo", Positional: []string{"fail"}, Resolved: true},
 			},
 		},
 		{
 			name:  "semicolon sequence",
 			input: "cd /tmp; ls",
 			want: []Command{
-				{Binary: "cd", Subcommand: "/tmp", Args: []string{"/tmp"}, Resolved: true},
-				{Binary: "ls", Resolved: true},
+				{Binary: "cd", RawBinary: "cd", Positional: []string{"/tmp"}, Resolved: true},
+				{Binary: "ls", RawBinary: "ls", Resolved: true},
 			},
 		},
 		{
 			name:  "single-quoted literal stays resolved",
 			input: "echo 'hello world'",
 			want: []Command{
-				{Binary: "echo", Subcommand: "hello world", Args: []string{"hello world"}, Resolved: true},
+				{Binary: "echo", RawBinary: "echo", Positional: []string{"hello world"}, Resolved: true},
 			},
 		},
 		{
 			name:  "double-quoted literal is unresolved",
 			input: `echo "static"`,
 			want: []Command{
-				{Binary: "echo", Args: []string{""}, Resolved: false},
+				{Binary: "echo", RawBinary: "echo", Positional: []string{""}, Resolved: false},
 			},
 		},
 		{
 			name:  "param expansion is unresolved",
 			input: `echo "$HOME"`,
 			want: []Command{
-				{Binary: "echo", Args: []string{""}, Resolved: false},
+				{Binary: "echo", RawBinary: "echo", Positional: []string{""}, Resolved: false},
 			},
 		},
 		{
 			name:  "command substitution yields outer plus inner",
 			input: "echo $(whoami)",
 			want: []Command{
-				{Binary: "echo", Args: []string{""}, Resolved: false},
-				{Binary: "whoami", Resolved: true},
+				{Binary: "echo", RawBinary: "echo", Positional: []string{""}, Resolved: false},
+				{Binary: "whoami", RawBinary: "whoami", Resolved: true},
 			},
 		},
 		{
 			name:  "unquoted variable is unresolved",
 			input: "cat $FILE",
 			want: []Command{
-				{Binary: "cat", Args: []string{""}, Resolved: false},
+				{Binary: "cat", RawBinary: "cat", Positional: []string{""}, Resolved: false},
+			},
+		},
+		{
+			name:  "rm -rf bundled short flags",
+			input: "rm -rf /tmp/x",
+			want: []Command{
+				{
+					Binary:     "rm",
+					RawBinary:  "rm",
+					Positional: []string{"/tmp/x"},
+					ShortFlags: map[string]bool{"r": true, "f": true},
+					Resolved:   true,
+				},
+			},
+		},
+		{
+			name:  "rm -r -f separated short flags",
+			input: "rm -r -f /tmp/x",
+			want: []Command{
+				{
+					Binary:     "rm",
+					RawBinary:  "rm",
+					Positional: []string{"/tmp/x"},
+					ShortFlags: map[string]bool{"r": true, "f": true},
+					Resolved:   true,
+				},
+			},
+		},
+		{
+			name:  "rm -rvf with extra unknown flag",
+			input: "rm -rvf /tmp/x",
+			want: []Command{
+				{
+					Binary:     "rm",
+					RawBinary:  "rm",
+					Positional: []string{"/tmp/x"},
+					ShortFlags: map[string]bool{"r": true, "v": true, "f": true},
+					Resolved:   true,
+				},
+			},
+		},
+		{
+			name:  "rm with long flags",
+			input: "rm --recursive --force /tmp/x",
+			want: []Command{
+				{
+					Binary:     "rm",
+					RawBinary:  "rm",
+					Positional: []string{"/tmp/x"},
+					LongFlags:  map[string]bool{"recursive": true, "force": true},
+					Resolved:   true,
+				},
+			},
+		},
+		{
+			name:  "POSIX end-of-options treats -rf as positional",
+			input: "rm -- -rf",
+			want: []Command{
+				{Binary: "rm", RawBinary: "rm", Positional: []string{"-rf"}, Resolved: true},
+			},
+		},
+		{
+			name:  "absolute path binary canonicalizes to basename",
+			input: "/bin/rm -rf /tmp/x",
+			want: []Command{
+				{
+					Binary:     "rm",
+					RawBinary:  "/bin/rm",
+					Positional: []string{"/tmp/x"},
+					ShortFlags: map[string]bool{"r": true, "f": true},
+					Resolved:   true,
+				},
+			},
+		},
+		{
+			name:  "usr/bin path binary canonicalizes to basename",
+			input: "/usr/bin/rm -rf /tmp/x",
+			want: []Command{
+				{
+					Binary:     "rm",
+					RawBinary:  "/usr/bin/rm",
+					Positional: []string{"/tmp/x"},
+					ShortFlags: map[string]bool{"r": true, "f": true},
+					Resolved:   true,
+				},
+			},
+		},
+		{
+			name:  "long flag with equals value drops value",
+			input: "curl --data-binary=@foo https://x",
+			want: []Command{
+				{
+					Binary:     "curl",
+					RawBinary:  "curl",
+					Positional: []string{"https://x"},
+					LongFlags:  map[string]bool{"data-binary": true},
+					Resolved:   true,
+				},
 			},
 		},
 		{
 			name:  "bash -c with single quotes unwraps",
 			input: `bash -c 'rm -rf /tmp/x'`,
 			want: []Command{
-				{Binary: "rm", Subcommand: "-rf", Args: []string{"-rf", "/tmp/x"}, Resolved: true},
+				{
+					Binary:     "rm",
+					RawBinary:  "rm",
+					Positional: []string{"/tmp/x"},
+					ShortFlags: map[string]bool{"r": true, "f": true},
+					Resolved:   true,
+				},
 			},
 		},
 		{
 			name:  "sh -c with single quotes unwraps",
 			input: `sh -c 'ls'`,
 			want: []Command{
-				{Binary: "ls", Resolved: true},
+				{Binary: "ls", RawBinary: "ls", Resolved: true},
 			},
 		},
 		{
 			name:  "bash -c single-quoted pipe unwraps to both commands",
 			input: `bash -c 'cat a | grep b'`,
 			want: []Command{
-				{Binary: "cat", Subcommand: "a", Args: []string{"a"}, Resolved: true},
-				{Binary: "grep", Subcommand: "b", Args: []string{"b"}, Resolved: true},
+				{Binary: "cat", RawBinary: "cat", Positional: []string{"a"}, Resolved: true},
+				{Binary: "grep", RawBinary: "grep", Positional: []string{"b"}, Resolved: true},
 			},
 		},
 		{
 			name:  "bash -c with double quotes does not unwrap",
 			input: `bash -c "rm -rf /tmp/x"`,
 			want: []Command{
-				{Binary: "bash", Subcommand: "-c", Args: []string{"-c", ""}, Resolved: false},
+				{
+					Binary:     "bash",
+					RawBinary:  "bash",
+					Positional: []string{""},
+					ShortFlags: map[string]bool{"c": true},
+					Resolved:   false,
+				},
 			},
 		},
 		{
 			name:  "syntax error falls back to first word",
 			input: ")",
-			want:  []Command{{Binary: ")"}},
+			want:  []Command{{Binary: ")", RawBinary: ")"}},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			got := Parse(tc.input)
-			if diff := cmp.Diff(tc.want, got); diff != "" {
+			if diff := cmp.Diff(tc.want, got, cmpopts.EquateEmpty()); diff != "" {
 				t.Fatalf("Parse(%q) mismatch (-want +got):\n%s", tc.input, diff)
 			}
 		})
@@ -174,8 +297,86 @@ func TestParseBashCNested(t *testing.T) {
 	got := Parse(`bash -c 'bash -c "echo inner"'`)
 	require.Len(t, got, 1)
 	require.Equal(t, "bash", got[0].Binary)
-	require.Equal(t, "-c", got[0].Subcommand)
+	require.Equal(t, "bash", got[0].RawBinary)
+	require.True(t, got[0].ShortFlags["c"])
 	require.False(t, got[0].Resolved)
+}
+
+func TestClassifyFlags(t *testing.T) {
+	tests := []struct {
+		name           string
+		in             []string
+		wantPositional []string
+		wantShort      map[string]bool
+		wantLong       map[string]bool
+	}{
+		{
+			name: "empty input",
+			in:   nil,
+		},
+		{
+			name:      "bundled short",
+			in:        []string{"-rf"},
+			wantShort: map[string]bool{"r": true, "f": true},
+		},
+		{
+			name:      "separated short",
+			in:        []string{"-r", "-f"},
+			wantShort: map[string]bool{"r": true, "f": true},
+		},
+		{
+			name:     "long flags",
+			in:       []string{"--recursive", "--force"},
+			wantLong: map[string]bool{"recursive": true, "force": true},
+		},
+		{
+			name:     "long flag with value",
+			in:       []string{"--name=value"},
+			wantLong: map[string]bool{"name": true},
+		},
+		{
+			name: "bare end-of-options",
+			in:   []string{"--"},
+		},
+		{
+			name:           "tokens after end-of-options are positional",
+			in:             []string{"--", "-rf"},
+			wantPositional: []string{"-rf"},
+		},
+		{
+			name:           "lone dash is positional",
+			in:             []string{"-"},
+			wantPositional: []string{"-"},
+		},
+		{
+			name:           "mixed",
+			in:             []string{"foo", "-r", "bar", "--", "-x"},
+			wantPositional: []string{"foo", "bar", "-x"},
+			wantShort:      map[string]bool{"r": true},
+		},
+		{
+			name:           "long and short combined",
+			in:             []string{"-v", "--recursive", "file"},
+			wantPositional: []string{"file"},
+			wantShort:      map[string]bool{"v": true},
+			wantLong:       map[string]bool{"recursive": true},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			pos, short, long := ClassifyFlags(tc.in)
+			if diff := cmp.Diff(tc.wantPositional, pos, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("positional mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantShort, short, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("short mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(tc.wantLong, long, cmpopts.EquateEmpty()); diff != "" {
+				t.Errorf("long mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
 
 func TestHasUnresolved(t *testing.T) {
@@ -204,7 +405,7 @@ func TestExtractArgs(t *testing.T) {
 		want []string
 	}{
 		{
-			name: "flags are skipped",
+			name: "positional paths only",
 			cmds: Parse("ls -la /tmp"),
 			want: []string{"/tmp"},
 		},
@@ -220,7 +421,7 @@ func TestExtractArgs(t *testing.T) {
 		},
 		{
 			name: "empty strings are filtered",
-			cmds: []Command{{Binary: "echo", Args: []string{"", "x", ""}}},
+			cmds: []Command{{Binary: "echo", Positional: []string{"", "x", ""}}},
 			want: []string{"x"},
 		},
 		{
@@ -233,7 +434,7 @@ func TestExtractArgs(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			got := ExtractArgs(tc.cmds)
-			if diff := cmp.Diff(tc.want, got); diff != "" {
+			if diff := cmp.Diff(tc.want, got, cmpopts.EquateEmpty()); diff != "" {
 				t.Fatalf("ExtractArgs mismatch (-want +got):\n%s", diff)
 			}
 		})

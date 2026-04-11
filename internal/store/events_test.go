@@ -14,7 +14,6 @@ func TestRecordEvent_RoundTrip(t *testing.T) {
 	in := makeEvent(
 		withRawName("Bash"),
 		withBinary("rm"),
-		withSubcommand("-rf"),
 		withWorkdir("/proj/a"),
 		withSession("sess-1"),
 		withAction("block"),
@@ -31,7 +30,6 @@ func TestRecordEvent_RoundTrip(t *testing.T) {
 	require.Equal(t, in.ToolName, got.ToolName)
 	require.Equal(t, in.RawName, got.RawName)
 	require.Equal(t, in.Binary, got.Binary)
-	require.Equal(t, in.Subcommand, got.Subcommand)
 	require.Equal(t, in.Workdir, got.Workdir)
 	require.Equal(t, in.Session, got.Session)
 	require.Equal(t, in.Action, got.Action)
@@ -72,7 +70,6 @@ func TestRecordEvent_PreservesEmptyFields(t *testing.T) {
 	require.Len(t, rows, 1)
 	require.Equal(t, "", rows[0].RawName)
 	require.Equal(t, "", rows[0].Binary)
-	require.Equal(t, "", rows[0].Subcommand)
 	require.Equal(t, "", rows[0].File)
 	require.Equal(t, "", rows[0].Workdir)
 }

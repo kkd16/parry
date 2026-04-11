@@ -102,7 +102,6 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
                 <div className="drawer-field-value">{event.raw_name || "—"}</div>
               </div>
               <CopyField label="binary" value={event.binary} />
-              <CopyField label="subcommand" value={event.subcommand} />
               <CopyField label="file" value={event.file} />
               <CopyField label="workdir" value={event.workdir} />
               <CopyField label="session" value={event.session} />

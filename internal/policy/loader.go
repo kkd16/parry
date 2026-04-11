@@ -35,8 +35,10 @@ func (e *Engine) LoadBytes(data []byte) error {
 		return fmt.Errorf("invalid policy: %w", err)
 	}
 	p.expandHome()
-	for _, rule := range p.Rules {
-		rule.buildBinaries()
+	for name, rule := range p.Rules {
+		if err := rule.compile(); err != nil {
+			return fmt.Errorf("rule %q: %w", name, err)
+		}
 	}
 	e.policy = &p
 	return nil

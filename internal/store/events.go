@@ -11,31 +11,29 @@ import (
 )
 
 type Event struct {
-	ToolName   string
-	ToolInput  map[string]any
-	Action     string
-	Session    string
-	Mode       string
-	RawName    string
-	Binary     string
-	Subcommand string
-	File       string
-	Workdir    string
+	ToolName  string
+	ToolInput map[string]any
+	Action    string
+	Session   string
+	Mode      string
+	RawName   string
+	Binary    string
+	File      string
+	Workdir   string
 }
 
 type EventRow struct {
-	ID         int            `json:"id"`
-	Timestamp  string         `json:"timestamp"`
-	ToolName   string         `json:"tool_name"`
-	ToolInput  map[string]any `json:"tool_input"`
-	Action     string         `json:"action"`
-	Session    string         `json:"session"`
-	Mode       string         `json:"mode"`
-	RawName    string         `json:"raw_name"`
-	Binary     string         `json:"binary"`
-	Subcommand string         `json:"subcommand"`
-	File       string         `json:"file"`
-	Workdir    string         `json:"workdir"`
+	ID        int            `json:"id"`
+	Timestamp string         `json:"timestamp"`
+	ToolName  string         `json:"tool_name"`
+	ToolInput map[string]any `json:"tool_input"`
+	Action    string         `json:"action"`
+	Session   string         `json:"session"`
+	Mode      string         `json:"mode"`
+	RawName   string         `json:"raw_name"`
+	Binary    string         `json:"binary"`
+	File      string         `json:"file"`
+	Workdir   string         `json:"workdir"`
 }
 
 func NewEvent(tc *check.ToolCall, action, mode string) Event {
@@ -52,7 +50,6 @@ func NewEvent(tc *check.ToolCall, action, mode string) Event {
 		cmds := shellparse.Parse(cmd)
 		if len(cmds) > 0 {
 			e.Binary = cmds[0].Binary
-			e.Subcommand = cmds[0].Subcommand
 		}
 	}
 	if p, ok := tc.ToolInput["path"].(string); ok {
@@ -62,15 +59,14 @@ func NewEvent(tc *check.ToolCall, action, mode string) Event {
 }
 
 var allowedSortCols = map[string]string{
-	"timestamp":  "timestamp",
-	"tool_name":  "tool_name",
-	"action":     "action",
-	"mode":       "mode",
-	"raw_name":   "raw_name",
-	"binary":     "binary",
-	"subcommand": "subcommand",
-	"file":       "file",
-	"workdir":    "workdir",
+	"timestamp": "timestamp",
+	"tool_name": "tool_name",
+	"action":    "action",
+	"mode":      "mode",
+	"raw_name":  "raw_name",
+	"binary":    "binary",
+	"file":      "file",
+	"workdir":   "workdir",
 }
 
 func (s *Store) RecordEvent(e Event) error {
@@ -80,8 +76,8 @@ func (s *Store) RecordEvent(e Event) error {
 	}
 
 	_, err = s.db.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
@@ -90,7 +86,6 @@ func (s *Store) RecordEvent(e Event) error {
 		e.Mode,
 		e.RawName,
 		e.Binary,
-		e.Subcommand,
 		e.File,
 		e.Workdir,
 	)
@@ -152,10 +147,10 @@ func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, so
 	var q string
 	var rowArgs []any
 	if sinceID > 0 {
-		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
+		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
 		rowArgs = append(args, limit)
 	} else {
-		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, subcommand, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
+		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
 		rowArgs = append(args, limit, offset)
 	}
 	rows, err := s.db.Query(q, rowArgs...)
@@ -168,7 +163,7 @@ func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, so
 	for rows.Next() {
 		var ev EventRow
 		var inputJSON string
-		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.Subcommand, &ev.File, &ev.Workdir); err != nil {
+		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.File, &ev.Workdir); err != nil {
 			return nil, 0, fmt.Errorf("scanning event: %w", err)
 		}
 		if err := json.Unmarshal([]byte(inputJSON), &ev.ToolInput); err != nil {

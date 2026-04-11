@@ -36,194 +36,252 @@ protected_paths:
 rules:
   shell:
     default_action: confirm
+
+    flag_equivalents:
+      rm:
+        recursive: [r, R, --recursive]
+        force:     [f, --force]
+      chmod:
+        recursive: [R, --recursive]
+      chown:
+        recursive: [R, --recursive]
+
     allow:
-      - ls
-      - cat
-      - head
-      - tail
-      - less
-      - more
-      - grep
-      - rg
-      - find
-      - wc
-      - echo
-      - pwd
-      - which
-      - whoami
-      - env
-      - printenv
-      - date
-      - file
-      - stat
-      - du
-      - df
-      - tree
-      - diff
-      - ps
-      - top
-      - htop
-      - lsof
-      - uname
-      - hostname
-      - id
-      - groups
-      - history
-      - man
-      - help
-      - type
-      - command
-      - true
-      - false
-      - sleep
-      - test
-      - seq
-      - column
-      - tput
-      - basename
-      - dirname
-      - realpath
-      - readlink
-      - sed
-      - awk
-      - jq
-      - yq
-      - xargs
-      - sort
-      - uniq
-      - cut
-      - tr
-      - tee
-      - cp
-      - mv
-      - mkdir
-      - touch
-      - tar
-      - zip
-      - unzip
-      - gzip
-      - gunzip
-      - ping
-      - "git status"
-      - "git log"
-      - "git diff"
-      - "git show"
-      - "git branch"
-      - "git remote"
-      - "git tag"
-      - "git add"
-      - "git commit"
-      - "git checkout"
-      - "git switch"
-      - "git merge"
-      - "git rebase"
-      - "git stash"
-      - "git reset"
-      - python
-      - python3
-      - node
-      - npx
-      - "npm install"
-      - "npm run"
-      - "npm test"
-      - yarn
-      - pnpm
-      - bun
-      - ruby
-      - bundle
-      - "pip install"
-      - pytest
-      - jest
-      - "go build"
-      - "go test"
-      - "go run"
-      - "go vet"
-      - "go fmt"
-      - "go mod"
-      - "go get"
-      - gofmt
-      - golangci-lint
-      - "cargo build"
-      - "cargo test"
-      - "cargo run"
-      - "cargo check"
-      - "cargo fmt"
-      - "cargo clippy"
-      - make
-      - mvn
-      - gradle
-      - "docker ps"
-      - "docker images"
-      - "docker logs"
-      - "docker inspect"
-      - "docker build"
-      - "kubectl get"
-      - "kubectl describe"
-      - "kubectl logs"
-      - "terraform plan"
-      - "terraform fmt"
-      - "terraform validate"
+      - binary: ls
+      - binary: cat
+      - binary: head
+      - binary: tail
+      - binary: less
+      - binary: more
+      - binary: grep
+      - binary: rg
+      - binary: find
+      - binary: wc
+      - binary: echo
+      - binary: pwd
+      - binary: which
+      - binary: whoami
+      - binary: env
+      - binary: printenv
+      - binary: date
+      - binary: file
+      - binary: stat
+      - binary: du
+      - binary: df
+      - binary: tree
+      - binary: diff
+      - binary: ps
+      - binary: top
+      - binary: htop
+      - binary: lsof
+      - binary: uname
+      - binary: hostname
+      - binary: id
+      - binary: groups
+      - binary: history
+      - binary: man
+      - binary: help
+      - binary: type
+      - binary: command
+      - binary: "true"
+      - binary: "false"
+      - binary: sleep
+      - binary: test
+      - binary: seq
+      - binary: column
+      - binary: tput
+      - binary: basename
+      - binary: dirname
+      - binary: realpath
+      - binary: readlink
+      - binary: sed
+      - binary: awk
+      - binary: jq
+      - binary: yq
+      - binary: xargs
+      - binary: sort
+      - binary: uniq
+      - binary: cut
+      - binary: tr
+      - binary: tee
+      - binary: cp
+      - binary: mv
+      - binary: mkdir
+      - binary: touch
+      - binary: tar
+      - binary: zip
+      - binary: unzip
+      - binary: gzip
+      - binary: gunzip
+      - binary: ping
+      - binary: git
+        positional: [status]
+      - binary: git
+        positional: [log]
+      - binary: git
+        positional: [diff]
+      - binary: git
+        positional: [show]
+      - binary: git
+        positional: [branch]
+      - binary: git
+        positional: [remote]
+      - binary: git
+        positional: [tag]
+      - binary: git
+        positional: [add]
+      - binary: git
+        positional: [commit]
+      - binary: git
+        positional: [checkout]
+      - binary: git
+        positional: [switch]
+      - binary: git
+        positional: [merge]
+      - binary: git
+        positional: [rebase]
+      - binary: git
+        positional: [stash]
+      - binary: git
+        positional: [reset]
+      - binary: python
+      - binary: python3
+      - binary: node
+      - binary: npx
+      - binary: npm
+        positional: [install]
+      - binary: npm
+        positional: [run]
+      - binary: npm
+        positional: [test]
+      - binary: yarn
+      - binary: pnpm
+      - binary: bun
+      - binary: ruby
+      - binary: bundle
+      - binary: pip
+        positional: [install]
+      - binary: pytest
+      - binary: jest
+      - binary: go
+        positional: [build]
+      - binary: go
+        positional: [test]
+      - binary: go
+        positional: [run]
+      - binary: go
+        positional: [vet]
+      - binary: go
+        positional: [fmt]
+      - binary: go
+        positional: [mod]
+      - binary: go
+        positional: [get]
+      - binary: gofmt
+      - binary: golangci-lint
+      - binary: cargo
+        positional: [build]
+      - binary: cargo
+        positional: [test]
+      - binary: cargo
+        positional: [run]
+      - binary: cargo
+        positional: [check]
+      - binary: cargo
+        positional: [fmt]
+      - binary: cargo
+        positional: [clippy]
+      - binary: make
+      - binary: mvn
+      - binary: gradle
+      - binary: docker
+        positional: [ps]
+      - binary: docker
+        positional: [images]
+      - binary: docker
+        positional: [logs]
+      - binary: docker
+        positional: [inspect]
+      - binary: docker
+        positional: [build]
+      - binary: kubectl
+        positional: [get]
+      - binary: kubectl
+        positional: [describe]
+      - binary: kubectl
+        positional: [logs]
+      - binary: terraform
+        positional: [plan]
+      - binary: terraform
+        positional: [fmt]
+      - binary: terraform
+        positional: [validate]
+
     confirm:
-      - rm
-      - rmdir
-      - chmod
-      - chown
-      - kill
-      - killall
-      - pkill
-      - truncate
-      - shred
-      - "git clean"
-      - curl
-      - wget
-      - ssh
-      - scp
-      - rsync
-      - "git push"
-      - "git fetch"
-      - "git pull"
-      - "git clone"
-      - "npm publish"
-      - "docker push"
+      - binary: rm
+      - binary: rmdir
+      - binary: chmod
+      - binary: chown
+      - binary: kill
+      - binary: killall
+      - binary: pkill
+      - binary: truncate
+      - binary: shred
+      - binary: curl
+      - binary: wget
+      - binary: ssh
+      - binary: scp
+      - binary: rsync
+      - binary: git
+        positional: [clean]
+      - binary: git
+        positional: [push]
+      - binary: git
+        positional: [fetch]
+      - binary: git
+        positional: [pull]
+      - binary: git
+        positional: [clone]
+      - binary: npm
+        positional: [publish]
+      - binary: docker
+        positional: [push]
+
     block:
-      - "rm -rf"
-      - "rm -fr"
-      - "rm -Rf"
-      - "rm -fR"
-      - "chmod -R"
-      - "chmod -Rf"
-      - "chown -R"
-      - "bash -i"
-      - "sh -i"
-      - "zsh -i"
-      - bash
-      - sh
-      - zsh
-      - nc
-      - sudo
-      - su
-      - doas
-      - dd
-      - mkfs
-      - mkfs.ext4
-      - mkfs.xfs
-      - mkfs.btrfs
-      - mkfs.zfs
-      - mkfs.fat
-      - mkfs.vfat
-      - mke2fs
-      - wipefs
-      - blkdiscard
-      - cryptsetup
-      - losetup
-      - fdisk
-      - parted
-      - shutdown
-      - reboot
-      - halt
-      - poweroff
-      - iptables
-      - nft
+      - binary: bash
+      - binary: sh
+      - binary: zsh
+      - binary: nc
+      - binary: sudo
+      - binary: su
+      - binary: doas
+      - binary: dd
+      - binary: mkfs
+      - binary: mkfs.ext4
+      - binary: mkfs.xfs
+      - binary: mkfs.btrfs
+      - binary: mkfs.zfs
+      - binary: mkfs.fat
+      - binary: mkfs.vfat
+      - binary: mke2fs
+      - binary: wipefs
+      - binary: blkdiscard
+      - binary: cryptsetup
+      - binary: losetup
+      - binary: fdisk
+      - binary: parted
+      - binary: shutdown
+      - binary: reboot
+      - binary: halt
+      - binary: poweroff
+      - binary: iptables
+      - binary: nft
+      - binary: rm
+        flags: [recursive, force]
+      - binary: chmod
+        flags: [recursive]
+      - binary: chown
+        flags: [recursive]
 
   file_edit:
     default_action: allow

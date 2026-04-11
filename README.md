@@ -64,7 +64,7 @@ Anything that does not match a rule falls through to `default_action` (default: 
 
 ## Policy
 
-Policy lives in `~/.parry/policy.yaml`. The defaults are usable on day one, and everything is plain strings, no DSL.
+Policy lives in `~/.parry/policy.yaml`. Shell rules are structured objects grouped under `allow` / `confirm` / `block`. A rule expresses intent (block rm invoked recursively and forcibly), not a literal command string.
 
 ```yaml
 version: 1
@@ -82,9 +82,45 @@ protected_paths:
 rules:
   shell:
     default_action: confirm
-    allow:   [ls, cat, grep, "git status", "git log", "git add", "git commit"]
-    confirm: [rm, chmod, curl, wget, "git push"]
-    block:   [sudo, su, "rm -rf", bash, sh, nc, dd]
+
+    # Per-binary semantic flag table. Rules reference these names; Parry
+    # resolves them to the actual short/long flag characters at match time.
+    flag_equivalents:
+      rm:
+        recursive: [r, R, --recursive]
+        force:     [f, --force]
+      chmod:
+        recursive: [R, --recursive]
+
+    allow:
+      - binary: ls
+      - binary: cat
+      - binary: grep
+      - binary: git
+        positional: [status]
+      - binary: git
+        positional: [log]
+      - binary: git
+        positional: [commit]
+
+    confirm:
+      - binary: rm
+      - binary: chmod
+      - binary: curl
+      - binary: git
+        positional: [push]
+
+    block:
+      - binary: bash
+      - binary: sudo
+      - binary: su
+      - binary: nc
+      - binary: dd
+      - binary: rm
+        flags: [recursive, force]
+      - binary: chmod
+        flags: [recursive]
+
   file_edit:
     default_action: allow
   file_read:
@@ -102,7 +138,9 @@ rate_limit:
   max: 50
 ```
 
-Run `parry validate` after editing to catch typos and unknown fields.
+A single `rm` block rule with `flags: [recursive, force]` covers every real-world variant: `rm -rf`, `rm -fr`, `rm -Rf`, `rm -r -f`, `rm -rvf`, `rm --recursive --force`, `/bin/rm -rf`, and `bash -c 'rm --recursive --force /'`. Absolute binary paths are matched by basename, and bundled short flags are split automatically.
+
+Run `parry validate` after editing to catch typos and unknown fields. See [docs/POLICY.md](docs/POLICY.md) for the full schema reference.
 
 ## What Parry covers
 

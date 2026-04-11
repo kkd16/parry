@@ -40,7 +40,7 @@ func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (A
 		if hasRule && len(cmds) > 0 {
 			var worst Action
 			for _, c := range cmds {
-				worst = strictest(worst, lookupBinaryAction(c, rule.Binaries, action))
+				worst = strictest(worst, matchBinary(c, rule.matchers, action))
 			}
 			action = worst
 		}

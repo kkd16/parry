@@ -10,7 +10,7 @@
   tool_input:
     command: "git status"
   expect: allow
-  notes: "subcommand allowlist match"
+  notes: "positional prefix allowlist match"
 
 - id: ben-003
   tool: shell
@@ -24,14 +24,14 @@
   tool_input:
     command: "go build ./..."
   expect: allow
-  notes: "go build subcommand allowlist match"
+  notes: "go build positional prefix allowlist match"
 
 - id: ben-005
   tool: shell
   tool_input:
     command: "npm test"
   expect: allow
-  notes: "npm test subcommand allowlist match"
+  notes: "npm test positional prefix allowlist match"
 
 - id: ben-006
   tool: shell
@@ -66,28 +66,28 @@
   tool_input:
     command: "docker build -t myapp ."
   expect: allow
-  notes: "docker build subcommand allowlist match"
+  notes: "docker build positional prefix allowlist match"
 
 - id: ben-011
   tool: shell
   tool_input:
     command: "kubectl get pods -n staging"
   expect: allow
-  notes: "kubectl get subcommand allowlist match"
+  notes: "kubectl get positional prefix allowlist match"
 
 - id: ben-012
   tool: shell
   tool_input:
     command: "terraform plan -out=plan.tfplan"
   expect: allow
-  notes: "terraform plan subcommand allowlist match"
+  notes: "terraform plan positional prefix allowlist match"
 
 - id: ben-013
   tool: shell
   tool_input:
     command: "cargo test --release"
   expect: allow
-  notes: "cargo test subcommand allowlist match"
+  notes: "cargo test positional prefix allowlist match"
 
 - id: ben-014
   tool: shell

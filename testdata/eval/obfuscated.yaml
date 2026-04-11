@@ -63,12 +63,11 @@
   notes: "KNOWN-BYPASS: backslash preserved in Lit value; parser sees \\rm, not rm; falls to confirm"
 
 - id: obf-010
-  bypass: true
   tool: shell
   tool_input:
     command: "/bin/rm -rf ~"
   expect: block
-  notes: "KNOWN-BYPASS: full path to rm; parser sees /bin/rm as binary, not in block list. Falls to default confirm."
+  notes: "full path to rm; basename canonicalization maps /bin/rm to rm, flag-equivalence catches -rf"
 
 - id: obf-011
   bypass: true

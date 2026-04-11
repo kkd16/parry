@@ -8,7 +8,6 @@ export interface Event {
   mode: "observe" | "enforce";
   raw_name: string;
   binary: string;
-  subcommand: string;
   file: string;
   workdir: string;
 }
@@ -20,11 +19,18 @@ export interface EventsResponse {
   offset: number;
 }
 
+export interface RuleEntry {
+  binary: string;
+  positional?: string[];
+  flags?: string[];
+}
+
 export interface Rule {
   default_action?: string;
-  allow?: string[];
-  confirm?: string[];
-  block?: string[];
+  flag_equivalents?: Record<string, Record<string, string[]>>;
+  allow?: RuleEntry[];
+  confirm?: RuleEntry[];
+  block?: RuleEntry[];
 }
 
 export interface RateLimit {

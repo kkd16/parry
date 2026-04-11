@@ -1,6 +1,7 @@
 package shellparse
 
 import (
+	"path/filepath"
 	"strings"
 
 	"mvdan.cc/sh/v3/syntax"
@@ -8,8 +9,10 @@ import (
 
 type Command struct {
 	Binary     string
-	Subcommand string
-	Args       []string
+	RawBinary  string
+	Positional []string
+	ShortFlags map[string]bool
+	LongFlags  map[string]bool
 	Resolved   bool
 }
 
@@ -17,7 +20,7 @@ func Parse(cmd string) []Command {
 	parser := syntax.NewParser(syntax.KeepComments(false))
 	f, err := parser.Parse(strings.NewReader(cmd), "")
 	if err != nil {
-		return []Command{{Binary: firstWord(cmd)}}
+		return []Command{fallback(firstWord(cmd))}
 	}
 
 	var cmds []Command
@@ -27,23 +30,14 @@ func Parse(cmd string) []Command {
 			return true
 		}
 
-		binary, binResolved := wordToString(call.Args[0])
-		if binary == "" && binResolved {
+		rawBinary, binResolved := wordToString(call.Args[0])
+		if rawBinary == "" && binResolved {
 			return true
 		}
 
 		resolved := binResolved
 
-		var sub string
-		if len(call.Args) > 1 {
-			var subResolved bool
-			sub, subResolved = wordToString(call.Args[1])
-			if !subResolved {
-				resolved = false
-			}
-		}
-
-		if isBashLike(binary) && hasCFlag(call.Args) {
+		if isBashLike(rawBinary) && hasCFlag(call.Args) {
 			inner := extractCArg(call.Args)
 			if inner != "" {
 				cmds = append(cmds, Parse(inner)...)
@@ -51,7 +45,7 @@ func Parse(cmd string) []Command {
 			}
 		}
 
-		var args []string
+		args := make([]string, 0, len(call.Args)-1)
 		for _, arg := range call.Args[1:] {
 			s, r := wordToString(arg)
 			args = append(args, s)
@@ -60,14 +54,67 @@ func Parse(cmd string) []Command {
 			}
 		}
 
-		cmds = append(cmds, Command{Binary: binary, Subcommand: sub, Args: args, Resolved: resolved})
+		positional, short, long := ClassifyFlags(args)
+
+		cmds = append(cmds, Command{
+			Binary:     canonicalBinary(rawBinary),
+			RawBinary:  rawBinary,
+			Positional: positional,
+			ShortFlags: short,
+			LongFlags:  long,
+			Resolved:   resolved,
+		})
 		return true
 	})
 
 	if len(cmds) == 0 {
-		return []Command{{Binary: firstWord(cmd)}}
+		return []Command{fallback(firstWord(cmd))}
 	}
 	return cmds
+}
+
+// ClassifyFlags splits a post-binary argument list into positional tokens,
+// short flags (bundled -xyz split into x, y, z), and long flags (with `--`
+// prefix stripped; `--name=value` keeps only `name`). Respects POSIX `--`
+// end-of-options: every token after `--` is positional regardless of prefix.
+// A lone `-` is treated as positional (stdin marker).
+func ClassifyFlags(args []string) (positional []string, short map[string]bool, long map[string]bool) {
+	endOfOptions := false
+	for _, arg := range args {
+		if endOfOptions {
+			positional = append(positional, arg)
+			continue
+		}
+		switch {
+		case arg == "--":
+			endOfOptions = true
+		case arg == "-" || arg == "":
+			positional = append(positional, arg)
+		case strings.HasPrefix(arg, "--"):
+			name := strings.TrimPrefix(arg, "--")
+			if eq := strings.IndexByte(name, '='); eq >= 0 {
+				name = name[:eq]
+			}
+			if name == "" {
+				positional = append(positional, arg)
+				continue
+			}
+			if long == nil {
+				long = make(map[string]bool)
+			}
+			long[name] = true
+		case strings.HasPrefix(arg, "-"):
+			for _, r := range arg[1:] {
+				if short == nil {
+					short = make(map[string]bool)
+				}
+				short[string(r)] = true
+			}
+		default:
+			positional = append(positional, arg)
+		}
+	}
+	return positional, short, long
 }
 
 func wordToString(w *syntax.Word) (string, bool) {
@@ -120,12 +167,15 @@ func extractCArg(args []*syntax.Word) string {
 	return ""
 }
 
+// ExtractArgs collects deduped positional tokens across every parsed command,
+// preserving first-seen order. Used by the policy engine's protected-path
+// checker to test each path argument.
 func ExtractArgs(cmds []Command) []string {
 	seen := make(map[string]bool)
 	var args []string
 	for _, c := range cmds {
-		for _, arg := range c.Args {
-			if arg == "" || strings.HasPrefix(arg, "-") {
+		for _, arg := range c.Positional {
+			if arg == "" {
 				continue
 			}
 			if !seen[arg] {
@@ -135,6 +185,17 @@ func ExtractArgs(cmds []Command) []string {
 		}
 	}
 	return args
+}
+
+func canonicalBinary(raw string) string {
+	if strings.Contains(raw, "/") {
+		return filepath.Base(raw)
+	}
+	return raw
+}
+
+func fallback(word string) Command {
+	return Command{Binary: canonicalBinary(word), RawBinary: word}
 }
 
 func firstWord(cmd string) string {

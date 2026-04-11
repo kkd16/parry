@@ -28,7 +28,8 @@ default_action: confirm
 rules:
   shell:
     default_action: confirm
-    ` + key + `: [` + binary + `]
+    ` + key + `:
+      - binary: ` + binary + `
 `
 }
 

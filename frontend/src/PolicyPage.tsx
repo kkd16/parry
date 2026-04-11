@@ -2,16 +2,27 @@ import { useMemo, useState } from "react";
 import { ChevronRight, Eraser, Search } from "lucide-react";
 import PageHeader from "./components/PageHeader";
 import { actionBadge } from "./policyBadges";
-import type { Rule } from "./types";
+import type { Rule, RuleEntry } from "./types";
 import type { PolicyOverviewState } from "./usePolicyOverview";
 import { useUrlParam, usePath } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
 
-function ruleBindings(rule: Rule): { action: string; binaries: string[] }[] {
-  const rows: { action: string; binaries: string[] }[] = [];
-  if (rule.allow?.length) rows.push({ action: "allow", binaries: rule.allow });
-  if (rule.confirm?.length) rows.push({ action: "confirm", binaries: rule.confirm });
-  if (rule.block?.length) rows.push({ action: "block", binaries: rule.block });
+function formatEntry(entry: RuleEntry): string {
+  const parts = [entry.binary];
+  if (entry.positional?.length) {
+    parts.push(...entry.positional);
+  }
+  if (entry.flags?.length) {
+    parts.push(`[${entry.flags.join(", ")}]`);
+  }
+  return parts.join(" ");
+}
+
+function ruleBindings(rule: Rule): { action: string; entries: RuleEntry[] }[] {
+  const rows: { action: string; entries: RuleEntry[] }[] = [];
+  if (rule.allow?.length) rows.push({ action: "allow", entries: rule.allow });
+  if (rule.confirm?.length) rows.push({ action: "confirm", entries: rule.confirm });
+  if (rule.block?.length) rows.push({ action: "block", entries: rule.block });
   return rows;
 }
 
@@ -92,13 +103,13 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
     const filterRule = (rule: Rule | undefined) => {
       if (!rule) return [];
       return ruleBindings(rule)
-        .map(({ action, binaries }) => ({
+        .map(({ action, entries }) => ({
           action,
-          binaries: query
-            ? binaries.filter((b) => b.toLowerCase().includes(query.toLowerCase()))
-            : binaries,
+          entries: query
+            ? entries.filter((e) => formatEntry(e).toLowerCase().includes(query.toLowerCase()))
+            : entries,
         }))
-        .filter((r) => r.binaries.length > 0 || matchesQuery(r.action));
+        .filter((r) => r.entries.length > 0 || matchesQuery(r.action));
     };
     return {
       shell: filterRule(policy.rules["shell"]),
@@ -155,7 +166,7 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
         {policy.rules["shell"] && (
           <Section
             title="Shell Rules"
-            count={filteredBindings.shell.reduce((a, b) => a + b.binaries.length, 0)}
+            count={filteredBindings.shell.reduce((a, b) => a + b.entries.length, 0)}
           >
             <div className="policy-field">
               <span className="policy-label">Default Action</span>
@@ -167,22 +178,25 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
               <thead>
                 <tr>
                   <th>Action</th>
-                  <th>Binaries</th>
+                  <th>Rules</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredBindings.shell.map(({ action, binaries }) => (
+                {filteredBindings.shell.map(({ action, entries }) => (
                   <tr key={action}>
                     <td>{actionBadge(action)}</td>
                     <td>
-                      {binaries.map((b, i) => (
-                        <span key={b}>
-                          {i > 0 && ", "}
-                          <button className="cell-link mono" onClick={() => goBinary(b)}>
-                            {highlight(b, query)}
-                          </button>
-                        </span>
-                      ))}
+                      {entries.map((e, i) => {
+                        const text = formatEntry(e);
+                        return (
+                          <span key={`${e.binary}-${i}`}>
+                            {i > 0 && ", "}
+                            <button className="cell-link mono" onClick={() => goBinary(e.binary)}>
+                              {highlight(text, query)}
+                            </button>
+                          </span>
+                        );
+                      })}
                     </td>
                   </tr>
                 ))}

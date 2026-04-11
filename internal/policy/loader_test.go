@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/kkd16/parry/internal/policy"
 	"github.com/stretchr/testify/require"
 )
@@ -17,15 +16,24 @@ func TestLoadBytes_DefaultPolicy(t *testing.T) {
 
 	shell := p.Rules["shell"]
 	require.NotNil(t, shell)
-	require.NotEmpty(t, shell.Binaries, "buildBinaries did not run")
-	require.Equal(t, policy.Allow, shell.Binaries["ls"])
+	require.NotEmpty(t, shell.Matchers(), "compile did not run")
+	require.True(t, hasBinaryEntry(shell.Allow, "ls"))
 
 	for _, pp := range p.ParryPaths {
 		require.False(t, strings.HasPrefix(pp, "~/"), "tilde survived expansion: %s", pp)
 	}
 }
 
-func TestLoadBytes_BuildsBinaries(t *testing.T) {
+func hasBinaryEntry(entries []policy.RuleEntry, binary string) bool {
+	for _, e := range entries {
+		if e.Binary == binary {
+			return true
+		}
+	}
+	return false
+}
+
+func TestLoadBytes_CompilesMatchers(t *testing.T) {
 	yamlDoc := `version: 1
 mode: enforce
 check_mode_confirm: block
@@ -33,22 +41,24 @@ default_action: confirm
 rules:
   shell:
     default_action: confirm
-    allow: [ls, cat]
-    confirm: [rm]
-    block: [sudo]
+    allow:
+      - binary: ls
+      - binary: cat
+    confirm:
+      - binary: rm
+    block:
+      - binary: sudo
 `
 	e := loadEngine(t, yamlDoc)
+	shell := e.Policy().Rules["shell"]
 
-	want := map[string]policy.Action{
-		"ls":   policy.Allow,
-		"cat":  policy.Allow,
-		"rm":   policy.Confirm,
-		"sudo": policy.Block,
-	}
-	got := e.Policy().Rules["shell"].Binaries
-	if diff := cmp.Diff(want, got); diff != "" {
-		t.Fatalf("Binaries mismatch (-want +got):\n%s", diff)
-	}
+	// each rule entry compiles to a matcher with the same action
+	require.Len(t, shell.Matchers(), 4)
+
+	require.True(t, hasBinaryEntry(shell.Allow, "ls"))
+	require.True(t, hasBinaryEntry(shell.Allow, "cat"))
+	require.True(t, hasBinaryEntry(shell.Confirm, "rm"))
+	require.True(t, hasBinaryEntry(shell.Block, "sudo"))
 }
 
 func TestLoadBytes_InvalidYAML(t *testing.T) {

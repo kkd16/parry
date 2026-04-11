@@ -116,7 +116,8 @@ default_action: confirm
 rules:
   shell:
     default_action: confirm
-    allow: [ls]
+    allow:
+      - binary: ls
 rate_limit:
   window: 1m
   max: 3
@@ -170,7 +171,8 @@ default_action: confirm
 rules:
   shell:
     default_action: confirm
-    allow: [ls]
+    allow:
+      - binary: ls
 rate_limit:
   window: 1m
   max: 3

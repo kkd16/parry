@@ -65,11 +65,11 @@ func (c *ConfigStatusCmd) Run() error {
 	ui.SectionHeader("Policy")
 	ui.Detail("  mode", p.Mode)
 	ui.Detail("  rules", fmt.Sprintf("%d", len(p.Rules)))
-	binaries := 0
+	ruleCount := 0
 	for _, r := range p.Rules {
-		binaries += len(r.Binaries)
+		ruleCount += len(r.Allow) + len(r.Confirm) + len(r.Block)
 	}
-	ui.Detail("  binaries", fmt.Sprintf("%d classified", binaries))
+	ui.Detail("  entries", fmt.Sprintf("%d classified", ruleCount))
 	ui.Break()
 	return nil
 }

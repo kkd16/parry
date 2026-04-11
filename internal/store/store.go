@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS events (
 	mode       TEXT    NOT NULL,
 	raw_name   TEXT    NOT NULL DEFAULT '',
 	binary     TEXT    NOT NULL DEFAULT '',
-	subcommand TEXT    NOT NULL DEFAULT '',
 	file       TEXT    NOT NULL DEFAULT '',
 	workdir    TEXT    NOT NULL DEFAULT ''
 );

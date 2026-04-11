@@ -41,7 +41,6 @@ const COLUMN_LABELS: Record<string, string> = {
   raw_name: "Raw",
   tool_name: "Tool",
   binary: "Binary",
-  subcommand: "Subcmd",
   action: "Action",
   mode: "Mode",
   workdir: "Directory",
@@ -91,7 +90,6 @@ function downloadCsv(events: Event[]) {
     "tool_name",
     "raw_name",
     "binary",
-    "subcommand",
     "action",
     "mode",
     "workdir",
@@ -187,7 +185,6 @@ export default function EventsPage({
     "parry-col-visibility",
     {
       raw_name: false,
-      subcommand: false,
       session: false,
     },
   );
@@ -394,15 +391,6 @@ export default function EventsPage({
               {v}
             </button>
           );
-        },
-      },
-      {
-        accessorKey: "subcommand",
-        header: "Subcmd",
-        size: 110,
-        cell: (c) => {
-          const v = c.getValue<string>();
-          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
         },
       },
       {

@@ -53,15 +53,14 @@ func listAll(tb testing.TB, s *store.Store) []store.EventRow {
 	return rows
 }
 
-func withBinary(b string) eventOpt      { return func(e *store.Event) { e.Binary = b } }
-func withAction(a string) eventOpt      { return func(e *store.Event) { e.Action = a } }
-func withSession(s string) eventOpt     { return func(e *store.Event) { e.Session = s } }
-func withWorkdir(w string) eventOpt     { return func(e *store.Event) { e.Workdir = w } }
-func withFile(f string) eventOpt        { return func(e *store.Event) { e.File = f } }
-func withSubcommand(sc string) eventOpt { return func(e *store.Event) { e.Subcommand = sc } }
-func withToolName(t string) eventOpt    { return func(e *store.Event) { e.ToolName = t } }
-func withRawName(r string) eventOpt     { return func(e *store.Event) { e.RawName = r } }
-func withMode(m string) eventOpt        { return func(e *store.Event) { e.Mode = m } }
+func withBinary(b string) eventOpt   { return func(e *store.Event) { e.Binary = b } }
+func withAction(a string) eventOpt   { return func(e *store.Event) { e.Action = a } }
+func withSession(s string) eventOpt  { return func(e *store.Event) { e.Session = s } }
+func withWorkdir(w string) eventOpt  { return func(e *store.Event) { e.Workdir = w } }
+func withFile(f string) eventOpt     { return func(e *store.Event) { e.File = f } }
+func withToolName(t string) eventOpt { return func(e *store.Event) { e.ToolName = t } }
+func withRawName(r string) eventOpt  { return func(e *store.Event) { e.RawName = r } }
+func withMode(m string) eventOpt     { return func(e *store.Event) { e.Mode = m } }
 func withToolInput(in map[string]any) eventOpt {
 	return func(e *store.Event) { e.ToolInput = in }
 }
