@@ -8,14 +8,16 @@ import (
 	"time"
 
 	"github.com/kkd16/parry/frontend"
+	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/store"
 )
 
 type Server struct {
-	store    *store.Store
-	addr     string
-	frontend fs.FS
-	logger   *log.Logger
+	store        *store.Store
+	addr         string
+	frontend     fs.FS
+	logger       *log.Logger
+	policyLoader func() (*policy.Policy, error)
 }
 
 type Option func(*Server)
@@ -34,7 +36,7 @@ func New(dbPath, addr string, opts ...Option) (*Server, error) {
 		_ = s.Close()
 		return nil, fmt.Errorf("embedded frontend missing: %w", err)
 	}
-	srv := &Server{store: s, addr: addr, frontend: sub}
+	srv := &Server{store: s, addr: addr, frontend: sub, policyLoader: loadPolicy}
 	for _, o := range opts {
 		o(srv)
 	}

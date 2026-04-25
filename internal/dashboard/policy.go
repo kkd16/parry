@@ -16,10 +16,17 @@ func loadPolicy() (*policy.Policy, error) {
 }
 
 func (s *Server) handlePolicy(w http.ResponseWriter, _ *http.Request) {
-	p, err := loadPolicy()
+	p, err := s.loadPolicy()
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	writeJSON(w, http.StatusOK, p)
+}
+
+func (s *Server) loadPolicy() (*policy.Policy, error) {
+	if s.policyLoader != nil {
+		return s.policyLoader()
+	}
+	return loadPolicy()
 }

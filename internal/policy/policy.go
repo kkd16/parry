@@ -136,6 +136,14 @@ func (r *Rule) MatcherCount() int {
 	return r.count
 }
 
+func (r *Rule) Entries() []RuleEntry {
+	entries := make([]RuleEntry, 0, len(r.Allow)+len(r.Confirm)+len(r.Block))
+	entries = append(entries, r.Allow...)
+	entries = append(entries, r.Confirm...)
+	entries = append(entries, r.Block...)
+	return entries
+}
+
 type RateLimit struct {
 	Window   string `yaml:"window" json:"window"`
 	Max      int    `yaml:"max" json:"max"`

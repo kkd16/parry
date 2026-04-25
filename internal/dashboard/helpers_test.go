@@ -9,6 +9,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/kkd16/parry/internal/policy"
 	"github.com/kkd16/parry/internal/store"
 	"github.com/stretchr/testify/require"
 )
@@ -21,10 +22,10 @@ func newTestServer(t *testing.T) *Server {
 	t.Cleanup(func() { _ = st.Close() })
 
 	frontend := fstest.MapFS{
-		"index.html":   &fstest.MapFile{Data: []byte("<!doctype html><title>parry</title>")},
+		"index.html":    &fstest.MapFile{Data: []byte("<!doctype html><title>parry</title>")},
 		"assets/app.js": &fstest.MapFile{Data: []byte("console.log('parry')")},
 	}
-	return &Server{store: st, frontend: fs.FS(frontend)}
+	return &Server{store: st, frontend: fs.FS(frontend), policyLoader: loadTestPolicy}
 }
 
 func seedEvents(t *testing.T, s *store.Store, events ...store.Event) {
@@ -35,6 +36,39 @@ func seedEvents(t *testing.T, s *store.Store, events ...store.Event) {
 		}
 		require.NoError(t, s.RecordEvent(e))
 	}
+}
+
+func loadTestPolicy() (*policy.Policy, error) {
+	engine := policy.NewEngine()
+	err := engine.LoadBytes([]byte(`
+version: 1
+mode: observe
+default_action: confirm
+check_mode_confirm: block
+protected_paths:
+  - "/etc/shadow"
+rules:
+  shell:
+    default_action: confirm
+    flag_equivalents:
+      rm:
+        recursive: [r, R, --recursive]
+        force: [f, --force]
+    allow:
+      - binary: git
+        positional: [status]
+    block:
+      - binary: rm
+        flags: [recursive, force]
+  file_edit:
+    default_action: allow
+  file_read:
+    default_action: allow
+`))
+	if err != nil {
+		return nil, err
+	}
+	return engine.Policy(), nil
 }
 
 func requireJSONArray(t *testing.T, body map[string]any, key string) []any {

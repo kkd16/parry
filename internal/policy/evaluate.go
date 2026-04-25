@@ -12,12 +12,7 @@ func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (A
 		return Block, fmt.Errorf("no policy loaded")
 	}
 
-	rule, hasRule := e.policy.Rules[string(tool)]
-
-	action := e.policy.DefaultAction
-	if hasRule && rule.DefaultAction != "" {
-		action = rule.DefaultAction
-	}
+	action := e.policy.ToolDefaultAction(string(tool))
 
 	switch tool {
 	case check.ToolShell:
@@ -37,10 +32,10 @@ func (e *Engine) Evaluate(tool check.CanonicalTool, toolInput map[string]any) (A
 			return Block, nil
 		}
 
-		if hasRule && len(cmds) > 0 {
+		if len(cmds) > 0 {
 			var worst Action
 			for _, c := range cmds {
-				worst = strictest(worst, matchBinary(c, rule.byBinary, action))
+				worst = strictest(worst, e.policy.ShellCommandAction(c))
 			}
 			action = worst
 		}

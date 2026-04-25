@@ -21,6 +21,23 @@ func strictest(a, b Action) Action {
 	return b
 }
 
+func (p *Policy) ToolDefaultAction(tool string) Action {
+	action := p.DefaultAction
+	if rule := p.Rules[tool]; rule != nil && rule.DefaultAction != "" {
+		action = rule.DefaultAction
+	}
+	return action
+}
+
+func (p *Policy) ShellCommandAction(cmd shellparse.Command) Action {
+	action := p.ToolDefaultAction("shell")
+	rule := p.Rules["shell"]
+	if rule == nil {
+		return action
+	}
+	return matchBinary(cmd, rule.byBinary, action)
+}
+
 func matchBinary(cmd shellparse.Command, byBinary map[string][]compiledMatcher, fallback Action) Action {
 	bucket := byBinary[cmd.Binary]
 	if len(bucket) == 0 {

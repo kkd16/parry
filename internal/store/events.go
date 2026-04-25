@@ -1,7 +1,9 @@
 package store
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -34,6 +36,23 @@ type EventRow struct {
 	Binary    string         `json:"binary"`
 	File      string         `json:"file"`
 	Workdir   string         `json:"workdir"`
+}
+
+func (ev EventRow) CanonicalTool() string {
+	switch ev.ToolName {
+	case string(check.ToolShell), string(check.ToolFileRead), string(check.ToolFileEdit):
+		return ev.ToolName
+	}
+	if ev.Binary != "" {
+		return string(check.ToolShell)
+	}
+	if _, ok := ev.ToolInput["command"].(string); ok {
+		return string(check.ToolShell)
+	}
+	if ev.File != "" {
+		return string(check.ToolFileEdit)
+	}
+	return ev.ToolName
 }
 
 func NewEvent(tc *check.ToolCall, action, mode string) Event {
@@ -107,6 +126,19 @@ func (s *Store) CountSince(session string, since time.Time) (int, error) {
 	return count, nil
 }
 
+func (s *Store) GetEvent(id int) (*EventRow, error) {
+	row := s.db.QueryRow(
+		`SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir
+		 FROM events WHERE id = ?`,
+		id,
+	)
+	ev, err := scanEvent(row)
+	if err != nil {
+		return nil, err
+	}
+	return &ev, nil
+}
+
 func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, sortOrder, search string) ([]EventRow, int, error) {
 	where := ""
 	var args []any
@@ -161,14 +193,9 @@ func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, so
 
 	var result []EventRow
 	for rows.Next() {
-		var ev EventRow
-		var inputJSON string
-		if err := rows.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.File, &ev.Workdir); err != nil {
-			return nil, 0, fmt.Errorf("scanning event: %w", err)
-		}
-		if err := json.Unmarshal([]byte(inputJSON), &ev.ToolInput); err != nil {
-			log.Printf("warning: malformed tool_input JSON for event %d: %v", ev.ID, err)
-			ev.ToolInput = map[string]any{"raw": inputJSON}
+		ev, err := scanEvent(rows)
+		if err != nil {
+			return nil, 0, err
 		}
 		result = append(result, ev)
 	}
@@ -177,4 +204,24 @@ func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, so
 	}
 
 	return result, total, nil
+}
+
+type eventScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanEvent(scanner eventScanner) (EventRow, error) {
+	var ev EventRow
+	var inputJSON string
+	if err := scanner.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.File, &ev.Workdir); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return EventRow{}, err
+		}
+		return EventRow{}, fmt.Errorf("scanning event: %w", err)
+	}
+	if err := json.Unmarshal([]byte(inputJSON), &ev.ToolInput); err != nil {
+		log.Printf("warning: malformed tool_input JSON for event %d: %v", ev.ID, err)
+		ev.ToolInput = map[string]any{"raw": inputJSON}
+	}
+	return ev, nil
 }

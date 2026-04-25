@@ -6,6 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/kkd16/parry/internal/check"
 	"github.com/kkd16/parry/internal/store"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewEvent(t *testing.T) {
@@ -129,6 +130,46 @@ func TestNewEvent(t *testing.T) {
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Fatalf("NewEvent mismatch (-want +got):\n%s", diff)
 			}
+		})
+	}
+}
+
+func TestEventRowCanonicalTool(t *testing.T) {
+	tests := []struct {
+		name string
+		ev   store.EventRow
+		want string
+	}{
+		{
+			name: "canonical shell is preserved",
+			ev:   store.EventRow{ToolName: string(check.ToolShell)},
+			want: string(check.ToolShell),
+		},
+		{
+			name: "binary implies shell for legacy row",
+			ev:   store.EventRow{ToolName: "Bash", Binary: "git"},
+			want: string(check.ToolShell),
+		},
+		{
+			name: "command implies shell for legacy row",
+			ev:   store.EventRow{ToolName: "Bash", ToolInput: map[string]any{"command": "git status"}},
+			want: string(check.ToolShell),
+		},
+		{
+			name: "file implies file_edit for legacy row",
+			ev:   store.EventRow{ToolName: "Write", File: "/tmp/x"},
+			want: string(check.ToolFileEdit),
+		},
+		{
+			name: "unknown stays unknown",
+			ev:   store.EventRow{ToolName: "Custom", ToolInput: map[string]any{"anything": 1}},
+			want: "Custom",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.ev.CanonicalTool())
 		})
 	}
 }

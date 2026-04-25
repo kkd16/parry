@@ -25,6 +25,14 @@ export interface RuleEntry {
   flags?: string[];
 }
 
+export interface RuleSuggestion {
+  tool: string;
+  action: "allow" | "block" | "confirm";
+  yaml: string;
+  duplicate: boolean;
+  warning?: string;
+}
+
 export interface Rule {
   default_action?: string;
   flag_equivalents?: Record<string, Record<string, string[]>>;

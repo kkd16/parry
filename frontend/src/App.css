@@ -1032,6 +1032,84 @@ a { color: var(--brass); }
 }
 .copy-btn:hover { color: var(--brass); }
 
+.rule-suggestion {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(212, 161, 74, 0.08), rgba(12, 15, 20, 0.55));
+}
+
+.rule-suggestion-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rule-suggestion-sub {
+  margin-top: 4px;
+  color: var(--ink-mute);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.86rem;
+}
+
+.rule-suggestion-select {
+  min-width: 120px;
+}
+
+.rule-suggestion-status,
+.rule-suggestion-error,
+.rule-suggestion-warning,
+.rule-suggestion-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.rule-suggestion-status {
+  color: var(--ink-mute);
+}
+
+.rule-suggestion-error,
+.rule-suggestion-warning {
+  margin: 10px 0;
+  color: var(--block);
+}
+
+.rule-suggestion-warning {
+  color: var(--brass-bright);
+}
+
+.rule-suggestion-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.rule-suggestion-duplicate {
+  color: var(--allow);
+}
+
+.rule-suggestion-yaml {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--rule-soft);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* ─── policy page ──────────────────────────────────────────────── */
 
 .policy-page {

@@ -95,6 +95,26 @@ func TestCountSince(t *testing.T) {
 	require.Equal(t, 0, c)
 }
 
+func TestGetEvent(t *testing.T) {
+	s := openTempStore(t)
+	in := makeEvent(
+		withToolName("shell"),
+		withBinary("git"),
+		withToolInput(map[string]any{"command": "git status --short"}),
+	)
+	seedEvent(t, s, in)
+
+	got, err := s.GetEvent(1)
+	require.NoError(t, err)
+	require.Equal(t, 1, got.ID)
+	require.Equal(t, "shell", got.ToolName)
+	require.Equal(t, "git", got.Binary)
+	require.Equal(t, map[string]any{"command": "git status --short"}, got.ToolInput)
+
+	_, err = s.GetEvent(99)
+	require.Error(t, err)
+}
+
 func TestListEvents_Filters(t *testing.T) {
 	tests := []struct {
 		name     string

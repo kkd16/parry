@@ -911,6 +911,7 @@ export default function EventsPage({
       </div>
 
       <EventDrawer
+        key={selected?.id ?? "empty"}
         event={selected}
         onClose={() => setSelected(null)}
         onApplyFilter={(key, value) => {

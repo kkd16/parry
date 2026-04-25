@@ -8,6 +8,7 @@ import (
 func (s *Server) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/events", s.handleEvents)
+	mux.HandleFunc("GET /api/rule-suggestion", s.handleRuleSuggestion)
 	mux.HandleFunc("GET /api/policy", s.handlePolicy)
 	mux.HandleFunc("GET /api/notify/health", s.handleNotifyHealth)
 	mux.HandleFunc("POST /api/notify/test", s.handleNotifyTest)
