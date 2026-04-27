@@ -10,7 +10,7 @@ require (
 	go.uber.org/mock v0.6.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/term v0.42.0
-	modernc.org/sqlite v1.49.1
+	modernc.org/sqlite v1.50.0
 	mvdan.cc/sh/v3 v3.13.1
 )
 
