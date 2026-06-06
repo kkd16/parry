@@ -59,7 +59,7 @@ export function ToastsProvider({ children }: { children: ReactNode }) {
             <motion.div
               key={t.id}
               className={clsx(
-                "pointer-events-auto flex max-w-100 min-w-70 items-start gap-3 rounded border border-l-3 border-rule bg-bg-raised px-3.5 py-3 font-mono text-meta shadow-float",
+                "pointer-events-auto flex max-w-100 min-w-70 items-start gap-3 rounded border border-l-3 border-rule bg-bg-raised px-3.5 py-3 text-meta shadow-float",
                 t.kind === "success" ? "border-l-allow" : "border-l-block",
               )}
               initial={{ opacity: 0, x: 40, scale: 0.96 }}

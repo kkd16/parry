@@ -178,7 +178,7 @@ export default function EventsPage({ onCountChange, onLiveChange }: Props) {
         onFilterWorkdir={(w) => filters.set("workdir", w)}
       />
 
-      <div className="mt-4 flex items-center justify-between px-1 py-1.5 font-mono text-meta text-ink-dim">
+      <div className="mt-4 flex items-center justify-between px-1 py-1.5 text-meta text-ink-dim">
         <span>
           showing {filteredEvents.length}
           {clientFiltered ? " filtered" : ""} of {total.toLocaleString()}

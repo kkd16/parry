@@ -106,7 +106,7 @@ function Donut({ data }: { data: ActionCount[] }) {
           {total.toLocaleString()}
         </text>
       </svg>
-      <div className="flex flex-1 flex-col gap-1 font-mono text-meta">
+      <div className="flex flex-1 flex-col gap-1 text-meta">
         {data.map((d) => (
           <div key={d.action} className="flex items-center gap-2">
             <span
@@ -171,14 +171,14 @@ export default function BridgePage({
                 <div className="font-display text-[3.4rem] leading-[0.9] text-ink italic">
                   {data.today.toLocaleString()}
                 </div>
-                <div className="mt-1.5 font-mono text-meta text-ink-dim">
+                <div className="mt-1.5 text-meta text-ink-dim">
                   events today
                 </div>
               </div>
               <div className="flex-1" />
               <Sparkline data={data.last_7d} />
             </div>
-            <div className="mt-3 border-t border-rule-soft pt-2.5 font-mono text-tiny text-ink-mute">
+            <div className="mt-3 border-t border-rule-soft pt-2.5 text-tiny text-ink-mute">
               <span>{data.total.toLocaleString()} total recorded</span>
             </div>
           </Card>
@@ -190,7 +190,7 @@ export default function BridgePage({
 
           <Card className="flex flex-col">
             <Eyebrow>policy heartbeat</Eyebrow>
-            <div className="flex flex-col gap-2 font-mono text-body">
+            <div className="flex flex-col gap-2 text-body">
               <div className="flex items-center justify-between gap-3">
                 <FieldLabel>mode</FieldLabel>
                 <FieldValue>{policy?.mode ?? "—"}</FieldValue>
@@ -220,7 +220,7 @@ export default function BridgePage({
                 no binary calls recorded yet
               </div>
             ) : (
-              <table className="w-full border-collapse font-mono text-body [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2">
+              <table className="w-full border-collapse text-body [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2">
                 <tbody>
                   {data.top_binaries.map((b) => (
                     <tr key={b.binary}>
@@ -232,7 +232,7 @@ export default function BridgePage({
                           {b.binary}
                         </button>
                       </td>
-                      <td className="w-[70px] text-right text-ink-dim">
+                      <td className="w-17.5 text-right text-ink-dim">
                         {b.count.toLocaleString()}
                       </td>
                       <td className="w-1/2">
@@ -252,10 +252,10 @@ export default function BridgePage({
                 <div className="mb-1 font-display text-[1.6rem] text-ink italic">
                   {basename(data.top_project.workdir)}
                 </div>
-                <div className="mb-2 font-mono text-meta break-all text-ink-mute">
+                <div className="mb-2 text-meta break-all text-ink-mute">
                   {data.top_project.workdir}
                 </div>
-                <div className="font-mono text-body text-brass">
+                <div className="text-body text-brass">
                   {data.top_project.count.toLocaleString()} events
                 </div>
               </>
@@ -280,16 +280,14 @@ export default function BridgePage({
                       onClick={onEventClick}
                     >
                       <td
-                        className="font-mono text-body whitespace-nowrap"
+                        className="text-body whitespace-nowrap"
                         title={formatAbsolute(e.timestamp)}
                       >
                         {formatRelative(e.timestamp, nowTick)}
                       </td>
                       <td>{actionBadge(e.action)}</td>
-                      <td className="font-mono text-body">
-                        {e.binary || e.tool_name}
-                      </td>
-                      <td className="w-full max-w-0 truncate font-mono text-body text-ink-mute italic">
+                      <td className="text-body">{e.binary || e.tool_name}</td>
+                      <td className="w-full max-w-0 truncate text-body text-ink-mute italic">
                         {shortJson(e.tool_input, 80)}
                       </td>
                     </tr>

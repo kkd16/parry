@@ -26,9 +26,9 @@ function CopyBtn({ value }: { value: string }) {
 
 function AboutRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-dashed border-rule py-2.25 font-mono text-body last:border-b-0">
+    <div className="flex items-center justify-between gap-3 py-2.25 text-body">
       <FieldLabel>{label}</FieldLabel>
-      <span className="inline-flex items-center gap-2.5 text-right font-mono text-body break-all text-ink-dim">
+      <span className="inline-flex items-center gap-2.5 text-right break-all text-ink-dim">
         {children}
       </span>
     </div>
@@ -49,7 +49,7 @@ function AboutContent() {
           </span>
         </h2>
       </div>
-      <div className="px-7 pt-4.5 pb-3.5">
+      <div className="divide-y divide-dashed divide-rule px-7 pt-4.5 pb-3.5">
         <AboutRow label="go">{info?.go_version || "—"}</AboutRow>
         <AboutRow label="commit">
           {info?.commit || <Muted>unknown</Muted>}
@@ -64,7 +64,7 @@ function AboutContent() {
           {info?.data_dir && <CopyBtn value={info.data_dir} />}
         </AboutRow>
       </div>
-      <div className="flex items-center justify-between gap-4 border-t border-rule px-7 pt-3 pb-4 font-mono text-tiny text-ink-mute">
+      <div className="flex items-center justify-between gap-4 border-t border-rule px-7 pt-3 pb-4 text-tiny text-ink-mute">
         <span className="font-display text-sm text-ink-dim italic">
           your agent decides · parry enforces
         </span>

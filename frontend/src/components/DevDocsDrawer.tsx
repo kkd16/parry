@@ -20,7 +20,7 @@ function StatusBadge({ status }: { status: NodeStatus }) {
   return (
     <span
       className={clsx(
-        "inline-block rounded border px-1.75 py-0.5 font-mono text-micro tracking-widest uppercase",
+        "inline-block rounded border px-1.75 py-0.5 text-micro tracking-widest uppercase",
         BADGE_CLS[status],
       )}
     >
@@ -33,7 +33,7 @@ function Component({ item }: { item: SubComponent }) {
   return (
     <li className="flex flex-col gap-0.75">
       <span className="flex items-center gap-2">
-        <span className="font-mono text-meta text-ink">{item.name}</span>
+        <span className="text-meta text-ink">{item.name}</span>
         {item.status === "planned" && <StatusBadge status="planned" />}
       </span>
       {item.oneliner && (
@@ -61,7 +61,7 @@ function Block({ block }: { block: DetailBlock }) {
             {block.paths.map((p) => (
               <span
                 key={p}
-                className="rounded border border-rule bg-bg px-2 py-0.75 font-mono text-meta text-brass"
+                className="rounded border border-rule bg-bg px-2 py-0.75 text-meta text-brass"
               >
                 {p}
               </span>

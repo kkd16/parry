@@ -54,7 +54,7 @@ function Section({
           {title}
         </span>
         {count != null && (
-          <span className="font-mono text-meta text-ink-mute">{count}</span>
+          <span className="text-meta text-ink-mute">{count}</span>
         )}
       </button>
       {open && (
@@ -73,7 +73,7 @@ function Section({
 
 function PathList({ paths, query }: { paths: string[]; query: string }) {
   return (
-    <ul className="font-mono text-body leading-loose text-ink">
+    <ul className="text-body leading-loose text-ink">
       {paths.map((p) => (
         <li key={p} className="before:text-brass before:content-['·_']">
           {highlight(p, query)}

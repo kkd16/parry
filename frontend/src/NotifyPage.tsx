@@ -84,8 +84,8 @@ interface Props {
 }
 
 const ORB_CLS: Record<string, string> = {
-  ok: "border border-allow bg-allow/10 text-allow shadow-[0_0_28px_rgba(127,196,154,0.2)]",
-  err: "border border-block bg-block/10 text-block shadow-[0_0_28px_rgba(224,90,76,0.2)]",
+  ok: "border border-allow bg-allow/12 text-allow shadow-[0_0_28px_rgba(127,196,154,0.2)]",
+  err: "border border-block bg-block/12 text-block shadow-[0_0_28px_rgba(224,90,76,0.2)]",
   none: "border border-ink-mute bg-ink-mute/8 text-ink-mute after:animate-none",
 };
 
@@ -104,7 +104,7 @@ function ConfigRow({
 }) {
   return (
     <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
-      <FieldLabel className="min-w-[90px]">{label}</FieldLabel>
+      <FieldLabel className="min-w-22.5">{label}</FieldLabel>
       {children}
     </div>
   );
@@ -113,7 +113,7 @@ function ConfigRow({
 function CopyBlock({ text }: { text: string }) {
   return (
     <div className="relative rounded border border-rule bg-bg px-4 py-3.5">
-      <pre className="font-mono text-meta leading-relaxed whitespace-pre-wrap text-ink">
+      <pre className="text-meta leading-relaxed whitespace-pre-wrap text-ink">
         {text}
       </pre>
       <CopyButton
@@ -221,7 +221,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               <span className="mx-1 text-ink-mute">·</span>{" "}
               <span
                 className={clsx(
-                  "font-mono text-meta tracking-[0.12em] uppercase not-italic",
+                  "font-mono text-meta tracking-label uppercase not-italic",
                   STATE_CLS[orbClass],
                 )}
               >
@@ -229,9 +229,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               </span>
             </div>
             {health?.error && (
-              <div className="mb-1 font-mono text-meta text-block">
-                {health.error}
-              </div>
+              <div className="mb-1 text-meta text-block">{health.error}</div>
             )}
             <Btn
               className="mt-1 self-start disabled:cursor-not-allowed disabled:opacity-40"
@@ -247,7 +245,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
       <div className="mb-8 grid grid-cols-2 gap-4">
         <Card>
           <Eyebrow>active configuration</Eyebrow>
-          <div className="flex flex-col gap-2.5 font-mono text-body">
+          <div className="flex flex-col gap-2.5 text-body">
             <ConfigRow label="provider">
               <FieldValue className="break-all">{providerId || "—"}</FieldValue>
             </ConfigRow>
@@ -265,9 +263,9 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               </>
             )}
           </div>
-          <div className="mt-3.5 border-t border-rule-soft pt-3 font-mono text-tiny leading-relaxed text-ink-mute">
+          <div className="mt-3.5 border-t border-rule-soft pt-3 text-tiny leading-relaxed text-ink-mute">
             on timeout, falls back to{" "}
-            <span className="font-mono text-body">check_mode_confirm</span>.
+            <span className="text-body">check_mode_confirm</span>.
           </div>
         </Card>
 
@@ -287,15 +285,13 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
                     onClick={onGoToEvents}
                   >
                     <td
-                      className="font-mono text-body whitespace-nowrap"
+                      className="text-body whitespace-nowrap"
                       title={formatAbsolute(e.timestamp)}
                     >
                       {formatRelative(e.timestamp, nowTick)}
                     </td>
-                    <td className="font-mono text-body">
-                      {e.binary || e.tool_name}
-                    </td>
-                    <td className="w-full max-w-0 truncate font-mono text-body text-ink-mute italic">
+                    <td className="text-body">{e.binary || e.tool_name}</td>
+                    <td className="w-full max-w-0 truncate text-body text-ink-mute italic">
                       {(e.tool_input?.["command"] as string | undefined) ??
                         shortJson(e.tool_input, 60)}
                     </td>
@@ -325,18 +321,18 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
                 {p.name}
               </h3>
               {providerId === p.id && (
-                <span className="rounded-sm border border-brass-dim bg-brass/12 px-2 py-0.5 font-mono text-eyebrow tracking-[0.18em] text-brass-bright uppercase">
+                <span className="rounded-sm border border-brass-dim bg-brass/12 px-2 py-0.5 text-eyebrow tracking-eyebrow text-brass-bright uppercase">
                   active
                 </span>
               )}
             </div>
             <div className="text-sm leading-normal text-ink">{p.desc}</div>
-            <div className="rounded-r border-l border-brass-dim bg-bg px-3 py-2.5 font-mono text-meta leading-relaxed text-ink-dim">
+            <div className="rounded-r border-l border-brass-dim bg-bg px-3 py-2.5 text-meta leading-relaxed text-ink-dim">
               {p.works}
             </div>
 
             {p.fields.length > 0 && (
-              <table className="mt-1 w-full border-collapse font-mono text-meta [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2 [&_td]:align-top [&_td]:text-ink [&_th]:border-b [&_th]:border-rule [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:text-eyebrow [&_th]:font-semibold [&_th]:tracking-[0.14em] [&_th]:text-ink-mute [&_th]:uppercase">
+              <table className="mt-1 w-full border-collapse text-meta [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2 [&_td]:align-top [&_td]:text-ink [&_th]:border-b [&_th]:border-rule [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:text-eyebrow [&_th]:font-semibold [&_th]:tracking-label [&_th]:text-ink-mute [&_th]:uppercase">
                 <thead>
                   <tr>
                     <th>field</th>
@@ -358,7 +354,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               </table>
             )}
 
-            <div className="mt-1 font-mono text-eyebrow tracking-[0.18em] text-ink-mute uppercase">
+            <div className="mt-1 text-eyebrow tracking-eyebrow text-ink-mute uppercase">
               setup snippet
             </div>
             <CopyBlock text={p.yaml} />

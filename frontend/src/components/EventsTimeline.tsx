@@ -69,7 +69,7 @@ export default function EventsTimeline({ events }: Props) {
 
   return (
     <div className="mb-3.5 rounded-md border border-rule bg-bg-raised px-4 py-3">
-      <div className="mb-1.5 font-mono text-eyebrow tracking-[0.18em] text-brass uppercase">
+      <div className="mb-1.5 text-eyebrow tracking-eyebrow text-brass uppercase">
         activity
       </div>
       <div className="relative">
@@ -78,7 +78,7 @@ export default function EventsTimeline({ events }: Props) {
           height={h}
           viewBox={`0 0 ${w} ${h}`}
           preserveAspectRatio="none"
-          className="block h-[70px] w-full [&_g]:cursor-crosshair"
+          className="block h-17.5 w-full [&_g]:cursor-crosshair"
           onMouseLeave={() => setHover(null)}
         >
           {data.buckets.map((b, i) => {
@@ -134,7 +134,7 @@ export default function EventsTimeline({ events }: Props) {
         </svg>
         {hoverBucket && hover && (
           <div
-            className="pointer-events-none absolute bottom-[calc(100%+6px)] z-5 -translate-x-1/2 rounded border border-brass-dim bg-scrim/97 px-3 py-2 font-mono text-meta whitespace-nowrap text-ink shadow-[0_6px_24px_rgba(0,0,0,0.5)]"
+            className="pointer-events-none absolute bottom-full z-5 mb-1.5 -translate-x-1/2 rounded border border-brass-dim bg-scrim/97 px-3 py-2 text-meta whitespace-nowrap text-ink shadow-[0_6px_24px_rgba(0,0,0,0.5)]"
             style={{ left: hover.x }}
           >
             <div className="text-tiny text-brass">
@@ -169,7 +169,7 @@ export default function EventsTimeline({ events }: Props) {
           </div>
         )}
       </div>
-      <div className="mt-1 flex justify-between font-mono text-micro text-ink-mute">
+      <div className="mt-1 flex justify-between text-micro text-ink-mute">
         <span>{data.startLabel}</span>
         <span>{data.endLabel}</span>
       </div>

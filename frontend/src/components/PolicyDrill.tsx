@@ -34,21 +34,19 @@ function Stage({
   return (
     <div className="flex items-center gap-2.5 py-1">
       {total > 1 && (
-        <span className="min-w-13 font-mono text-micro tracking-[0.12em] text-ink-mute uppercase">
+        <span className="min-w-13 text-micro tracking-label text-ink-mute uppercase">
           stage {index + 1}
         </span>
       )}
-      <span className="min-w-20 font-mono text-body text-ink">
-        {stage.binary}
-      </span>
+      <span className="min-w-20 text-body text-ink">{stage.binary}</span>
       {actionBadge(stage.action)}
       {stage.matched.is_default || !stage.matched.entry ? (
-        <span className="rounded-full border border-dashed border-rule bg-bg px-2.5 py-0.75 font-mono text-tiny text-ink-mute">
+        <span className="rounded-full border border-dashed border-rule bg-bg px-2.5 py-0.75 text-tiny text-ink-mute">
           shell default
         </span>
       ) : (
         <button
-          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-0.75 font-mono text-tiny text-ink-dim transition-colors duration-150 hover:border-brass-dim hover:text-brass"
+          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-0.75 text-tiny text-ink-dim transition-colors duration-150 hover:border-brass-dim hover:text-brass"
           title="open this rule"
           onClick={() => onOpenBinary(stage.binary)}
         >
@@ -88,7 +86,7 @@ export default function PolicyDrill({
             <button
               key={id}
               className={clsx(
-                "cursor-pointer bg-bg px-3 py-1.75 font-mono text-meta tracking-wider text-ink-dim transition-colors duration-150 not-first:border-l not-first:border-rule hover:text-ink",
+                "cursor-pointer bg-bg px-3 py-1.75 text-meta tracking-wider text-ink-dim transition-colors duration-150 not-first:border-l not-first:border-rule hover:text-ink",
                 tool === id && "bg-bg-active text-brass",
               )}
               onClick={() => setTool(id)}
@@ -111,7 +109,7 @@ export default function PolicyDrill({
       {result && (
         <div className="flex flex-col gap-2.5 rounded-md border border-rule-soft bg-bg-raised px-4 py-3.5">
           <div className="flex items-center gap-2.5">
-            <span className="font-mono text-tiny font-semibold tracking-[0.18em] text-ink-mute uppercase">
+            <span className="text-tiny font-semibold tracking-eyebrow text-ink-mute uppercase">
               verdict
             </span>
             {actionBadge(result.action)}

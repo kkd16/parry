@@ -13,6 +13,7 @@ import { focusSearchInput } from "./utils/dom";
 import CommandPalette from "./components/CommandPalette";
 import ShortcutsHelp from "./components/ShortcutsHelp";
 import AboutDialog from "./components/AboutDialog";
+import { MotionConfig } from "motion/react";
 import { ToastsProvider } from "./components/Toasts";
 import { usePolicyOverview } from "./hooks/usePolicyOverview";
 import { useApi } from "./hooks/useApi";
@@ -207,7 +208,7 @@ function AppShell() {
             className={
               TABS.find((t) => t.id === tab)?.fullBleed
                 ? "h-screen"
-                : "mx-auto max-w-[1440px] px-14 pt-14 pb-10"
+                : "mx-auto max-w-360 px-14 pt-14 pb-10"
             }
           >
             <Suspense fallback={null}>
@@ -256,10 +257,12 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ToastsProvider>
-      <CommandsProvider>
-        <AppShell />
-      </CommandsProvider>
-    </ToastsProvider>
+    <MotionConfig reducedMotion="user">
+      <ToastsProvider>
+        <CommandsProvider>
+          <AppShell />
+        </CommandsProvider>
+      </ToastsProvider>
+    </MotionConfig>
   );
 }

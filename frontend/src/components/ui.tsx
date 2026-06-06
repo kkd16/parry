@@ -6,10 +6,10 @@ export const inputCls =
   "rounded border border-rule bg-bg px-2.5 py-1.5 font-mono text-body text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:italic placeholder:text-ink-mute focus:border-brass focus:ring-2 focus:ring-brass/15";
 
 export const btnCls =
-  "inline-flex items-center gap-1.5 rounded border border-rule bg-bg px-3 py-1.5 font-mono text-meta tracking-widest text-ink uppercase transition-colors duration-150 hover:border-brass hover:text-brass-bright [&_svg]:h-3.25 [&_svg]:w-3.25";
+  "inline-flex items-center gap-1.5 rounded border border-rule bg-bg px-3 py-1.5 font-mono text-meta tracking-widest text-ink uppercase transition-colors duration-150 hover:border-brass hover:text-brass-bright focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass [&_svg]:size-3.25";
 
 export const chipBtnCls =
-  "inline-flex items-center gap-1 rounded border border-rule px-2 py-0.5 font-mono text-micro tracking-widest text-ink-mute uppercase hover:border-brass hover:text-brass";
+  "inline-flex items-center gap-1 rounded border border-rule px-2 py-0.5 font-mono text-micro tracking-widest text-ink-mute uppercase hover:border-brass hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass";
 
 export function Btn({
   active,
@@ -44,7 +44,7 @@ export function Eyebrow({ className, ...rest }: ComponentProps<"div">) {
   return (
     <div
       className={clsx(
-        "mb-3 font-mono text-eyebrow tracking-[0.22em] text-brass uppercase",
+        "mb-3 font-mono text-eyebrow tracking-eyebrow text-brass uppercase",
         className,
       )}
       {...rest}
@@ -125,7 +125,7 @@ export function FieldLabel({ className, ...rest }: ComponentProps<"div">) {
   return (
     <div
       className={clsx(
-        "font-mono text-micro tracking-[0.14em] text-ink-mute uppercase",
+        "font-mono text-micro tracking-label text-ink-mute uppercase",
         className,
       )}
       {...rest}

@@ -20,7 +20,7 @@ export default function PageHeader({
   return (
     <header className={clsx("animate-fade-up", !flush && "mb-9", className)}>
       {eyebrow && (
-        <div className="mb-2.5 font-mono text-micro tracking-[0.24em] text-brass uppercase">
+        <div className="mb-2.5 text-micro tracking-eyebrow text-brass uppercase">
           {eyebrow}
         </div>
       )}
@@ -32,7 +32,7 @@ export default function PageHeader({
       >
         {title}
       </h1>
-      {sub && <div className="font-mono text-body text-ink-dim">{sub}</div>}
+      {sub && <div className="text-body text-ink-dim">{sub}</div>}
       <div
         className="flex max-w-80 items-center gap-1.5 before:h-px before:flex-1 before:bg-rule before:content-[''] after:h-px after:flex-1 after:bg-rule after:content-['']"
         aria-hidden

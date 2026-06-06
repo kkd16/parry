@@ -112,23 +112,21 @@ function RuleSuggestionPanel({
       </div>
 
       {api.loading && (
-        <div className="font-mono text-meta text-ink-mute">
-          building suggestion…
-        </div>
+        <div className="text-meta text-ink-mute">building suggestion…</div>
       )}
       {api.error && (
-        <div className="my-2.5 font-mono text-meta text-block">{api.error}</div>
+        <div className="my-2.5 text-meta text-block">{api.error}</div>
       )}
       {suggestion && (
         <>
-          <div className="mb-2.5 flex flex-wrap gap-2 font-mono text-meta tracking-widest text-ink-mute uppercase">
+          <div className="mb-2.5 flex flex-wrap gap-2 text-meta tracking-widest text-ink-mute uppercase">
             <span>{suggestion.tool}</span>
             {suggestion.duplicate && (
               <span className="text-allow">already covered</span>
             )}
           </div>
           {suggestion.warning && (
-            <div className="my-2.5 font-mono text-meta text-brass-bright">
+            <div className="my-2.5 text-meta text-brass-bright">
               {suggestion.warning}
             </div>
           )}
@@ -218,7 +216,7 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
             setTargetAction={setTargetAction}
           />
           <div
-            className="mt-5 overflow-x-auto rounded border border-rule bg-bg p-3.5 font-mono text-meta leading-relaxed wrap-break-word whitespace-pre-wrap text-ink-dim"
+            className="mt-5 rounded border border-rule bg-bg p-3.5 text-meta leading-relaxed wrap-break-word whitespace-pre-wrap text-ink-dim"
             dangerouslySetInnerHTML={{
               __html: highlightJson(event.tool_input),
             }}

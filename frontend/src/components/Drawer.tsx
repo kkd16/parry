@@ -13,13 +13,13 @@ interface Props {
 }
 
 export const yamlBlockCls =
-  "my-3 rounded border border-rule-soft bg-bg p-3 font-mono text-meta leading-normal whitespace-pre-wrap wrap-break-word text-ink";
+  "my-3 rounded border border-rule-soft bg-bg p-3 text-meta leading-normal whitespace-pre-wrap wrap-break-word text-ink";
 
 export const drawerSectionCls =
   "mt-5.5 border-t border-dashed border-rule-soft pt-4";
 
 export const drawerLabelCls =
-  "font-mono text-micro tracking-[0.12em] text-ink-mute uppercase";
+  "text-micro tracking-label text-ink-mute uppercase";
 
 export function DrawerField({
   label,
@@ -31,9 +31,7 @@ export function DrawerField({
   return (
     <div className="flex gap-3.5 border-b border-dashed border-rule-soft py-2.5 text-body">
       <div className={clsx("min-w-25 pt-0.75", drawerLabelCls)}>{label}</div>
-      <div className="flex-1 font-mono text-body break-all text-ink">
-        {children}
-      </div>
+      <div className="flex-1 text-body break-all text-ink">{children}</div>
     </div>
   );
 }
@@ -87,7 +85,7 @@ export default function Drawer({
             onClick={onClose}
           />
           <motion.aside
-            className="fixed top-0 right-0 bottom-0 z-90 flex w-[min(560px,90vw)] flex-col border-l border-rule bg-bg-raised shadow-[-20px_0_60px_rgba(0,0,0,0.5)]"
+            className="fixed inset-y-0 right-0 z-90 flex w-[min(560px,90vw)] flex-col border-l border-rule bg-bg-raised shadow-[-20px_0_60px_rgba(0,0,0,0.5)]"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -101,7 +99,7 @@ export default function Drawer({
                 </h2>
               </div>
               <button
-                className="shrink-0 rounded border border-rule px-2 py-1 font-mono text-meta text-ink-dim hover:border-brass hover:text-brass"
+                className="shrink-0 rounded border border-rule px-2 py-1 text-meta text-ink-dim hover:border-brass hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass"
                 onClick={onClose}
               >
                 close · esc

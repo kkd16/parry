@@ -31,10 +31,10 @@ function formatCount(n: number | null): string {
 }
 
 const navHeadingCls =
-  "px-3.5 pt-4.5 pb-2 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase";
+  "px-3.5 pt-4.5 pb-2 text-eyebrow tracking-eyebrow text-ink-mute uppercase";
 
 const navBadgeCls =
-  "rounded-lg border border-brass-dim bg-brass/10 px-1.5 py-px font-mono text-eyebrow tracking-wider text-brass";
+  "rounded-lg border border-brass-dim bg-brass/10 px-1.5 py-px text-eyebrow tracking-wider text-brass";
 
 function FooterRow({
   label,
@@ -49,7 +49,7 @@ function FooterRow({
     <div className="flex items-center justify-between gap-2 text-meta">
       <FieldLabel>{label}</FieldLabel>
       <span
-        className="max-w-[110px] truncate font-mono text-meta text-ink-dim"
+        className="max-w-27.5 truncate text-meta text-ink-dim"
         title={title}
       >
         {children}
@@ -165,7 +165,7 @@ export default function Sidebar({
           <button
             key={t.id}
             className={clsx(
-              "relative flex items-center gap-3 rounded px-3.5 py-2.5 text-left text-sm font-medium text-ink-dim transition-colors duration-150 hover:bg-bg-hover hover:text-ink [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.8]",
+              "relative flex items-center gap-3 rounded px-3.5 py-2.5 text-left text-sm font-medium text-ink-dim transition-colors duration-150 hover:bg-bg-hover hover:text-ink focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.8]",
               tab === t.id &&
                 "bg-bg-hover text-ink before:absolute before:top-1/2 before:-left-3.5 before:h-5.5 before:w-0.5 before:-translate-y-1/2 before:bg-brass-bright before:shadow-[0_0_8px_var(--color-brass)] before:content-['']",
             )}
@@ -176,7 +176,7 @@ export default function Sidebar({
             {tabBadge[t.id]}
             <span
               className={clsx(
-                "font-mono text-tiny tracking-wider text-ink-mute",
+                "text-tiny tracking-wider text-ink-mute",
                 tabBadge[t.id] ? "ml-1.5" : "ml-auto",
               )}
             >
@@ -192,7 +192,7 @@ export default function Sidebar({
               {bookmarks.bookmarks.map((b) => (
                 <div key={b.id} className="flex items-center gap-1">
                   <button
-                    className="flex min-w-0 flex-1 items-center gap-2 rounded px-2.5 py-1.5 text-left font-mono text-meta text-ink-dim hover:bg-bg-hover hover:text-brass [&_svg]:h-3 [&_svg]:w-3 [&_svg]:shrink-0"
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded px-2.5 py-1.5 text-left text-meta text-ink-dim hover:bg-bg-hover hover:text-brass [&_svg]:size-3 [&_svg]:shrink-0"
                     onClick={() => onOpenBookmark(b.qs)}
                     onDoubleClick={() => {
                       const next = window.prompt("rename bookmark", b.name);
@@ -232,7 +232,7 @@ export default function Sidebar({
         </FooterRow>
         <button
           className={clsx(
-            "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 font-mono text-micro tracking-widest text-ink-dim uppercase transition-colors duration-150 hover:border-brass-dim hover:text-brass [&_svg]:h-3.25 [&_svg]:w-3.25 [&_svg]:shrink-0",
+            "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 text-micro tracking-widest text-ink-dim uppercase transition-colors duration-150 hover:border-brass-dim hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass [&_svg]:size-3.25 [&_svg]:shrink-0",
             tab === "devdocs" && "border-brass-dim bg-observe/14 text-brass",
           )}
           onClick={() => setTab("devdocs")}
@@ -242,7 +242,7 @@ export default function Sidebar({
           <Kbd className="ml-auto">g d</Kbd>
         </button>
         <button
-          className="group mt-1.5 flex w-full flex-col items-start gap-1 rounded border-t border-dashed border-rule-soft px-1 pt-2 pb-1 text-left font-mono text-micro tracking-widest text-ink-mute uppercase hover:text-brass"
+          className="group mt-1.5 flex w-full flex-col items-start gap-1 rounded border-t border-dashed border-rule-soft px-1 pt-2 pb-1 text-left text-micro tracking-widest text-ink-mute uppercase hover:text-brass"
           onClick={onShowHelp}
         >
           <span className="inline-flex items-center gap-1.25">

@@ -115,7 +115,9 @@ export default function EventsToolbar({
           title="auto-refresh every 3s"
         >
           <RefreshCw
-            className={autoRefresh ? "animate-spin-slow" : undefined}
+            className={
+              autoRefresh ? "animate-[spin_2s_linear_infinite]" : undefined
+            }
           />
           live
         </Btn>
@@ -145,11 +147,11 @@ export default function EventsToolbar({
             <Columns3 /> cols
           </Btn>
           {colMenuOpen && (
-            <div className="absolute top-[calc(100%+6px)] right-0 z-20 min-w-40 rounded-md border border-rule bg-bg-raised px-3.5 py-2.5 shadow-panel">
+            <div className="absolute top-full right-0 z-20 mt-1.5 min-w-40 rounded-md border border-rule bg-bg-raised px-3.5 py-2.5 shadow-panel">
               {EVENT_COLUMNS.map((col) => (
                 <label
                   key={col.id}
-                  className="flex cursor-pointer items-center gap-2 py-1 font-mono text-body"
+                  className="flex cursor-pointer items-center gap-2 py-1 text-body"
                 >
                   <input
                     type="checkbox"

@@ -120,12 +120,12 @@ function RecentActivity({
                 key={e.id}
                 className="flex items-center gap-2.5 border-b border-dashed border-rule-soft py-1.75"
               >
-                <span className="min-w-18 shrink-0 font-mono text-tiny text-ink-mute">
+                <span className="min-w-18 shrink-0 text-tiny text-ink-mute">
                   {formatRelative(e.timestamp, nowTick)}
                 </span>
                 {actionBadge(e.action)}
                 <span
-                  className="flex-1 truncate font-mono text-meta text-ink-dim"
+                  className="flex-1 truncate text-meta text-ink-dim"
                   title={cmd}
                 >
                   {cmd}
@@ -178,13 +178,11 @@ export default function RuleDrawer({
             <div className="mt-3 flex flex-col">
               {x.rows.map((r) => (
                 <div className={ladderRowCls} key={r.label + r.action}>
-                  <span className="font-mono text-body text-ink">
-                    {r.label}
-                  </span>
+                  <span className="text-body text-ink">{r.label}</span>
                   <span className="inline-flex items-center gap-2">
                     {actionBadge(r.action)}
                     <span
-                      className="cursor-help rounded-sm border border-rule px-1.5 py-px font-mono text-micro text-ink-mute"
+                      className="cursor-help rounded-sm border border-rule px-1.5 py-px text-micro text-ink-mute"
                       title="specificity: positional + flags"
                     >
                       {r.specificity}
@@ -196,7 +194,7 @@ export default function RuleDrawer({
                 </div>
               ))}
               <div className={clsx(ladderRowCls, "border-dashed")}>
-                <span className="font-mono text-body text-ink-dim italic">
+                <span className="text-body text-ink-dim italic">
                   anything else
                 </span>
                 <span className="inline-flex items-center gap-2">
@@ -248,10 +246,10 @@ export default function RuleDrawer({
                     className="grid grid-cols-[140px_1fr] gap-3 border-b border-dashed border-rule-soft py-1.75"
                     key={f.name}
                   >
-                    <span className="font-mono text-tiny tracking-[0.12em] text-ink-mute uppercase">
+                    <span className="text-tiny tracking-label text-ink-mute uppercase">
                       {f.name}
                     </span>
-                    <span className="font-mono text-meta tracking-wider text-ink">
+                    <span className="text-meta tracking-wider text-ink">
                       {f.forms.join("  ")}
                     </span>
                   </div>
@@ -270,12 +268,12 @@ export default function RuleDrawer({
                   key={ex.command}
                   className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-dashed border-rule-soft py-2"
                 >
-                  <span className="font-mono text-body break-all text-ink">
+                  <span className="text-body break-all text-ink">
                     {ex.command}
                   </span>
                   <span className="inline-flex items-center gap-2">
                     {actionBadge(ex.action)}
-                    <span className="max-w-45 truncate font-mono text-micro text-ink-mute">
+                    <span className="max-w-45 truncate text-micro text-ink-mute">
                       {ex.via}
                     </span>
                   </span>

@@ -25,7 +25,7 @@ export interface ColumnSpec {
 export const MIN_COL_WIDTH = 60;
 
 const cellLinkCls =
-  "cursor-pointer border-b border-dashed border-transparent text-left font-mono text-body hover:border-brass-dim hover:text-brass";
+  "cursor-pointer border-b border-dashed border-transparent text-left text-body hover:border-brass-dim hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass";
 
 const dash = <Muted />;
 
@@ -36,7 +36,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     defaultSize: 150,
     sortable: true,
     render: (e, ctx) => (
-      <span className="font-mono text-body" title={formatAbsolute(e.timestamp)}>
+      <span className="text-body" title={formatAbsolute(e.timestamp)}>
         {formatRelative(e.timestamp, ctx.nowTick)}
       </span>
     ),
@@ -74,7 +74,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     defaultSize: 240,
     sortable: true,
     render: (e) =>
-      e.file ? <span className="font-mono text-body">{e.file}</span> : dash,
+      e.file ? <span className="text-body">{e.file}</span> : dash,
   },
   {
     id: "action",
@@ -123,7 +123,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     defaultSize: 280,
     sortable: false,
     render: (e) => (
-      <span className="font-mono text-body text-ink-mute italic">
+      <span className="text-body text-ink-mute italic">
         {shortJson(e.tool_input)}
       </span>
     ),
@@ -140,8 +140,6 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     label: "Session",
     defaultSize: 100,
     sortable: false,
-    render: (e) => (
-      <span className="font-mono text-body">{e.session.slice(0, 8)}</span>
-    ),
+    render: (e) => <span className="text-body">{e.session.slice(0, 8)}</span>,
   },
 ];

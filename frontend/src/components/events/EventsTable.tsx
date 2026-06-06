@@ -103,7 +103,7 @@ export default function EventsTable({
       )}
     >
       {loading && (
-        <div className="absolute top-0 right-0 left-0 z-2 h-0.5 animate-loading-slide bg-brass" />
+        <div className="absolute inset-x-0 top-0 z-2 h-0.5 animate-loading-slide bg-brass" />
       )}
       <table
         className="w-full table-fixed border-separate border-spacing-0 text-body"
@@ -119,7 +119,7 @@ export default function EventsTable({
                   key={c.id}
                   style={{ width: colWidth(c) }}
                   className={clsx(
-                    "sticky top-0 z-1 border-b border-rule bg-bg-raised px-3 py-2.5 text-left font-mono text-micro font-semibold tracking-[0.12em] text-ink-mute uppercase select-none",
+                    "sticky top-0 z-1 border-b border-rule bg-bg-raised px-3 py-2.5 text-left text-micro font-semibold tracking-label text-ink-mute uppercase select-none",
                     c.sortable && "cursor-pointer hover:text-brass",
                     sorted && "text-brass",
                   )}

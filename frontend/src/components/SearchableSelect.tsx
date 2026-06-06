@@ -12,7 +12,7 @@ interface Props {
 }
 
 const itemCls =
-  "block w-full truncate rounded px-2.5 py-1.75 text-left font-mono text-meta text-ink hover:bg-bg-hover hover:text-brass";
+  "block w-full truncate rounded px-2.5 py-1.75 text-left text-meta text-ink hover:bg-bg-hover hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass";
 
 export default function SearchableSelect({
   label,
@@ -46,7 +46,7 @@ export default function SearchableSelect({
       <button
         className={clsx(
           inputCls,
-          "inline-flex min-w-[130px] cursor-pointer items-center gap-2 text-left [&_svg]:shrink-0 [&_svg]:text-ink-mute",
+          "inline-flex min-w-32.5 cursor-pointer items-center gap-2 text-left focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass [&_svg]:shrink-0 [&_svg]:text-ink-mute",
         )}
         onClick={openMenu}
       >
@@ -54,10 +54,10 @@ export default function SearchableSelect({
         <ChevronDown size={12} />
       </button>
       {open && (
-        <div className="absolute top-[calc(100%+4px)] left-0 z-30 max-w-105 min-w-65 overflow-hidden rounded border border-rule bg-bg-raised shadow-float">
+        <div className="absolute top-full left-0 z-30 mt-1 max-w-105 min-w-65 overflow-hidden rounded border border-rule bg-bg-raised shadow-float">
           <input
             ref={inputRef}
-            className="w-full border-b border-rule bg-bg px-3 py-2.5 font-mono text-body text-ink outline-none placeholder:text-ink-mute placeholder:italic focus:border-b-brass"
+            className="w-full border-b border-rule bg-bg px-3 py-2.5 text-body text-ink outline-none placeholder:text-ink-mute placeholder:italic focus:border-b-brass"
             placeholder={`search ${label}…`}
             value={query}
             onChange={(e) => setQuery(e.target.value)}

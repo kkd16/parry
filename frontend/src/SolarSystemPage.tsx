@@ -18,8 +18,8 @@ interface Body {
 }
 
 const BODY_FILL = "#f5e9d2";
-const BODY_STROKE = "#d4a14a";
-const SUN_FILL = "#f5c97a";
+const BODY_STROKE = "var(--color-brass)";
+const SUN_FILL = "var(--color-brass-bright)";
 
 interface System {
   cx: number;
@@ -49,9 +49,9 @@ const emptyCls =
   "p-15 text-center font-display text-[1.6rem] text-ink-dim italic [&_code]:font-mono [&_code]:text-sm [&_code]:text-brass [&_code]:not-italic";
 
 const overlayCls =
-  "absolute z-5 rounded border border-rule bg-bg-raised/92 px-4 py-3.5 font-mono text-meta text-ink-dim backdrop-blur-[6px]";
+  "absolute z-5 rounded border border-rule bg-bg-raised/92 px-4 py-3.5 text-meta text-ink-dim backdrop-blur-[6px]";
 
-const tallyLabelCls = "text-eyebrow tracking-[0.18em] text-ink-mute uppercase";
+const tallyLabelCls = "text-eyebrow tracking-eyebrow text-ink-mute uppercase";
 
 const tallyValueCls = "truncate text-sm text-ink";
 
@@ -449,7 +449,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
           titleClassName="[text-shadow:0_2px_24px_rgba(0,0,0,0.8)]"
         />
         {stats && (
-          <div className="flex shrink-0 items-center gap-5.5 rounded-md border border-brass-dim bg-bg-raised/82 px-5.5 py-3.5 font-mono backdrop-blur-sm">
+          <div className="flex shrink-0 items-center gap-5.5 rounded-md border border-brass-dim bg-bg-raised/82 px-5.5 py-3.5 backdrop-blur-sm">
             <div className="border-r border-rule pr-5.5 font-display text-[1.4rem] text-brass italic">
               tally
             </div>
@@ -495,7 +495,13 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
         </defs>
         <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
           {stars.map((s, i) => (
-            <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#2a3040" />
+            <circle
+              key={i}
+              cx={s.x}
+              cy={s.y}
+              r={s.r}
+              fill="var(--color-rule)"
+            />
           ))}
 
           {systems.map((sys) => (
@@ -507,7 +513,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
                   cy={sys.cy}
                   r={r}
                   fill="none"
-                  stroke="#1d2030"
+                  stroke="var(--color-rule-soft)"
                   strokeWidth={1}
                   strokeDasharray="2 7"
                 />
@@ -525,7 +531,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
                 x={sys.cx}
                 y={sys.cy + 56}
                 textAnchor="middle"
-                fill="#eae3d2"
+                fill="var(--color-ink)"
                 fontSize={18}
                 fontFamily="Instrument Serif, serif"
                 fontStyle="italic"
@@ -570,7 +576,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
                     <text
                       x={b.x + b.r + 4}
                       y={b.y + 3}
-                      fill="#8a8478"
+                      fill="var(--color-ink-dim)"
                       fontSize={9}
                       fontFamily="JetBrains Mono, monospace"
                       className="pointer-events-none"
@@ -600,7 +606,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
             <button
               key={s.workdir}
               className={clsx(
-                "block w-full rounded px-1.5 py-1 text-left font-mono text-meta text-ink hover:bg-brass/8 hover:text-brass",
+                "block w-full rounded px-1.5 py-1 text-left text-meta text-ink hover:bg-brass/8 hover:text-brass",
                 filterProject === s.workdir && "bg-brass/12 text-brass",
               )}
               onClick={() => flyToSystem(s)}
@@ -644,7 +650,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
 
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 max-w-105 rounded border border-brass-dim bg-scrim/96 px-3 py-2 font-mono text-meta"
+          className="pointer-events-none absolute z-10 max-w-105 rounded border border-brass-dim bg-scrim/96 px-3 py-2 text-meta"
           style={{ left: hover.x + 12, top: hover.y + 12 }}
         >
           <div className="break-all text-ink">{hover.body.path}</div>

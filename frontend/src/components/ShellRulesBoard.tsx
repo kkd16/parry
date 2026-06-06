@@ -41,7 +41,7 @@ function Chip({
   return (
     <button
       className={clsx(
-        "cursor-pointer rounded border px-2.75 py-1.25 font-mono text-meta transition-[border-color,transform,box-shadow] duration-140 hover:-translate-y-px hover:border-brass hover:shadow-[0_3px_10px_rgba(0,0,0,0.35)] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass",
+        "cursor-pointer rounded border px-2.75 py-1.25 text-meta transition-[border-color,transform,box-shadow] duration-140 hover:-translate-y-px hover:border-brass hover:shadow-[0_3px_10px_rgba(0,0,0,0.35)] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass",
         CHIP_CLS[action],
       )}
       onClick={onClick}
@@ -69,15 +69,13 @@ export default function ShellRulesBoard({
             <div className="flex items-baseline gap-2.5">
               <span
                 className={clsx(
-                  "inline-flex items-center gap-1.75 font-mono text-tiny font-semibold tracking-[0.18em] uppercase before:h-1.5 before:w-1.5 before:rotate-45 before:bg-current before:content-['']",
+                  "inline-flex items-center gap-1.75 text-tiny font-semibold tracking-eyebrow uppercase before:h-1.5 before:w-1.5 before:rotate-45 before:bg-current before:content-['']",
                   CLUSTER_NAME_CLS[action],
                 )}
               >
                 {action}
               </span>
-              <span className="font-mono text-tiny text-ink-mute">
-                {chips.length}
-              </span>
+              <span className="text-tiny text-ink-mute">{chips.length}</span>
               <span className="font-display text-body text-ink-mute italic">
                 {CLUSTER_SUB[action]}
               </span>
