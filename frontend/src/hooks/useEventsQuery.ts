@@ -60,10 +60,11 @@ export function useEventsQuery(opts: {
     };
   }, [eventsQuery, queryKey, onCountChange]);
 
-  const tailNewEvents = useCallback(async () => {
+  const tailNewEvents = useCallback(async (signal: AbortSignal) => {
     const lastSeenId = eventsRef.current.reduce((m, e) => (e.id > m ? e.id : m), 0);
     try {
-      const data = await getEvents(tailQuery(lastSeenId));
+      const data = await getEvents(tailQuery(lastSeenId), signal);
+      if (signal.aborted) return;
       const incoming = data.events ?? [];
       if (incoming.length === 0) return;
       setEvents((prev) => {
@@ -102,11 +103,13 @@ export function useEventsQuery(opts: {
   useEffect(() => {
     onLiveChange(autoRefresh);
     if (!autoRefresh) return;
+    const ctrl = new AbortController();
     const id = setInterval(() => {
-      void tailNewEvents();
+      void tailNewEvents(ctrl.signal);
     }, 3000);
     const timeouts = tailTimeoutsRef.current;
     return () => {
+      ctrl.abort();
       clearInterval(id);
       for (const t of timeouts) clearTimeout(t);
       timeouts.clear();

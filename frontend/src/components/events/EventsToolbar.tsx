@@ -138,35 +138,14 @@ export default function EventsToolbar({
         <button className="btn" onClick={onSaveBookmark} title="save current filters as a bookmark">
           <Star /> save
         </button>
-        <div className="toolbar-group" ref={colMenuRef} style={{ position: "relative" }}>
+        <div className="toolbar-group" ref={colMenuRef}>
           <button className="btn" onClick={() => setColMenuOpen((v) => !v)}>
             <Columns3 /> cols
           </button>
           {colMenuOpen && (
-            <div
-              className="card"
-              style={{
-                position: "absolute",
-                right: 0,
-                top: "calc(100% + 6px)",
-                zIndex: 20,
-                padding: "10px 14px",
-                minWidth: 160,
-              }}
-            >
+            <div className="card col-menu">
               {EVENT_COLUMNS.map((col) => (
-                <label
-                  key={col.id}
-                  style={{
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                    fontSize: "0.78rem",
-                    padding: "4px 0",
-                    cursor: "pointer",
-                    fontFamily: "var(--font-mono)",
-                  }}
-                >
+                <label key={col.id} className="col-menu-item">
                   <input
                     type="checkbox"
                     checked={columnVisibility[col.id] !== false}
@@ -176,7 +155,6 @@ export default function EventsToolbar({
                         [col.id]: prev[col.id] === false,
                       }))
                     }
-                    style={{ accentColor: "var(--brass)" }}
                   />
                   {col.label}
                 </label>

@@ -53,12 +53,6 @@
 .events-table thead th.sortable:hover { color: var(--brass); }
 .events-table thead th.sorted { color: var(--brass); }
 
-.events-table th-inner {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .col-resizer {
   position: absolute;
   top: 0;

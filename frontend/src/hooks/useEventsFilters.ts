@@ -170,11 +170,8 @@ export function useEventsFilters(
     consumePendingFilter();
   }, [pendingFilter, consumePendingFilter, setAction, setTool, setTime]);
 
-  const eventsQuery = useMemo(() => {
-    const params = new URLSearchParams({
-      limit: String(PAGE_SIZE),
-      offset: String(offset),
-    });
+  const serverParams = useCallback(() => {
+    const params = new URLSearchParams();
     if (action) params.set("action", action);
     if (tool) params.set("tool", tool);
     if (binary) params.set("binary", binary);
@@ -182,25 +179,24 @@ export function useEventsFilters(
     if (search) params.set("search", search);
     params.set("sort", sortId);
     params.set("order", sortOrder);
+    return params;
+  }, [action, tool, binary, session, search, sortId, sortOrder]);
+
+  const eventsQuery = useMemo(() => {
+    const params = serverParams();
+    params.set("limit", String(PAGE_SIZE));
+    params.set("offset", String(offset));
     return params.toString();
-  }, [offset, action, tool, binary, session, search, sortId, sortOrder]);
+  }, [serverParams, offset]);
 
   const tailQuery = useCallback(
     (sinceId: number) => {
-      const params = new URLSearchParams({
-        limit: "50",
-        since_id: String(sinceId),
-      });
-      if (action) params.set("action", action);
-      if (tool) params.set("tool", tool);
-      if (binary) params.set("binary", binary);
-      if (session) params.set("session", session);
-      if (search) params.set("search", search);
-      params.set("sort", sortId);
-      params.set("order", sortOrder);
+      const params = serverParams();
+      params.set("limit", "50");
+      params.set("since_id", String(sinceId));
       return params.toString();
     },
-    [action, tool, binary, session, search, sortId, sortOrder],
+    [serverParams],
   );
 
   const bookmarkQuery = useCallback(() => {
