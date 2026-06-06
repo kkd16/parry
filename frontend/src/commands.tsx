@@ -31,33 +31,32 @@ interface RegistryValue {
 
 const CommandsContext = createContext<RegistryValue | null>(null);
 
+function collectCommands(sources: Map<symbol, Command[]>): Command[] {
+  const all: Command[] = [];
+  const seen = new Set<string>();
+  for (const list of sources.values()) {
+    for (const c of list) {
+      if (seen.has(c.id)) continue;
+      seen.add(c.id);
+      all.push(c);
+    }
+  }
+  return all;
+}
+
 export function CommandsProvider({ children }: { children: ReactNode }) {
-  const [version, setVersion] = useState(0);
+  const [commands, setCommands] = useState<Command[]>([]);
   const sources = useRef<Map<symbol, Command[]>>(new Map());
 
   const register = useCallback((cmds: Command[]) => {
     const key = Symbol();
     sources.current.set(key, cmds);
-    setVersion((v) => v + 1);
+    setCommands(collectCommands(sources.current));
     return () => {
       sources.current.delete(key);
-      setVersion((v) => v + 1);
+      setCommands(collectCommands(sources.current));
     };
   }, []);
-
-  const commands = useMemo(() => {
-    const all: Command[] = [];
-    const seen = new Set<string>();
-    for (const list of sources.current.values()) {
-      for (const c of list) {
-        if (seen.has(c.id)) continue;
-        seen.add(c.id);
-        all.push(c);
-      }
-    }
-    return all;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [version]);
 
   const value = useMemo(() => ({ commands, register }), [commands, register]);
 

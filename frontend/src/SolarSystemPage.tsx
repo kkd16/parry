@@ -210,8 +210,8 @@ export default function SolarSystemPage() {
     [flyTo],
   );
 
-  const orreryCommands = useMemo<Command[]>(() => {
-    const base: Command[] = [
+  const orreryCommands = useMemo<Command[]>(
+    () => [
       {
         id: "orrery.zoom-in",
         group: "Orrery",
@@ -262,9 +262,7 @@ export default function SolarSystemPage() {
         icon: <Maximize2 />,
         perform: () => setFilterProject(""),
       },
-    ];
-    for (const sys of allSystems) {
-      base.push({
+      ...allSystems.map((sys) => ({
         id: `orrery.fly.${sys.workdir}`,
         group: "Fly to system",
         label: sys.label,
@@ -274,10 +272,10 @@ export default function SolarSystemPage() {
           setFilterProject("");
           flyToSystem(sys);
         },
-      });
-    }
-    return base;
-  }, [allSystems, flyToSystem, resetView, setFilterProject]);
+      })),
+    ],
+    [allSystems, flyToSystem, resetView, setFilterProject],
+  );
   useRegisterCommands(orreryCommands, [orreryCommands]);
 
   useEffect(() => {
@@ -323,13 +321,6 @@ export default function SolarSystemPage() {
     dragState.current = null;
   };
 
-  const onDoubleClick = (e: React.MouseEvent) => {
-    const el = containerRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.shiftKey ? 1 / 1.8 : 1.8);
-  };
-
   const zoomAt = useCallback((mx: number, my: number, factor: number) => {
     setView((v) => {
       const next = Math.min(8, Math.max(0.1, v.scale * factor));
@@ -341,6 +332,13 @@ export default function SolarSystemPage() {
       };
     });
   }, []);
+
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.shiftKey ? 1 / 1.8 : 1.8);
+  };
 
   const zoomCentered = useCallback(
     (factor: number) => {
