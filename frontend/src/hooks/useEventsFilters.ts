@@ -65,20 +65,48 @@ export function useEventsFilters(
   const [sortOrder, setSortOrder] = useUrlParam("order", "desc");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const withOffsetReset = useCallback(
-    (set: (v: string) => void) => (v: string) => {
-      set(v);
+  const setAction = useCallback(
+    (v: string) => {
+      setActionParam(v);
       setOffset(0);
     },
-    [setOffset],
+    [setActionParam, setOffset],
   );
-
-  const setAction = useMemo(() => withOffsetReset(setActionParam), [withOffsetReset, setActionParam]);
-  const setTool = useMemo(() => withOffsetReset(setToolParam), [withOffsetReset, setToolParam]);
-  const setWorkdir = useMemo(() => withOffsetReset(setWorkdirParam), [withOffsetReset, setWorkdirParam]);
-  const setBinary = useMemo(() => withOffsetReset(setBinaryParam), [withOffsetReset, setBinaryParam]);
-  const setSession = useMemo(() => withOffsetReset(setSessionParam), [withOffsetReset, setSessionParam]);
-  const setTime = useMemo(() => withOffsetReset(setTimeParam), [withOffsetReset, setTimeParam]);
+  const setTool = useCallback(
+    (v: string) => {
+      setToolParam(v);
+      setOffset(0);
+    },
+    [setToolParam, setOffset],
+  );
+  const setWorkdir = useCallback(
+    (v: string) => {
+      setWorkdirParam(v);
+      setOffset(0);
+    },
+    [setWorkdirParam, setOffset],
+  );
+  const setBinary = useCallback(
+    (v: string) => {
+      setBinaryParam(v);
+      setOffset(0);
+    },
+    [setBinaryParam, setOffset],
+  );
+  const setSession = useCallback(
+    (v: string) => {
+      setSessionParam(v);
+      setOffset(0);
+    },
+    [setSessionParam, setOffset],
+  );
+  const setTime = useCallback(
+    (v: string) => {
+      setTimeParam(v);
+      setOffset(0);
+    },
+    [setTimeParam, setOffset],
+  );
 
   const onSearchChange = useCallback(
     (v: string) => {

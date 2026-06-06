@@ -38,3 +38,7 @@
   min-width: 260px;
   font-family: var(--font-mono);
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

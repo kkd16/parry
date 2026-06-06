@@ -23,6 +23,11 @@ export function useEventsQuery(opts: {
   const [total, setTotal] = useState(0);
   const [freshIds, setFreshIds] = useState<Set<number>>(new Set());
   const tailTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const eventsRef = useRef<Event[]>([]);
+
+  useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
 
   const [refreshNonce, setRefreshNonce] = useState(0);
   const refresh = useCallback(() => setRefreshNonce((n) => n + 1), []);
@@ -56,7 +61,7 @@ export function useEventsQuery(opts: {
   }, [eventsQuery, queryKey, onCountChange]);
 
   const tailNewEvents = useCallback(async () => {
-    const lastSeenId = events.reduce((m, e) => (e.id > m ? e.id : m), 0);
+    const lastSeenId = eventsRef.current.reduce((m, e) => (e.id > m ? e.id : m), 0);
     try {
       const data = await getEvents(tailQuery(lastSeenId));
       const incoming = data.events ?? [];
@@ -92,7 +97,7 @@ export function useEventsQuery(opts: {
     } catch {
       return;
     }
-  }, [events, tailQuery, onCountChange]);
+  }, [tailQuery, onCountChange]);
 
   useEffect(() => {
     onLiveChange(autoRefresh);

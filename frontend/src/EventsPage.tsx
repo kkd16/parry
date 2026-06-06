@@ -118,34 +118,14 @@ export default function EventsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const chips = [
-    ...(filters.action
-      ? [{ label: "action", value: filters.action, onClear: () => filters.setAction("") }]
-      : []),
-    ...(filters.tool
-      ? [{ label: "tool", value: filters.tool, onClear: () => filters.setTool("") }]
-      : []),
-    ...(filters.workdir
-      ? [{ label: "dir", value: filters.workdir, onClear: () => filters.setWorkdir("") }]
-      : []),
-    ...(filters.binary
-      ? [{ label: "bin", value: filters.binary, onClear: () => filters.setBinary("") }]
-      : []),
-    ...(filters.session
-      ? [
-          {
-            label: "session",
-            value: filters.session.slice(0, 8),
-            onClear: () => filters.setSession(""),
-          },
-        ]
-      : []),
-    ...(filters.time
-      ? [{ label: "time", value: filters.time, onClear: () => filters.setTime("") }]
-      : []),
-    ...(filters.search
-      ? [{ label: "search", value: filters.search, onClear: filters.clearSearch }]
-      : []),
-  ];
+    { label: "action", value: filters.action, onClear: () => filters.setAction("") },
+    { label: "tool", value: filters.tool, onClear: () => filters.setTool("") },
+    { label: "dir", value: filters.workdir, onClear: () => filters.setWorkdir("") },
+    { label: "bin", value: filters.binary, onClear: () => filters.setBinary("") },
+    { label: "session", value: filters.session.slice(0, 8), onClear: () => filters.setSession("") },
+    { label: "time", value: filters.time, onClear: () => filters.setTime("") },
+    { label: "search", value: filters.search, onClear: filters.clearSearch },
+  ].filter((c) => c.value);
 
   return (
     <>
