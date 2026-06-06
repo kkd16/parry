@@ -131,13 +131,14 @@ export function useEventsFilters(): EventsFiltersApi {
         action,
         tool,
         binary,
+        workdir,
         session,
         search,
         sort: sortId,
         order: sortOrder,
         ...extra,
       }),
-    [action, tool, binary, session, search, sortId, sortOrder],
+    [action, tool, binary, workdir, session, search, sortId, sortOrder],
   );
 
   const eventsQuery = useMemo(
@@ -169,7 +170,7 @@ export function useEventsFilters(): EventsFiltersApi {
     sortOrder,
     toggleSort,
     clearAll,
-    clientFiltered: !!(workdir || time),
+    clientFiltered: !!time,
     eventsQuery,
     tailQuery,
     bookmarkQuery,

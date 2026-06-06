@@ -135,6 +135,33 @@ func TestHandleEvents(t *testing.T) {
 			wantLimit:  1,
 			wantOffset: 1,
 		},
+		{
+			name: "filter by workdir",
+			seed: append(fixture, store.Event{
+				ToolName: "Bash", Action: "allow", Binary: "go",
+				Workdir: "/home/u/proj", ToolInput: map[string]any{"command": "go build"},
+			}),
+			target:     "/api/events?workdir=/home/u/proj",
+			wantLen:    1,
+			wantTotal:  1,
+			wantLimit:  100,
+			wantOffset: 0,
+			checkEvents: func(t *testing.T, events []any) {
+				require.Equal(t, "/home/u/proj", events[0].(map[string]any)["workdir"])
+			},
+		},
+		{
+			name: "workdir filter paginates against filtered total",
+			seed: append(fixture,
+				store.Event{ToolName: "Bash", Action: "allow", Binary: "go", Workdir: "/home/u/proj", ToolInput: map[string]any{"command": "go build"}},
+				store.Event{ToolName: "Bash", Action: "allow", Binary: "ls", Workdir: "/home/u/proj", ToolInput: map[string]any{"command": "ls"}},
+			),
+			target:     "/api/events?workdir=/home/u/proj&limit=1&offset=1",
+			wantLen:    1,
+			wantTotal:  2,
+			wantLimit:  1,
+			wantOffset: 1,
+		},
 	}
 
 	for _, tc := range tests {

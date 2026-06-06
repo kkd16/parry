@@ -146,7 +146,7 @@ func (s *Store) GetEvent(id int) (*EventRow, error) {
 type EventQuery struct {
 	Limit, Offset, SinceID int
 	Action, Tool, Binary   string
-	Session                string
+	Session, Workdir       string
 	SortCol, SortOrder     string
 	Search                 string
 }
@@ -174,6 +174,10 @@ func (s *Store) ListEvents(q EventQuery) ([]EventRow, int, error) {
 	if q.Session != "" {
 		where += " AND session = ?"
 		args = append(args, q.Session)
+	}
+	if q.Workdir != "" {
+		where += " AND workdir = ?"
+		args = append(args, q.Workdir)
 	}
 	if q.Search != "" {
 		where += " AND (tool_input LIKE ? OR tool_name LIKE ? OR session LIKE ?)"

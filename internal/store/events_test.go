@@ -180,6 +180,22 @@ func TestListEvents_Filters(t *testing.T) {
 			},
 		},
 		{
+			name: "filter by workdir",
+			seedMore: [][]eventOpt{
+				{withWorkdir("/home/u/proj")},
+				{withWorkdir("/tmp")},
+				{withWorkdir("/home/u/proj")},
+			},
+			query:   store.EventQuery{Limit: 100, Workdir: "/home/u/proj"},
+			wantLen: 2,
+			wantTot: 2,
+			assert: func(t *testing.T, rows []store.EventRow) {
+				for _, r := range rows {
+					require.Equal(t, "/home/u/proj", r.Workdir)
+				}
+			},
+		},
+		{
 			name: "action filter matches observe rows via would_action",
 			seedMore: [][]eventOpt{
 				{withAction("observe"), withWouldAction("block")},

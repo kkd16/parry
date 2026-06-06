@@ -70,15 +70,12 @@ export default function EventsPage({ onCountChange, onLiveChange }: Props) {
     onLiveChange,
   });
 
-  const { workdir, time } = filters.values;
+  const { time } = filters.values;
   const filteredEvents = useMemo(() => {
-    let out = events;
-    if (workdir) out = out.filter((e) => e.workdir === workdir);
     const cutoff = timeFilterCutoff(time);
-    if (cutoff != null)
-      out = out.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
-    return out;
-  }, [events, workdir, time]);
+    if (cutoff == null) return events;
+    return events.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
+  }, [events, time]);
 
   const workdirs = useMemo(
     () =>
