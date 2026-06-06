@@ -30,12 +30,12 @@ export default function CommandPalette({ open, onClose }: Props) {
     >
       <CmdkCommand label="Command palette">
         <CmdkCommand.Input
-          className="w-full border-b border-rule bg-transparent px-5.5 py-4.5 font-mono text-[0.9rem] text-ink outline-none placeholder:font-display placeholder:text-[1rem] placeholder:text-ink-mute placeholder:italic"
+          className="w-full border-b border-rule bg-transparent px-5.5 py-4.5 font-mono text-sm text-ink outline-none placeholder:font-display placeholder:text-base placeholder:text-ink-mute placeholder:italic"
           placeholder="what would you like to observe…"
           autoFocus
         />
-        <CmdkCommand.List className="max-h-[380px] overflow-y-auto p-2">
-          <CmdkCommand.Empty className="p-8 text-center font-display text-[1.1rem] text-ink-mute italic">
+        <CmdkCommand.List className="max-h-95 overflow-y-auto p-2">
+          <CmdkCommand.Empty className="p-8 text-center font-display text-lg text-ink-mute italic">
             no matching command.
           </CmdkCommand.Empty>
           {grouped.map(([group, items]) => (
@@ -49,7 +49,7 @@ export default function CommandPalette({ open, onClose }: Props) {
             >
               {items.map((c) => (
                 <CmdkCommand.Item
-                  className="flex cursor-pointer items-center gap-3 rounded px-3 py-2.5 text-[0.82rem] text-ink-dim data-[selected=true]:bg-bg-hover data-[selected=true]:text-ink [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:shrink-0 [&_svg]:text-brass"
+                  className="flex cursor-pointer items-center gap-3 rounded px-3 py-2.5 text-body text-ink-dim data-[selected=true]:bg-bg-hover data-[selected=true]:text-ink [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:shrink-0 [&_svg]:text-brass"
                   key={c.id}
                   value={`${c.label} ${(c.keywords ?? []).join(" ")}`}
                   onSelect={() => {

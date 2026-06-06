@@ -26,9 +26,9 @@ function CopyBtn({ value }: { value: string }) {
 
 function AboutRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-dashed border-rule py-[9px] font-mono text-[0.76rem] last:border-b-0">
+    <div className="flex items-center justify-between gap-3 border-b border-dashed border-rule py-2.25 font-mono text-body last:border-b-0">
       <FieldLabel>{label}</FieldLabel>
-      <span className="inline-flex items-center gap-2.5 text-right font-mono text-[0.75rem] break-all text-ink-dim">
+      <span className="inline-flex items-center gap-2.5 text-right font-mono text-body break-all text-ink-dim">
         {children}
       </span>
     </div>
@@ -44,7 +44,7 @@ function AboutContent() {
         <Eyebrow>about</Eyebrow>
         <h2 className={clsx(dialogTitleCls, "flex items-baseline gap-3.5")}>
           Parry
-          <span className="font-mono text-body tracking-[0.04em] text-brass not-italic">
+          <span className="font-mono text-body tracking-wider text-brass not-italic">
             v{info?.version ?? "…"}
           </span>
         </h2>
@@ -67,7 +67,7 @@ function AboutContent() {
         </AboutRow>
       </div>
       <div className="flex items-center justify-between gap-4 border-t border-rule px-7 pt-3 pb-4 font-mono text-tiny text-ink-mute">
-        <span className="font-display text-[0.92rem] text-ink-dim italic">
+        <span className="font-display text-sm text-ink-dim italic">
           your agent decides · parry enforces
         </span>
         <a

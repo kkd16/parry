@@ -64,13 +64,13 @@ export default function ShortcutsHelp({ open, onClose }: Props) {
       <div className="grid max-h-[60vh] grid-cols-2 gap-7 overflow-y-auto px-7 pt-5.5 pb-2">
         {GROUPS.map((g) => (
           <div key={g.title}>
-            <div className="mb-2.5 border-b border-dashed border-rule pb-1.5 font-mono text-[0.6rem] tracking-[0.18em] text-ink-mute uppercase">
+            <div className="mb-2.5 border-b border-dashed border-rule pb-1.5 font-mono text-micro tracking-[0.18em] text-ink-mute uppercase">
               {g.title}
             </div>
             {g.items.map((item) => (
               <div
                 key={item.label}
-                className="flex items-center justify-between gap-3 py-[7px] font-mono text-[0.76rem]"
+                className="flex items-center justify-between gap-3 py-1.75 font-mono text-body"
               >
                 <span className="text-ink-dim">{item.label}</span>
                 <span className="inline-flex items-center gap-1">

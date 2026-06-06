@@ -109,7 +109,7 @@ function Donut({ data }: { data: ActionCount[] }) {
         {data.map((d) => (
           <div key={d.action} className="flex items-center gap-2">
             <span
-              className="h-2 w-2 rounded-[1px]"
+              className="h-2 w-2 rounded-xs"
               style={{
                 background: ACTION_COLORS[d.action] ?? "var(--color-ink-mute)",
               }}
@@ -126,7 +126,7 @@ function Donut({ data }: { data: ActionCount[] }) {
 function ActionBar({ actions }: { actions: Record<string, number> }) {
   const total = Object.values(actions).reduce((a, b) => a + b, 0) || 1;
   return (
-    <div className="flex h-2 w-full overflow-hidden rounded-[1px] bg-bg">
+    <div className="flex h-2 w-full overflow-hidden rounded-xs bg-bg">
       {Object.entries(actions).map(([a, c]) => (
         <span
           key={a}
@@ -172,14 +172,14 @@ export default function BridgePage({
                 <div className="font-display text-[3.4rem] leading-[0.9] text-ink italic">
                   {data.today.toLocaleString()}
                 </div>
-                <div className="mt-1.5 font-mono text-[0.7rem] text-ink-dim">
+                <div className="mt-1.5 font-mono text-meta text-ink-dim">
                   events today
                 </div>
               </div>
               <div className="flex-1" />
               <Sparkline data={data.last_7d} />
             </div>
-            <div className="mt-3 border-t border-rule-soft pt-2.5 font-mono text-[0.68rem] text-ink-mute">
+            <div className="mt-3 border-t border-rule-soft pt-2.5 font-mono text-tiny text-ink-mute">
               <span>{data.total.toLocaleString()} total recorded</span>
             </div>
           </Card>
@@ -253,7 +253,7 @@ export default function BridgePage({
                 <div className="mb-1 font-display text-[1.6rem] text-ink italic">
                   {basename(data.top_project.workdir)}
                 </div>
-                <div className="mb-2 font-mono text-[0.7rem] break-all text-ink-mute">
+                <div className="mb-2 font-mono text-meta break-all text-ink-mute">
                   {data.top_project.workdir}
                 </div>
                 <div className="font-mono text-body text-brass">
@@ -272,7 +272,7 @@ export default function BridgePage({
                 no blocks recorded — clean watch
               </div>
             ) : (
-              <table className="w-full border-collapse text-[0.76rem] [&_td]:px-2.5 [&_td]:py-[7px]">
+              <table className="w-full border-collapse text-body [&_td]:px-2.5 [&_td]:py-1.75">
                 <tbody>
                   {data.recent_blocks.map((e) => (
                     <tr
@@ -281,16 +281,16 @@ export default function BridgePage({
                       onClick={() => onEventClick(e)}
                     >
                       <td
-                        className="font-mono text-[0.75rem] whitespace-nowrap"
+                        className="font-mono text-body whitespace-nowrap"
                         title={formatAbsolute(e.timestamp)}
                       >
                         {formatRelative(e.timestamp, nowTick)}
                       </td>
                       <td>{actionBadge(e.action)}</td>
-                      <td className="font-mono text-[0.75rem]">
+                      <td className="font-mono text-body">
                         {e.binary || e.tool_name}
                       </td>
-                      <td className="w-full max-w-0 truncate font-mono text-[0.75rem] text-ink-mute italic">
+                      <td className="w-full max-w-0 truncate font-mono text-body text-ink-mute italic">
                         {JSON.stringify(e.tool_input).slice(0, 80)}
                       </td>
                     </tr>

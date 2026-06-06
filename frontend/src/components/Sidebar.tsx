@@ -31,7 +31,7 @@ function formatCount(n: number | null): string {
 }
 
 const navBadgeCls =
-  "rounded-lg border border-brass-dim bg-brass/10 px-1.5 py-px font-mono text-eyebrow tracking-[0.04em] text-brass";
+  "rounded-lg border border-brass-dim bg-brass/10 px-1.5 py-px font-mono text-eyebrow tracking-wider text-brass";
 
 function FooterRow({
   label,
@@ -164,9 +164,9 @@ export default function Sidebar({
           <button
             key={t.id}
             className={clsx(
-              "relative flex items-center gap-3 rounded px-3.5 py-2.5 text-left text-[0.88rem] font-medium text-ink-dim transition-colors duration-150 hover:bg-bg-hover hover:text-ink [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.8]",
+              "relative flex items-center gap-3 rounded px-3.5 py-2.5 text-left text-sm font-medium text-ink-dim transition-colors duration-150 hover:bg-bg-hover hover:text-ink [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.8]",
               tab === t.id &&
-                "bg-bg-hover text-ink before:absolute before:top-1/2 before:-left-3.5 before:h-[22px] before:w-0.5 before:-translate-y-1/2 before:bg-brass-bright before:shadow-[0_0_8px_var(--color-brass)] before:content-['']",
+                "bg-bg-hover text-ink before:absolute before:top-1/2 before:-left-3.5 before:h-5.5 before:w-0.5 before:-translate-y-1/2 before:bg-brass-bright before:shadow-[0_0_8px_var(--color-brass)] before:content-['']",
             )}
             onClick={() => setTab(t.id)}
           >
@@ -175,7 +175,7 @@ export default function Sidebar({
             {tabBadge[t.id]}
             <span
               className={clsx(
-                "font-mono text-[0.65rem] tracking-[0.05em] text-ink-mute",
+                "font-mono text-tiny tracking-wider text-ink-mute",
                 tabBadge[t.id] ? "ml-1.5" : "ml-auto",
               )}
             >
@@ -189,11 +189,11 @@ export default function Sidebar({
             <div className="px-3.5 pt-4.5 pb-2 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase">
               Bookmarks
             </div>
-            <div className="-mx-3.5 flex max-h-[200px] flex-col gap-px overflow-y-auto px-3.5">
+            <div className="-mx-3.5 flex max-h-50 flex-col gap-px overflow-y-auto px-3.5">
               {bookmarks.bookmarks.map((b) => (
                 <div key={b.id} className="flex items-center gap-1">
                   <button
-                    className="flex min-w-0 flex-1 items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-left font-mono text-[0.7rem] text-ink-dim hover:bg-bg-hover hover:text-brass [&_svg]:h-3 [&_svg]:w-3 [&_svg]:shrink-0"
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded px-2.5 py-1.5 text-left font-mono text-meta text-ink-dim hover:bg-bg-hover hover:text-brass [&_svg]:h-3 [&_svg]:w-3 [&_svg]:shrink-0"
                     onClick={() => onOpenBookmark(b.qs)}
                     onDoubleClick={() => {
                       const next = window.prompt("rename bookmark", b.name);
@@ -206,7 +206,7 @@ export default function Sidebar({
                     <span className="flex-1 truncate">{b.name}</span>
                   </button>
                   <button
-                    className="rounded-[3px] p-1 text-ink-mute hover:text-block"
+                    className="rounded p-1 text-ink-mute hover:text-block"
                     onClick={() => bookmarks.remove(b.id)}
                     title="delete bookmark"
                   >
@@ -233,7 +233,7 @@ export default function Sidebar({
         </FooterRow>
         <button
           className={clsx(
-            "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 font-mono text-[0.64rem] tracking-[0.1em] text-ink-dim uppercase transition-colors duration-150 hover:border-brass-dim hover:text-brass [&_svg]:h-[13px] [&_svg]:w-[13px] [&_svg]:shrink-0",
+            "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 font-mono text-micro tracking-widest text-ink-dim uppercase transition-colors duration-150 hover:border-brass-dim hover:text-brass [&_svg]:h-3.25 [&_svg]:w-3.25 [&_svg]:shrink-0",
             tab === "devdocs" && "border-brass-dim bg-observe/14 text-brass",
           )}
           onClick={() => setTab("devdocs")}
@@ -243,10 +243,10 @@ export default function Sidebar({
           <Kbd className="ml-auto">g d</Kbd>
         </button>
         <button
-          className="group mt-1.5 flex w-full flex-col items-start gap-1 rounded-[3px] border-t border-dashed border-rule-soft px-1 pt-2 pb-1 text-left font-mono text-[0.6rem] tracking-[0.08em] text-ink-mute uppercase hover:text-brass"
+          className="group mt-1.5 flex w-full flex-col items-start gap-1 rounded border-t border-dashed border-rule-soft px-1 pt-2 pb-1 text-left font-mono text-micro tracking-widest text-ink-mute uppercase hover:text-brass"
           onClick={onShowHelp}
         >
-          <span className="inline-flex items-center gap-[5px]">
+          <span className="inline-flex items-center gap-1.25">
             <Kbd className="group-hover:border-brass-dim group-hover:text-brass">
               ⌘
             </Kbd>
@@ -255,7 +255,7 @@ export default function Sidebar({
             </Kbd>
             <span>palette</span>
           </span>
-          <span className="inline-flex items-center gap-[5px]">
+          <span className="inline-flex items-center gap-1.25">
             <Kbd className="group-hover:border-brass-dim group-hover:text-brass">
               ?
             </Kbd>
@@ -265,7 +265,7 @@ export default function Sidebar({
       </div>
 
       <div
-        className="absolute top-0 -right-[3px] z-5 h-full w-1.5 cursor-col-resize after:absolute after:top-0 after:bottom-0 after:left-0.5 after:w-0.5 after:content-[''] hover:after:bg-brass"
+        className="absolute top-0 -right-0.75 z-5 h-full w-1.5 cursor-col-resize after:absolute after:top-0 after:bottom-0 after:left-0.5 after:w-0.5 after:content-[''] hover:after:bg-brass"
         onMouseDown={onDown}
       />
     </aside>

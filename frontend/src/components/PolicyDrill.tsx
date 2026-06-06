@@ -17,7 +17,7 @@ const PLACEHOLDER: Record<DrillTool, string> = {
 };
 
 const calloutBlockCls =
-  "rounded-r border-l-2 border-block bg-block/12 px-3 py-2 text-[0.82rem] leading-[1.5] text-ink [&_code]:font-mono [&_code]:text-body [&_code]:text-brass-bright";
+  "rounded-r border-l-2 border-block bg-block/12 px-3 py-2 text-body leading-normal text-ink [&_code]:font-mono [&_code]:text-body [&_code]:text-brass-bright";
 
 function entryLabel(e: RuleEntry): string {
   const parts = [e.binary, ...(e.positional ?? [])];
@@ -39,21 +39,21 @@ function Stage({
   return (
     <div className="flex items-center gap-2.5 py-1">
       {total > 1 && (
-        <span className="min-w-[52px] font-mono text-[0.64rem] tracking-[0.12em] text-ink-mute uppercase">
+        <span className="min-w-13 font-mono text-micro tracking-[0.12em] text-ink-mute uppercase">
           stage {index + 1}
         </span>
       )}
-      <span className="min-w-[80px] font-mono text-[0.82rem] text-ink">
+      <span className="min-w-20 font-mono text-body text-ink">
         {stage.binary}
       </span>
       {actionBadge(stage.action)}
       {stage.matched.is_default || !stage.matched.entry ? (
-        <span className="rounded-full border border-dashed border-rule bg-bg px-2.5 py-[3px] font-mono text-[0.68rem] text-ink-mute">
+        <span className="rounded-full border border-dashed border-rule bg-bg px-2.5 py-0.75 font-mono text-tiny text-ink-mute">
           shell default
         </span>
       ) : (
         <button
-          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-[3px] font-mono text-[0.68rem] text-ink-dim transition-all duration-150 hover:border-brass-dim hover:text-brass"
+          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-0.75 font-mono text-tiny text-ink-dim transition-all duration-150 hover:border-brass-dim hover:text-brass"
           title="open this rule"
           onClick={() => onOpenBinary(stage.binary)}
         >
@@ -93,7 +93,7 @@ export default function PolicyDrill({
             <button
               key={id}
               className={clsx(
-                "cursor-pointer bg-bg px-3 py-[7px] font-mono text-[0.7rem] tracking-[0.06em] text-ink-dim transition-all duration-150 not-first:border-l not-first:border-rule hover:text-ink",
+                "cursor-pointer bg-bg px-3 py-1.75 font-mono text-meta tracking-wider text-ink-dim transition-all duration-150 not-first:border-l not-first:border-rule hover:text-ink",
                 tool === id && "bg-bg-active text-brass",
               )}
               onClick={() => setTool(id)}
@@ -103,7 +103,7 @@ export default function PolicyDrill({
           ))}
         </div>
         <input
-          className={clsx("min-w-[260px] flex-1", inputCls)}
+          className={clsx("min-w-65 flex-1", inputCls)}
           placeholder={PLACEHOLDER[tool]}
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -154,7 +154,7 @@ export default function PolicyDrill({
           {!result.unresolved &&
             !result.protected &&
             !result.commands?.length && (
-              <div className="border-l-2 border-rule py-1 pl-3 text-[0.82rem] leading-[1.5] text-ink-dim">
+              <div className="border-l-2 border-rule py-1 pl-3 text-body leading-normal text-ink-dim">
                 no rule consulted — falls to the {result.tool} default
               </div>
             )}

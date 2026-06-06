@@ -134,7 +134,7 @@ export default function EventsTimeline({ events }: Props) {
         </svg>
         {hoverBucket && hover && (
           <div
-            className="pointer-events-none absolute bottom-[calc(100%+6px)] z-5 -translate-x-1/2 rounded border border-brass-dim bg-[rgba(5,6,10,0.97)] px-3 py-2 font-mono text-[0.7rem] whitespace-nowrap text-ink shadow-[0_6px_24px_rgba(0,0,0,0.5)]"
+            className="pointer-events-none absolute bottom-[calc(100%+6px)] z-5 -translate-x-1/2 rounded border border-brass-dim bg-scrim/97 px-3 py-2 font-mono text-meta whitespace-nowrap text-ink shadow-[0_6px_24px_rgba(0,0,0,0.5)]"
             style={{ left: hover.x }}
           >
             <div className="text-tiny text-brass">
@@ -155,7 +155,7 @@ export default function EventsTimeline({ events }: Props) {
                         className="flex items-center gap-1.5 text-tiny"
                       >
                         <span
-                          className="inline-block h-[7px] w-[7px] rounded-[1px]"
+                          className="inline-block h-1.75 w-1.75 rounded-xs"
                           style={{ background: ACTION_COLORS[a] }}
                         />
                         <span className="flex-1 text-ink-dim">{a}</span>

@@ -20,6 +20,7 @@
   --color-block: #e05a4c;
   --color-observe: #d4a14a;
   --color-confirm: #6fb3d2;
+  --color-scrim: #05060a;
 
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: "Instrument Serif", Georgia, serif;
@@ -33,6 +34,7 @@
 
   --shadow-panel:
     inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 1px 0 rgba(0, 0, 0, 0.3);
+  --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.5);
 
   --animate-fade-up: fade-up 600ms ease both;
   --animate-docs-pulse: docs-pulse 2.6s linear infinite;

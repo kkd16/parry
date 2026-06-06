@@ -172,7 +172,7 @@ export default function DevDocsPage() {
               />
               {geo.label && (
                 <text
-                  className="fill-ink-mute font-mono text-[9px] tracking-[0.06em] uppercase"
+                  className="fill-ink-mute font-mono text-[9px] tracking-wider uppercase"
                   x={geo.label.x}
                   y={geo.label.y}
                   textAnchor="middle"
@@ -237,7 +237,7 @@ export default function DevDocsPage() {
                 {n.title}
               </text>
               <text
-                className="fill-ink-mute font-mono text-[9.5px] tracking-[0.04em]"
+                className="fill-ink-mute font-mono text-[9.5px] tracking-wider"
                 x={n.cx}
                 y={n.y + 45}
                 textAnchor="middle"
@@ -255,7 +255,7 @@ export default function DevDocsPage() {
                     rx={3}
                   />
                   <text
-                    className="fill-brass font-mono text-[8px] tracking-[0.08em] uppercase"
+                    className="fill-brass font-mono text-[8px] tracking-widest uppercase"
                     x={n.x + n.w - 30}
                     y={n.y + 3}
                     textAnchor="middle"
@@ -268,9 +268,9 @@ export default function DevDocsPage() {
           ))}
         </svg>
 
-        <div className="mt-2.5 flex flex-wrap gap-4.5 border-t border-dashed border-rule-soft px-2.5 pt-2 font-mono text-micro tracking-[0.08em] text-ink-dim uppercase">
+        <div className="mt-2.5 flex flex-wrap gap-4.5 border-t border-dashed border-rule-soft px-2.5 pt-2 font-mono text-micro tracking-widest text-ink-dim uppercase">
           {LEGEND.map(([swatch, label]) => (
-            <span key={label} className="inline-flex items-center gap-[7px]">
+            <span key={label} className="inline-flex items-center gap-1.75">
               <span className={swatch} />
               {label}
             </span>

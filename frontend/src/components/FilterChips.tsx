@@ -21,15 +21,13 @@ export default function FilterChips({ chips, onClearAll }: Props) {
       {chips.map((c) => (
         <button
           key={c.label + c.value}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-brass-dim bg-brass/10 px-2.5 py-[3px] text-[0.7rem] text-brass-bright hover:border-brass hover:bg-brass/18"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-brass-dim bg-brass/10 px-2.5 py-0.75 text-meta text-brass-bright hover:border-brass hover:bg-brass/18"
           onClick={c.onClear}
         >
           <span className="text-eyebrow tracking-[0.12em] text-ink-mute uppercase">
             {c.label}
           </span>
-          <span className="max-w-[220px] truncate text-brass-bright">
-            {c.value}
-          </span>
+          <span className="max-w-55 truncate text-brass-bright">{c.value}</span>
           <X size={11} />
         </button>
       ))}

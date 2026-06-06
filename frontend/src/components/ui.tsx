@@ -3,13 +3,13 @@ import type { ComponentProps } from "react";
 import { badgeVariants, healthClass, healthDotVariants } from "./variants";
 
 export const inputCls =
-  "rounded border border-rule bg-bg px-2.5 py-1.5 font-mono text-body text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:italic placeholder:text-ink-mute focus:border-brass focus:shadow-[0_0_0_2px_rgba(212,161,74,0.15)]";
+  "rounded border border-rule bg-bg px-2.5 py-1.5 font-mono text-body text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:italic placeholder:text-ink-mute focus:border-brass focus:ring-2 focus:ring-brass/15";
 
 export const btnCls =
-  "inline-flex items-center gap-1.5 rounded border border-rule bg-bg px-3 py-1.5 font-mono text-meta tracking-[0.08em] text-ink uppercase transition-all duration-150 hover:border-brass hover:text-brass-bright [&_svg]:h-[13px] [&_svg]:w-[13px]";
+  "inline-flex items-center gap-1.5 rounded border border-rule bg-bg px-3 py-1.5 font-mono text-meta tracking-widest text-ink uppercase transition-all duration-150 hover:border-brass hover:text-brass-bright [&_svg]:h-3.25 [&_svg]:w-3.25";
 
 export const chipBtnCls =
-  "inline-flex items-center gap-1 rounded-[3px] border border-rule px-2 py-0.5 font-mono text-micro tracking-[0.1em] text-ink-mute uppercase hover:border-brass hover:text-brass";
+  "inline-flex items-center gap-1 rounded border border-rule px-2 py-0.5 font-mono text-micro tracking-widest text-ink-mute uppercase hover:border-brass hover:text-brass";
 
 export function Btn({
   active,
@@ -60,7 +60,7 @@ export function Badge({
   return (
     <span
       className={clsx(
-        "inline-block rounded-sm border px-2 py-0.5 font-mono text-[0.64rem] font-semibold tracking-[0.1em] uppercase",
+        "inline-block rounded-sm border px-2 py-0.5 font-mono text-micro font-semibold tracking-widest uppercase",
         badgeVariants[action ?? ""] ?? "border-transparent",
         className,
       )}
@@ -73,7 +73,7 @@ export function Kbd({ className, ...rest }: ComponentProps<"span">) {
   return (
     <span
       className={clsx(
-        "rounded-[3px] border border-rule bg-bg-raised px-1.5 py-px font-mono text-micro text-ink-dim",
+        "rounded border border-rule bg-bg-raised px-1.5 py-px font-mono text-micro text-ink-dim",
         className,
       )}
       {...rest}
@@ -92,7 +92,7 @@ export function HealthDot({
   return (
     <span
       className={clsx(
-        "mr-1.5 inline-block h-[7px] w-[7px] rounded-full align-middle",
+        "mr-1.5 inline-block h-1.75 w-1.75 rounded-full align-middle",
         healthDotVariants[key],
         className,
       )}
@@ -104,7 +104,7 @@ export function FieldLabel({ className, ...rest }: ComponentProps<"div">) {
   return (
     <div
       className={clsx(
-        "font-mono text-[0.6rem] tracking-[0.14em] text-ink-mute uppercase",
+        "font-mono text-micro tracking-[0.14em] text-ink-mute uppercase",
         className,
       )}
       {...rest}

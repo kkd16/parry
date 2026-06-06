@@ -46,14 +46,14 @@ const ORBIT_SPAN = 220;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 const emptyCls =
-  "p-15 text-center font-display text-[1.6rem] text-ink-dim italic [&_code]:font-mono [&_code]:text-[0.9rem] [&_code]:text-brass [&_code]:not-italic";
+  "p-15 text-center font-display text-[1.6rem] text-ink-dim italic [&_code]:font-mono [&_code]:text-sm [&_code]:text-brass [&_code]:not-italic";
 
 const overlayCls =
   "absolute z-5 rounded border border-rule bg-bg-raised/92 px-4 py-3.5 font-mono text-meta text-ink-dim backdrop-blur-[6px]";
 
 const tallyLabelCls = "text-eyebrow tracking-[0.18em] text-ink-mute uppercase";
 
-const tallyValueCls = "truncate text-[0.92rem] text-ink";
+const tallyValueCls = "truncate text-sm text-ink";
 
 function buildSystems(projects: HeatmapProject[]): System[] {
   return projects.map((p, idx) => {
@@ -418,7 +418,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
         <PageHeader eyebrow="instrument · 02" title="Orrery" />
         <div className={emptyCls}>
           the sky is empty.
-          <div className="mt-3 text-[0.8rem] not-italic">
+          <div className="mt-3 text-body not-italic">
             run some tool calls with <code>parry check</code> first.
           </div>
         </div>
@@ -448,7 +448,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
           titleClassName="[text-shadow:0_2px_24px_rgba(0,0,0,0.8)]"
         />
         {stats && (
-          <div className="flex shrink-0 items-center gap-5.5 rounded-md border border-brass-dim bg-bg-raised/82 px-5.5 py-3.5 font-mono backdrop-blur-[8px]">
+          <div className="flex shrink-0 items-center gap-5.5 rounded-md border border-brass-dim bg-bg-raised/82 px-5.5 py-3.5 font-mono backdrop-blur-sm">
             <div className="border-r border-rule pr-5.5 font-display text-[1.4rem] text-brass italic">
               tally
             </div>
@@ -466,11 +466,11 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
                 {stats.totalEvents.toLocaleString()}
               </span>
             </div>
-            <div className="flex max-w-[240px] min-w-0 flex-col gap-0.5">
+            <div className="flex max-w-60 min-w-0 flex-col gap-0.5">
               <span className={tallyLabelCls}>hottest</span>
               <span className={tallyValueCls}>
                 {basename(stats.topFile.path)}{" "}
-                <span className="ml-1 text-[0.74rem] text-brass">
+                <span className="ml-1 text-meta text-brass">
                   ×{stats.topFile.count}
                 </span>
               </span>
@@ -584,11 +584,11 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
         </g>
       </svg>
 
-      <div className={clsx(overlayCls, "bottom-4 left-4 max-w-[220px]")}>
-        <div className="mb-2 font-display text-[1rem] text-brass italic">
+      <div className={clsx(overlayCls, "bottom-4 left-4 max-w-55")}>
+        <div className="mb-2 font-display text-base text-brass italic">
           legend
         </div>
-        <div className="mb-2 leading-[1.6]">
+        <div className="mb-2 leading-relaxed">
           inner orbit · hottest
           <br />
           larger body · more accesses
@@ -599,7 +599,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
             <button
               key={s.workdir}
               className={clsx(
-                "block w-full rounded-[3px] px-1.5 py-1 text-left font-mono text-meta text-ink hover:bg-brass/8 hover:text-brass",
+                "block w-full rounded px-1.5 py-1 text-left font-mono text-meta text-ink hover:bg-brass/8 hover:text-brass",
                 filterProject === s.workdir && "bg-brass/12 text-brass",
               )}
               onClick={() => flyToSystem(s)}
@@ -614,7 +614,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
         </div>
       </div>
 
-      <div className={clsx(overlayCls, "right-4 bottom-4 max-w-[260px]")}>
+      <div className={clsx(overlayCls, "right-4 bottom-4 max-w-65")}>
         <div className="mb-1.5 flex gap-1">
           <Btn
             className="flex-1"
@@ -643,11 +643,11 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
 
       {hover && (
         <div
-          className="pointer-events-none absolute z-10 max-w-[420px] rounded border border-brass-dim bg-[rgba(5,6,10,0.96)] px-3 py-2 font-mono text-meta"
+          className="pointer-events-none absolute z-10 max-w-105 rounded border border-brass-dim bg-scrim/96 px-3 py-2 font-mono text-meta"
           style={{ left: hover.x + 12, top: hover.y + 12 }}
         >
           <div className="break-all text-ink">{hover.body.path}</div>
-          <div className="mt-[3px] text-tiny text-brass">
+          <div className="mt-0.75 text-tiny text-brass">
             {hover.body.count} events
           </div>
         </div>

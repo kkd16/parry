@@ -99,15 +99,15 @@ function RuleSuggestionPanel({
     <section className="mt-5 rounded border border-rule bg-[linear-gradient(135deg,rgba(212,161,74,0.08),rgba(12,15,20,0.55))] p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className={clsx("min-w-[100px] pt-[3px]", drawerLabelCls)}>
+          <div className={clsx("min-w-25 pt-0.75", drawerLabelCls)}>
             suggest rule
           </div>
-          <div className="mt-1 font-display text-[0.86rem] text-ink-mute italic">
+          <div className="mt-1 font-display text-sm text-ink-mute italic">
             copy YAML into policy.yaml
           </div>
         </div>
         <select
-          className={clsx(inputCls, "min-w-[120px]")}
+          className={clsx(inputCls, "min-w-30")}
           value={targetAction}
           onChange={(e) => setTargetAction(e.target.value as SuggestAction)}
         >
@@ -129,7 +129,7 @@ function RuleSuggestionPanel({
       )}
       {suggestion && (
         <>
-          <div className="mb-2.5 flex flex-wrap gap-2 font-mono text-meta tracking-[0.1em] text-ink-mute uppercase">
+          <div className="mb-2.5 flex flex-wrap gap-2 font-mono text-meta tracking-widest text-ink-mute uppercase">
             <span>{suggestion.tool}</span>
             {suggestion.duplicate && (
               <span className="text-allow">already covered</span>
@@ -226,7 +226,7 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
             setTargetAction={setTargetAction}
           />
           <div
-            className="mt-5 overflow-x-auto rounded border border-rule bg-bg p-3.5 font-mono text-meta leading-[1.6] wrap-break-word whitespace-pre-wrap text-ink-dim"
+            className="mt-5 overflow-x-auto rounded border border-rule bg-bg p-3.5 font-mono text-meta leading-relaxed wrap-break-word whitespace-pre-wrap text-ink-dim"
             dangerouslySetInnerHTML={{
               __html: highlightJson(event.tool_input),
             }}

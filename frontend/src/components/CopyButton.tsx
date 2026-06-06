@@ -10,7 +10,7 @@ interface Props {
 
 export default function CopyButton({
   text,
-  className = "ml-2 text-[0.7rem] text-ink-mute hover:text-brass",
+  className = "ml-2 text-meta text-ink-mute hover:text-brass",
   label = "copy",
   copiedLabel = "copied",
   onCopied,

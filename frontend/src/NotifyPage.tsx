@@ -111,7 +111,7 @@ function ConfigRow({
 function CopyBlock({ text }: { text: string }) {
   return (
     <div className="relative rounded border border-rule bg-bg px-4 py-3.5">
-      <pre className="font-mono text-[0.74rem] leading-[1.65] whitespace-pre-wrap text-ink">
+      <pre className="font-mono text-meta leading-relaxed whitespace-pre-wrap text-ink">
         {text}
       </pre>
       <CopyButton
@@ -211,7 +211,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
           flush
           className="flex-1"
         />
-        <div className="flex min-w-[320px] items-center gap-5.5 rounded-md border border-l-3 border-rule border-l-brass bg-bg-raised px-6.5 py-5.5">
+        <div className="flex min-w-80 items-center gap-5.5 rounded-md border border-l-3 border-rule border-l-brass bg-bg-raised px-6.5 py-5.5">
           <div
             className={clsx(
               "relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full after:absolute after:-inset-1.5 after:animate-orb-pulse after:rounded-full after:border after:border-current after:opacity-25 after:content-['']",
@@ -221,12 +221,12 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
             <Bell size={26} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <div className="font-display text-[1.5rem] leading-[1.1] text-ink italic">
+            <div className="font-display text-2xl leading-[1.1] text-ink italic">
               {providerId || "none"}{" "}
               <span className="mx-1 text-ink-mute">·</span>{" "}
               <span
                 className={clsx(
-                  "font-mono text-[0.7rem] tracking-[0.12em] uppercase not-italic",
+                  "font-mono text-meta tracking-[0.12em] uppercase not-italic",
                   STATE_CLS[orbClass],
                 )}
               >
@@ -234,7 +234,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               </span>
             </div>
             {health?.error && (
-              <div className="mb-1 font-mono text-[0.7rem] text-block">
+              <div className="mb-1 font-mono text-meta text-block">
                 {health.error}
               </div>
             )}
@@ -270,21 +270,20 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               </>
             )}
           </div>
-          <div className="mt-3.5 border-t border-rule-soft pt-3 font-mono text-tiny leading-[1.6] text-ink-mute">
+          <div className="mt-3.5 border-t border-rule-soft pt-3 font-mono text-tiny leading-relaxed text-ink-mute">
             on timeout, falls back to{" "}
-            <span className="font-mono text-[0.75rem]">check_mode_confirm</span>
-            .
+            <span className="font-mono text-body">check_mode_confirm</span>.
           </div>
         </Card>
 
         <Card>
           <Eyebrow>recent confirmations</Eyebrow>
           {recent.length === 0 ? (
-            <div className="px-1 py-4.5 font-display text-[1rem] text-ink-mute italic">
+            <div className="px-1 py-4.5 font-display text-base text-ink-mute italic">
               no confirmation events yet.
             </div>
           ) : (
-            <table className="w-full border-collapse text-[0.74rem] [&_td]:p-2">
+            <table className="w-full border-collapse text-meta [&_td]:p-2">
               <tbody>
                 {recent.map((e) => (
                   <tr
@@ -293,15 +292,15 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
                     onClick={onGoToEvents}
                   >
                     <td
-                      className="font-mono text-[0.75rem] whitespace-nowrap"
+                      className="font-mono text-body whitespace-nowrap"
                       title={formatAbsolute(e.timestamp)}
                     >
                       {formatRelative(e.timestamp, nowTick)}
                     </td>
-                    <td className="font-mono text-[0.75rem]">
+                    <td className="font-mono text-body">
                       {e.binary || e.tool_name}
                     </td>
-                    <td className="w-full max-w-0 truncate font-mono text-[0.75rem] text-ink-mute italic">
+                    <td className="w-full max-w-0 truncate font-mono text-body text-ink-mute italic">
                       {(e.tool_input?.["command"] as string | undefined) ??
                         JSON.stringify(e.tool_input).slice(0, 60)}
                     </td>
@@ -321,10 +320,9 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
           <div
             key={p.id}
             className={clsx(
-              "flex flex-col gap-3 rounded-md border border-l-3 border-rule bg-bg-raised px-6 py-5.5",
-              providerId === p.id
-                ? "border-l-brass-bright shadow-[0_0_0_1px_rgba(212,161,74,0.08),inset_0_1px_0_rgba(255,255,255,0.02)]"
-                : "shadow-panel",
+              "flex flex-col gap-3 rounded-md border border-l-3 border-rule bg-bg-raised px-6 py-5.5 shadow-panel",
+              providerId === p.id &&
+                "border-l-brass-bright ring-1 ring-brass/8",
             )}
           >
             <div className="flex items-baseline gap-3">
@@ -337,15 +335,13 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
                 </span>
               )}
             </div>
-            <div className="text-[0.86rem] leading-[1.55] text-ink">
-              {p.desc}
-            </div>
-            <div className="rounded-r-[3px] border-l border-brass-dim bg-bg px-3 py-2.5 font-mono text-[0.7rem] leading-[1.7] text-ink-dim">
+            <div className="text-sm leading-normal text-ink">{p.desc}</div>
+            <div className="rounded-r border-l border-brass-dim bg-bg px-3 py-2.5 font-mono text-meta leading-relaxed text-ink-dim">
               {p.works}
             </div>
 
             {p.fields.length > 0 && (
-              <table className="mt-1 w-full border-collapse font-mono text-[0.7rem] [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2 [&_td]:align-top [&_td]:text-ink [&_th]:border-b [&_th]:border-rule [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-mono [&_th]:text-eyebrow [&_th]:font-semibold [&_th]:tracking-[0.14em] [&_th]:text-ink-mute [&_th]:uppercase">
+              <table className="mt-1 w-full border-collapse font-mono text-meta [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2 [&_td]:align-top [&_td]:text-ink [&_th]:border-b [&_th]:border-rule [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-mono [&_th]:text-eyebrow [&_th]:font-semibold [&_th]:tracking-[0.14em] [&_th]:text-ink-mute [&_th]:uppercase">
                 <thead>
                   <tr>
                     <th>field</th>
@@ -375,9 +371,9 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
         ))}
       </div>
 
-      <div className="border-t border-dashed border-rule pt-4.5 pb-2 text-center font-display text-[1rem] text-ink-dim italic">
+      <div className="border-t border-dashed border-rule pt-4.5 pb-2 text-center font-display text-base text-ink-dim italic">
         change provider with{" "}
-        <span className="font-mono text-[0.75rem] text-brass not-italic">
+        <span className="font-mono text-body text-brass not-italic">
           parry config notify
         </span>
         .

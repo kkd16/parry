@@ -31,7 +31,7 @@ interface Props {
 }
 
 const tdByDensity: Record<string, string> = {
-  compact: "px-3 py-1 text-[0.74rem]",
+  compact: "px-3 py-1 text-meta",
   normal: "px-3 py-2",
   comfortable: "px-3.5 py-3",
 };
@@ -129,7 +129,7 @@ export default function EventsTable({
                   {sorted === "asc" ? " ▲" : sorted === "desc" ? " ▼" : ""}
                   <div
                     className={clsx(
-                      "absolute top-0 right-0 h-full w-[5px] cursor-col-resize bg-transparent select-none hover:bg-brass",
+                      "absolute top-0 right-0 h-full w-1.25 cursor-col-resize bg-transparent select-none hover:bg-brass",
                       resizingId === c.id && "bg-brass",
                     )}
                     onClick={(e) => e.stopPropagation()}
@@ -159,7 +159,7 @@ export default function EventsTable({
               <tr
                 key={e.id}
                 className={clsx(
-                  "cursor-pointer transition-colors duration-[140ms] hover:bg-bg-hover",
+                  "cursor-pointer transition-colors duration-140 hover:bg-bg-hover",
                   selectedId === e.id &&
                     "bg-brass/6 shadow-[inset_2px_0_0_var(--color-brass)]",
                   freshIds.has(e.id) && "animate-row-fresh",

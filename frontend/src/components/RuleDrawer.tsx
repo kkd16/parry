@@ -27,15 +27,15 @@ const PHRASE: Record<ActionName, string> = {
 };
 
 const codeCls =
-  "[&_code]:rounded-[3px] [&_code]:bg-brass/8 [&_code]:px-[5px] [&_code]:py-px [&_code]:font-mono [&_code]:text-[0.78em] [&_code]:text-brass-bright [&_code]:not-italic";
+  "[&_code]:rounded [&_code]:bg-brass/8 [&_code]:px-1.25 [&_code]:py-px [&_code]:font-mono [&_code]:text-[0.78em] [&_code]:text-brass-bright [&_code]:not-italic";
 
 const verdictCls = clsx(
-  "mt-0.5 mb-1.5 font-display text-[1.05rem] leading-[1.9] text-ink italic",
+  "mt-0.5 mb-1.5 font-display text-base leading-loose text-ink italic",
   codeCls,
 );
 
 const ladderRowCls =
-  "relative grid grid-cols-[1fr_auto] items-center gap-y-0.5 border-l-2 border-rule py-[9px] pl-4 before:absolute before:top-4 before:-left-1 before:h-1.5 before:w-1.5 before:rotate-45 before:border before:border-ink-mute before:bg-bg-raised before:content-['']";
+  "relative grid grid-cols-[1fr_auto] items-center gap-y-0.5 border-l-2 border-rule py-2.25 pl-4 before:absolute before:top-4 before:-left-1 before:h-1.5 before:w-1.5 before:rotate-45 before:border before:border-ink-mute before:bg-bg-raised before:content-['']";
 
 function Verdict({ x }: { x: BinaryExplanation }) {
   const rows = x.rows;
@@ -102,10 +102,10 @@ function RecentActivity({
     <section className={drawerSectionCls}>
       <div className={drawerLabelCls}>recent activity</div>
       {events === null && (
-        <div className="mt-2 text-[0.76rem] text-ink-mute italic">loading…</div>
+        <div className="mt-2 text-body text-ink-mute italic">loading…</div>
       )}
       {events?.length === 0 && (
-        <div className="mt-2 text-[0.76rem] text-ink-mute italic">
+        <div className="mt-2 text-body text-ink-mute italic">
           no logged calls to {binary} yet
         </div>
       )}
@@ -119,14 +119,14 @@ function RecentActivity({
             return (
               <li
                 key={e.id}
-                className="flex items-center gap-2.5 border-b border-dashed border-rule-soft py-[7px]"
+                className="flex items-center gap-2.5 border-b border-dashed border-rule-soft py-1.75"
               >
-                <span className="min-w-[72px] shrink-0 font-mono text-tiny text-ink-mute">
+                <span className="min-w-18 shrink-0 font-mono text-tiny text-ink-mute">
                   {formatRelative(e.timestamp, nowTick)}
                 </span>
                 {actionBadge(e.action)}
                 <span
-                  className="flex-1 truncate font-mono text-[0.74rem] text-ink-dim"
+                  className="flex-1 truncate font-mono text-meta text-ink-dim"
                   title={cmd}
                 >
                   {cmd}
@@ -246,13 +246,13 @@ export default function RuleDrawer({
               <div className="mt-2.5">
                 {x.flagForms.map((f) => (
                   <div
-                    className="grid grid-cols-[140px_1fr] gap-3 border-b border-dashed border-rule-soft py-[7px]"
+                    className="grid grid-cols-[140px_1fr] gap-3 border-b border-dashed border-rule-soft py-1.75"
                     key={f.name}
                   >
-                    <span className="font-mono text-[0.68rem] tracking-[0.12em] text-ink-mute uppercase">
+                    <span className="font-mono text-tiny tracking-[0.12em] text-ink-mute uppercase">
                       {f.name}
                     </span>
-                    <span className="font-mono text-[0.74rem] tracking-[0.04em] text-ink">
+                    <span className="font-mono text-meta tracking-wider text-ink">
                       {f.forms.join("  ")}
                     </span>
                   </div>
@@ -271,12 +271,12 @@ export default function RuleDrawer({
                   key={ex.command}
                   className="grid grid-cols-[1fr_auto] items-center gap-3 border-b border-dashed border-rule-soft py-2"
                 >
-                  <span className="font-mono text-[0.76rem] break-all text-ink">
+                  <span className="font-mono text-body break-all text-ink">
                     {ex.command}
                   </span>
                   <span className="inline-flex items-center gap-2">
                     {actionBadge(ex.action)}
-                    <span className="max-w-[180px] truncate font-mono text-micro text-ink-mute">
+                    <span className="max-w-45 truncate font-mono text-micro text-ink-mute">
                       {ex.via}
                     </span>
                   </span>
