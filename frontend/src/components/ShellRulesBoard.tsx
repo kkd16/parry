@@ -1,10 +1,28 @@
+import clsx from "clsx";
 import { highlight } from "../highlight";
-import { ACTIONS, chipMatches, type ActionName, type ClusterChip } from "../utils/policyView";
+import {
+  ACTIONS,
+  chipMatches,
+  type ActionName,
+  type ClusterChip,
+} from "../utils/policyView";
 
 const CLUSTER_SUB: Record<ActionName, string> = {
   allow: "runs silently, logged",
   confirm: "pauses until you approve",
   block: "refused and logged",
+};
+
+const CLUSTER_NAME_CLS: Record<ActionName, string> = {
+  allow: "text-allow",
+  confirm: "text-confirm",
+  block: "text-block",
+};
+
+const CHIP_CLS: Record<ActionName, string> = {
+  allow: "border-allow/18 bg-allow/12 text-allow",
+  confirm: "border-confirm/20 bg-confirm/14 text-confirm",
+  block: "border-block/20 bg-block/12 text-block",
 };
 
 interface Props {
@@ -25,28 +43,51 @@ function Chip({
   onClick: () => void;
 }) {
   return (
-    <button className={`rule-chip rule-chip-${action}`} onClick={onClick}>
+    <button
+      className={clsx(
+        "cursor-pointer rounded-[3px] border px-[11px] py-[5px] font-mono text-[0.74rem] transition-[border-color,transform,box-shadow] duration-[140ms] hover:-translate-y-px hover:border-brass hover:shadow-[0_3px_10px_rgba(0,0,0,0.35)] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass",
+        CHIP_CLS[action],
+      )}
+      onClick={onClick}
+    >
       {highlight(chip.label, query)}
-      {chip.count > 1 && <span className="rule-chip-count">·{chip.count}</span>}
+      {chip.count > 1 && (
+        <span className="ml-1.5 text-tiny opacity-60">·{chip.count}</span>
+      )}
     </button>
   );
 }
 
-export default function ShellRulesBoard({ clusters, query, onOpenBinary }: Props) {
+export default function ShellRulesBoard({
+  clusters,
+  query,
+  onOpenBinary,
+}: Props) {
   return (
-    <div className="rule-clusters">
+    <div className="mt-1.5 flex flex-col gap-6">
       {ACTIONS.map((action) => {
         const all = clusters[action];
         const chips = all.filter((c) => chipMatches(c, query));
         return (
-          <div className="rule-cluster" key={action}>
-            <div className="rule-cluster-head">
-              <span className={`rule-cluster-name rule-cluster-name-${action}`}>{action}</span>
-              <span className="rule-cluster-count">{chips.length}</span>
-              <span className="rule-cluster-sub">{CLUSTER_SUB[action]}</span>
+          <div key={action}>
+            <div className="flex items-baseline gap-2.5">
+              <span
+                className={clsx(
+                  "inline-flex items-center gap-[7px] font-mono text-tiny font-semibold tracking-[0.18em] uppercase before:h-1.5 before:w-1.5 before:rotate-45 before:bg-current before:content-['']",
+                  CLUSTER_NAME_CLS[action],
+                )}
+              >
+                {action}
+              </span>
+              <span className="font-mono text-tiny text-ink-mute">
+                {chips.length}
+              </span>
+              <span className="font-display text-[0.82rem] text-ink-mute italic">
+                {CLUSTER_SUB[action]}
+              </span>
             </div>
             {chips.length ? (
-              <div className="rule-cloud">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {chips.map((chip) => (
                   <Chip
                     key={chip.binary}
@@ -58,7 +99,7 @@ export default function ShellRulesBoard({ clusters, query, onOpenBinary }: Props
                 ))}
               </div>
             ) : (
-              <div className="rule-cloud-empty muted">
+              <div className="mt-2.5 text-[0.76rem] text-ink-mute italic">
                 {all.length ? `no ${action} rules match` : `no ${action} rules`}
               </div>
             )}

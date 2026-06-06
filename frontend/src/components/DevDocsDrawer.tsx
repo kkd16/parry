@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
   nodeById,
   type DetailBlock,
@@ -6,19 +7,43 @@ import {
   type SubComponent,
 } from "../devdocs";
 import Drawer from "./Drawer";
+import { Btn } from "./ui";
+
+const BADGE_CLS: Record<NodeStatus, string> = {
+  shipped: "border-allow/35 bg-allow/12 text-allow",
+  planned: "border-dashed border-observe/35 bg-observe/14 text-observe",
+};
+
+const sectionCls = "mt-5.5 border-t border-dashed border-rule-soft pt-4";
+
+const labelCls =
+  "mb-2.5 font-mono text-micro tracking-[0.12em] text-ink-mute uppercase";
 
 function StatusBadge({ status }: { status: NodeStatus }) {
-  return <span className={`devdocs-badge devdocs-badge-${status}`}>{status}</span>;
+  return (
+    <span
+      className={clsx(
+        "inline-block rounded-[3px] border px-[7px] py-0.5 font-mono text-[0.6rem] tracking-[0.1em] uppercase",
+        BADGE_CLS[status],
+      )}
+    >
+      {status}
+    </span>
+  );
 }
 
 function Component({ item }: { item: SubComponent }) {
   return (
-    <li className="devdocs-subcomp">
-      <span className="devdocs-subcomp-head">
-        <span className="devdocs-subcomp-name">{item.name}</span>
+    <li className="flex flex-col gap-[3px]">
+      <span className="flex items-center gap-2">
+        <span className="font-mono text-[0.74rem] text-ink">{item.name}</span>
         {item.status === "planned" && <StatusBadge status="planned" />}
       </span>
-      {item.oneliner && <span className="devdocs-subcomp-oneliner">{item.oneliner}</span>}
+      {item.oneliner && (
+        <span className="text-[0.74rem] leading-[1.45] text-ink-mute">
+          {item.oneliner}
+        </span>
+      )}
     </li>
   );
 }
@@ -26,14 +51,21 @@ function Component({ item }: { item: SubComponent }) {
 function Block({ block }: { block: DetailBlock }) {
   switch (block.kind) {
     case "para":
-      return <p className="devdocs-para">{block.text}</p>;
+      return (
+        <p className="mt-3.5 text-[0.8rem] leading-[1.65] text-ink-dim">
+          {block.text}
+        </p>
+      );
     case "packages":
       return (
-        <section className="devdocs-drawer-section">
-          <div className="drawer-field-label">{block.label ?? "key packages"}</div>
-          <div className="devdocs-pkg-list">
+        <section className={sectionCls}>
+          <div className={labelCls}>{block.label ?? "key packages"}</div>
+          <div className="flex flex-wrap gap-1.5">
             {block.paths.map((p) => (
-              <span key={p} className="devdocs-pkg">
+              <span
+                key={p}
+                className="rounded-[3px] border border-rule bg-bg px-2 py-[3px] font-mono text-[0.7rem] text-brass"
+              >
                 {p}
               </span>
             ))}
@@ -42,9 +74,9 @@ function Block({ block }: { block: DetailBlock }) {
       );
     case "components":
       return (
-        <section className="devdocs-drawer-section">
-          <div className="drawer-field-label">{block.label ?? "components"}</div>
-          <ul className="devdocs-subcomp-list">
+        <section className={sectionCls}>
+          <div className={labelCls}>{block.label ?? "components"}</div>
+          <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
             {block.items.map((item) => (
               <Component key={item.name} item={item} />
             ))}
@@ -53,7 +85,14 @@ function Block({ block }: { block: DetailBlock }) {
       );
     case "note":
       return (
-        <div className={`devdocs-note${block.tone === "planned" ? " devdocs-note-planned" : ""}`}>
+        <div
+          className={clsx(
+            "mt-3.5 rounded border px-3 py-[9px] text-[0.76rem] leading-[1.5]",
+            block.tone === "planned"
+              ? "border-dashed border-brass-dim bg-observe/14 text-observe"
+              : "border-rule bg-bg text-ink-dim",
+          )}
+        >
           {block.text}
         </div>
       );
@@ -82,23 +121,25 @@ export default function DevDocsDrawer({ node, onClose, onNavigate }: Props) {
     >
       {node && (
         <>
-          <div className="devdocs-drawer-meta">
+          <div className="flex items-center gap-2">
             <StatusBadge status={node.status} />
           </div>
-          <p className="devdocs-lede">{node.oneliner}</p>
+          <p className="mt-3 text-[0.88rem] leading-[1.5] text-ink">
+            {node.oneliner}
+          </p>
 
           {node.detail.map((block, i) => (
             <Block key={i} block={block} />
           ))}
 
           {seeAlso.length > 0 && (
-            <section className="devdocs-drawer-section">
-              <div className="drawer-field-label">see also</div>
-              <div className="devdocs-seealso">
+            <section className={sectionCls}>
+              <div className={labelCls}>see also</div>
+              <div className="flex flex-wrap gap-1.5">
                 {seeAlso.map((target) => (
-                  <button key={target.id} className="btn" onClick={() => onNavigate(target.id)}>
+                  <Btn key={target.id} onClick={() => onNavigate(target.id)}>
                     {target.title}
-                  </button>
+                  </Btn>
                 ))}
               </div>
             </section>

@@ -1,5 +1,12 @@
 import { useMemo } from "react";
-import { Columns3, Download, Eraser, FileJson, RefreshCw, RotateCcw } from "lucide-react";
+import {
+  Columns3,
+  Download,
+  Eraser,
+  FileJson,
+  RefreshCw,
+  RotateCcw,
+} from "lucide-react";
 import { useRegisterCommands, type Command } from "../commands";
 
 interface Opts {

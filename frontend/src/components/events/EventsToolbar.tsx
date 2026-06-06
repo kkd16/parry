@@ -1,9 +1,13 @@
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import clsx from "clsx";
 import { Columns3, Download, FileJson, RefreshCw, Star } from "lucide-react";
 import SearchableSelect from "../SearchableSelect";
-import { TIME_OPTIONS, type EventsFiltersApi } from "../../hooks/useEventsFilters";
+import { Btn, inputCls } from "../ui";
+import {
+  TIME_OPTIONS,
+  type EventsFiltersApi,
+} from "../../hooks/useEventsFilters";
 import { EVENT_COLUMNS, type ColumnVisibility } from "./columns";
-import "./EventsToolbar.css";
 
 interface Props {
   filters: EventsFiltersApi;
@@ -21,6 +25,9 @@ interface Props {
     v: ColumnVisibility | ((prev: ColumnVisibility) => ColumnVisibility),
   ) => void;
 }
+
+const toolbarCls =
+  "flex flex-wrap items-center gap-2.5 border border-rule bg-bg-raised px-3";
 
 export default function EventsToolbar({
   filters,
@@ -41,7 +48,10 @@ export default function EventsToolbar({
   useEffect(() => {
     if (!colMenuOpen) return;
     const click = (e: MouseEvent) => {
-      if (colMenuRef.current && !colMenuRef.current.contains(e.target as Node)) {
+      if (
+        colMenuRef.current &&
+        !colMenuRef.current.contains(e.target as Node)
+      ) {
         setColMenuOpen(false);
       }
     };
@@ -51,16 +61,18 @@ export default function EventsToolbar({
 
   return (
     <>
-      <div className="toolbar">
+      <div
+        className={clsx(toolbarCls, "rounded-t-md border-b-rule-soft py-2.5")}
+      >
         <input
-          className="input search-input"
+          className={clsx("search-input min-w-[260px]", inputCls)}
           type="text"
           placeholder="search entries… (press / to focus)"
           value={filters.searchInput}
           onChange={(e) => filters.onSearchChange(e.target.value)}
         />
         <select
-          className="input"
+          className={inputCls}
           value={filters.values.action}
           onChange={(e) => filters.set("action", e.target.value)}
         >
@@ -71,7 +83,7 @@ export default function EventsToolbar({
           <option value="observe">observe</option>
         </select>
         <select
-          className="input"
+          className={inputCls}
           value={filters.values.tool}
           onChange={(e) => filters.set("tool", e.target.value)}
         >
@@ -94,7 +106,7 @@ export default function EventsToolbar({
           onChange={(v) => filters.set("binary", v)}
         />
         <select
-          className="input"
+          className={inputCls}
           value={filters.values.time}
           onChange={(e) => filters.set("time", e.target.value)}
         >
@@ -106,39 +118,53 @@ export default function EventsToolbar({
           ))}
         </select>
 
-        <div className="toolbar-spacer" />
+        <div className="flex-1" />
 
-        <button
-          className={`btn${autoRefresh ? " active" : ""}`}
+        <Btn
+          active={autoRefresh}
           onClick={onToggleLive}
           title="auto-refresh every 3s"
         >
-          <RefreshCw style={{ animation: autoRefresh ? "spin 2s linear infinite" : "" }} />
+          <RefreshCw
+            className={autoRefresh ? "animate-spin-slow" : undefined}
+          />
           live
-        </button>
+        </Btn>
       </div>
 
-      <div className="toolbar toolbar-actions">
-        <div className="toolbar-spacer" />
-        <button className="btn" onClick={onExportCsv}>
+      <div
+        className={clsx(
+          toolbarCls,
+          "-mt-2.5 mb-4.5 rounded-b-md border-t-0 py-2",
+        )}
+      >
+        <div className="flex-1" />
+        <Btn onClick={onExportCsv}>
           <Download /> csv
-        </button>
-        <button className="btn" onClick={onExportJson}>
+        </Btn>
+        <Btn onClick={onExportJson}>
           <FileJson /> json
-        </button>
-        <button className="btn" onClick={onSaveBookmark} title="save current filters as a bookmark">
+        </Btn>
+        <Btn
+          onClick={onSaveBookmark}
+          title="save current filters as a bookmark"
+        >
           <Star /> save
-        </button>
-        <div className="toolbar-group" ref={colMenuRef}>
-          <button className="btn" onClick={() => setColMenuOpen((v) => !v)}>
+        </Btn>
+        <div className="relative flex items-center gap-1.5" ref={colMenuRef}>
+          <Btn onClick={() => setColMenuOpen((v) => !v)}>
             <Columns3 /> cols
-          </button>
+          </Btn>
           {colMenuOpen && (
-            <div className="card col-menu">
+            <div className="absolute top-[calc(100%+6px)] right-0 z-20 min-w-[160px] rounded-md border border-rule bg-bg-raised px-3.5 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]">
               {EVENT_COLUMNS.map((col) => (
-                <label key={col.id} className="col-menu-item">
+                <label
+                  key={col.id}
+                  className="flex cursor-pointer items-center gap-2 py-1 font-mono text-body"
+                >
                   <input
                     type="checkbox"
+                    className="accent-brass"
                     checked={columnVisibility[col.id] !== false}
                     onChange={() =>
                       setColumnVisibility((prev) => ({

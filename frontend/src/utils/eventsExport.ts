@@ -11,7 +11,9 @@ export function csvEscape(v: string): string {
 }
 
 export function downloadJson(events: Event[]) {
-  const blob = new Blob([JSON.stringify(events, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(events, null, 2)], {
+    type: "application/json",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

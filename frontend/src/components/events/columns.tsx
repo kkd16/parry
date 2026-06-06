@@ -23,6 +23,11 @@ export interface ColumnSpec {
 
 export const MIN_COL_WIDTH = 60;
 
+const cellLinkCls =
+  "cursor-pointer border-b border-dashed border-transparent text-left font-mono text-[0.75rem] hover:border-brass-dim hover:text-brass";
+
+const dash = <span className="text-ink-mute italic">—</span>;
+
 export const EVENT_COLUMNS: ColumnSpec[] = [
   {
     id: "timestamp",
@@ -30,7 +35,10 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     defaultSize: 150,
     sortable: true,
     render: (e, ctx) => (
-      <span className="mono" title={formatAbsolute(e.timestamp)}>
+      <span
+        className="font-mono text-[0.75rem]"
+        title={formatAbsolute(e.timestamp)}
+      >
         {formatRelative(e.timestamp, ctx.nowTick)}
       </span>
     ),
@@ -50,7 +58,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     render: (e, ctx) =>
       e.binary ? (
         <button
-          className="cell-link mono"
+          className={cellLinkCls}
           onClick={(ev) => {
             ev.stopPropagation();
             ctx.onFilterBinary(e.binary);
@@ -59,7 +67,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
           {e.binary}
         </button>
       ) : (
-        <span className="muted">—</span>
+        dash
       ),
   },
   {
@@ -68,7 +76,11 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     defaultSize: 240,
     sortable: true,
     render: (e) =>
-      e.file ? <span className="mono">{e.file}</span> : <span className="muted">—</span>,
+      e.file ? (
+        <span className="font-mono text-[0.75rem]">{e.file}</span>
+      ) : (
+        dash
+      ),
   },
   {
     id: "action",
@@ -82,8 +94,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     label: "Would",
     defaultSize: 100,
     sortable: true,
-    render: (e) =>
-      e.would_action ? actionBadge(e.would_action) : <span className="muted">—</span>,
+    render: (e) => (e.would_action ? actionBadge(e.would_action) : dash),
   },
   {
     id: "mode",
@@ -100,7 +111,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     render: (e, ctx) =>
       e.workdir ? (
         <button
-          className="cell-link mono"
+          className={cellLinkCls}
           onClick={(ev) => {
             ev.stopPropagation();
             ctx.onFilterWorkdir(e.workdir);
@@ -109,7 +120,7 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
           {e.workdir}
         </button>
       ) : (
-        <span className="muted">—</span>
+        dash
       ),
   },
   {
@@ -117,20 +128,26 @@ export const EVENT_COLUMNS: ColumnSpec[] = [
     label: "Input",
     defaultSize: 280,
     sortable: false,
-    render: (e) => <span className="mono muted">{shortJson(e.tool_input)}</span>,
+    render: (e) => (
+      <span className="font-mono text-[0.75rem] text-ink-mute italic">
+        {shortJson(e.tool_input)}
+      </span>
+    ),
   },
   {
     id: "raw_name",
     label: "Raw",
     defaultSize: 110,
     sortable: true,
-    render: (e) => e.raw_name || <span className="muted">—</span>,
+    render: (e) => e.raw_name || dash,
   },
   {
     id: "session",
     label: "Session",
     defaultSize: 100,
     sortable: false,
-    render: (e) => <span className="mono">{e.session.slice(0, 8)}</span>,
+    render: (e) => (
+      <span className="font-mono text-[0.75rem]">{e.session.slice(0, 8)}</span>
+    ),
   },
 ];

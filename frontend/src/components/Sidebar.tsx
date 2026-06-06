@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import clsx from "clsx";
 import { Bookmark, Workflow, X } from "lucide-react";
 import { TABS, type Tab } from "../tabs";
 import type { PolicyOverviewState } from "../hooks/usePolicyOverview";
@@ -6,7 +7,8 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 import type { BookmarksApi } from "../hooks/useBookmarks";
 import type { DashboardCounts } from "../types";
 import { healthClass } from "../policyBadges";
-import "./Sidebar.css";
+import { FieldLabel, HealthDot, Kbd } from "./ui";
+import { healthDotVariants } from "./variants";
 
 interface Props {
   tab: Tab;
@@ -29,6 +31,9 @@ function formatCount(n: number | null): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(n);
 }
+
+const navBadgeCls =
+  "rounded-lg border border-brass-dim bg-brass/10 px-1.5 py-px font-mono text-eyebrow tracking-[0.04em] text-brass";
 
 export default function Sidebar({
   tab,
@@ -90,11 +95,20 @@ export default function Sidebar({
     : null;
 
   const renderBadge = (n: number | null) =>
-    n != null ? <span className="sidebar-nav-badge">{formatCount(n)}</span> : null;
+    n != null ? (
+      <span className={clsx("ml-auto", navBadgeCls)}>{formatCount(n)}</span>
+    ) : null;
 
   const renderDangerBadge = (n: number | null) =>
     n ? (
-      <span className="sidebar-nav-badge danger" title="blocked or confirmed today">
+      <span
+        className={clsx(
+          "ml-auto",
+          navBadgeCls,
+          "border-block/35 bg-block/12 text-block",
+        )}
+        title="blocked or confirmed today"
+      >
         {formatCount(n)}
       </span>
     ) : null;
@@ -106,16 +120,23 @@ export default function Sidebar({
       renderBadge(eventCount > 0 ? eventCount : null),
     orrery: renderBadge(counts.projects),
     charter: renderBadge(ruleCount),
-    beacon: <span className={`sidebar-nav-dot ${healthCls}`} />,
+    beacon: (
+      <span
+        className={clsx(
+          "ml-auto h-2 w-2 rounded-full",
+          healthDotVariants[healthCls],
+        )}
+      />
+    ),
     devdocs: null,
   };
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-brand">
+    <aside className="relative flex flex-col border-r border-rule bg-[linear-gradient(180deg,#0c0d14_0%,#090a10_100%)] pt-7 pb-4 select-none">
+      <div className="mb-5 border-b border-rule-soft px-7 pb-7">
         <button
           type="button"
-          className="sidebar-brand-title sidebar-brand-button"
+          className="cursor-pointer text-left font-display text-[2.1rem] leading-none tracking-[-0.01em] text-ink italic transition-colors duration-150 hover:text-brass"
           onClick={onShowAbout}
           title="about parry"
         >
@@ -123,41 +144,57 @@ export default function Sidebar({
         </button>
       </div>
 
-      <nav className="sidebar-nav">
-        <div className="sidebar-nav-label">Instruments</div>
+      <nav className="flex flex-1 flex-col gap-0.5 px-3.5">
+        <div className="px-3.5 pt-4.5 pb-2 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase">
+          Instruments
+        </div>
         {TABS.filter((t) => t.id !== "devdocs").map((t) => (
           <button
             key={t.id}
-            className={`sidebar-nav-item${tab === t.id ? " active" : ""}`}
+            className={clsx(
+              "relative flex items-center gap-3 rounded px-3.5 py-2.5 text-left text-[0.88rem] font-medium text-ink-dim transition-colors duration-150 hover:bg-bg-hover hover:text-ink [&_svg]:h-4 [&_svg]:w-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.8]",
+              tab === t.id &&
+                "bg-bg-hover text-ink before:absolute before:top-1/2 before:-left-3.5 before:h-[22px] before:w-0.5 before:-translate-y-1/2 before:bg-brass-bright before:shadow-[0_0_8px_var(--color-brass)] before:content-['']",
+            )}
             onClick={() => setTab(t.id)}
           >
             <t.icon />
             <span>{t.label}</span>
             {tabBadge[t.id]}
-            <span className="sidebar-nav-hint">g {t.key}</span>
+            <span
+              className={clsx(
+                "font-mono text-[0.65rem] tracking-[0.05em] text-ink-mute",
+                tabBadge[t.id] ? "ml-1.5" : "ml-auto",
+              )}
+            >
+              g {t.key}
+            </span>
           </button>
         ))}
 
         {bookmarks.bookmarks.length > 0 && (
           <>
-            <div className="sidebar-nav-label">Bookmarks</div>
-            <div className="sidebar-bookmarks">
+            <div className="px-3.5 pt-4.5 pb-2 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase">
+              Bookmarks
+            </div>
+            <div className="-mx-3.5 flex max-h-[200px] flex-col gap-px overflow-y-auto px-3.5">
               {bookmarks.bookmarks.map((b) => (
-                <div key={b.id} className="sidebar-bookmark">
+                <div key={b.id} className="flex items-center gap-1">
                   <button
-                    className="sidebar-bookmark-link"
+                    className="flex min-w-0 flex-1 items-center gap-2 rounded-[3px] px-2.5 py-1.5 text-left font-mono text-[0.7rem] text-ink-dim hover:bg-bg-hover hover:text-brass [&_svg]:h-3 [&_svg]:w-3 [&_svg]:shrink-0"
                     onClick={() => onOpenBookmark(b.qs)}
                     onDoubleClick={() => {
                       const next = window.prompt("rename bookmark", b.name);
-                      if (next != null && next.trim()) bookmarks.rename(b.id, next.trim());
+                      if (next != null && next.trim())
+                        bookmarks.rename(b.id, next.trim());
                     }}
                     title="click: open · dbl-click: rename"
                   >
                     <Bookmark />
-                    <span className="sidebar-bookmark-name">{b.name}</span>
+                    <span className="flex-1 truncate">{b.name}</span>
                   </button>
                   <button
-                    className="sidebar-bookmark-x"
+                    className="rounded-[3px] p-1 text-ink-mute hover:text-block"
                     onClick={() => bookmarks.remove(b.id)}
                     title="delete bookmark"
                   >
@@ -170,55 +207,79 @@ export default function Sidebar({
         )}
       </nav>
 
-      <div className="sidebar-footer">
-        <div className="sidebar-footer-row">
-          <span className="field-label">mode</span>
-          <span className="sidebar-footer-value">{policy?.mode ?? "—"}</span>
+      <div className="mt-3 flex flex-col gap-2.5 border-t border-rule-soft px-6 pt-4 pb-1">
+        <div className="flex items-center justify-between gap-2 text-meta">
+          <FieldLabel>mode</FieldLabel>
+          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
+            {policy?.mode ?? "—"}
+          </span>
         </div>
-        <div className="sidebar-footer-row">
-          <span className="field-label">ver</span>
-          <span className="sidebar-footer-value">{policy?.version ?? "—"}</span>
+        <div className="flex items-center justify-between gap-2 text-meta">
+          <FieldLabel>ver</FieldLabel>
+          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
+            {policy?.version ?? "—"}
+          </span>
         </div>
-        <div className="sidebar-footer-row">
-          <span className="field-label">default</span>
-          <span className="sidebar-footer-value">{policy?.default_action ?? "—"}</span>
+        <div className="flex items-center justify-between gap-2 text-meta">
+          <FieldLabel>default</FieldLabel>
+          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
+            {policy?.default_action ?? "—"}
+          </span>
         </div>
-        <div className="sidebar-footer-row">
-          <span className="field-label">notify</span>
-          <span className="sidebar-footer-value" title={health?.error ?? ""}>
-            <span className={`health-dot ${healthCls}`} />
+        <div className="flex items-center justify-between gap-2 text-meta">
+          <FieldLabel>notify</FieldLabel>
+          <span
+            className="max-w-[110px] truncate font-mono text-meta text-ink-dim"
+            title={health?.error ?? ""}
+          >
+            <HealthDot status={health?.status} />
             {notify?.provider ?? "none"}
           </span>
         </div>
-        <div className="sidebar-footer-row">
-          <span className="field-label">live</span>
-          <span className="sidebar-footer-value">
-            <span className={`health-dot ${live ? "ok" : "none"}`} />
+        <div className="flex items-center justify-between gap-2 text-meta">
+          <FieldLabel>live</FieldLabel>
+          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
+            <HealthDot status={live ? "ok" : undefined} />
             {live ? "on" : "off"}
           </span>
         </div>
         <button
-          className={`sidebar-footer-docs-btn${tab === "devdocs" ? " active" : ""}`}
+          className={clsx(
+            "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 font-mono text-[0.64rem] tracking-[0.1em] text-ink-dim uppercase transition-colors duration-150 hover:border-brass-dim hover:text-brass [&_svg]:h-[13px] [&_svg]:w-[13px] [&_svg]:shrink-0",
+            tab === "devdocs" && "border-brass-dim bg-observe/14 text-brass",
+          )}
           onClick={() => setTab("devdocs")}
         >
           <Workflow />
           <span>Dev Docs</span>
-          <span className="kbd">g d</span>
+          <Kbd className="ml-auto">g d</Kbd>
         </button>
-        <button className="sidebar-footer-hint-btn" onClick={onShowHelp}>
-          <span className="sidebar-footer-hint-row">
-            <span className="kbd">⌘</span>
-            <span className="kbd">space</span>
+        <button
+          className="group mt-1.5 flex w-full flex-col items-start gap-1 rounded-[3px] border-t border-dashed border-rule-soft px-1 pt-2 pb-1 text-left font-mono text-[0.6rem] tracking-[0.08em] text-ink-mute uppercase hover:text-brass"
+          onClick={onShowHelp}
+        >
+          <span className="inline-flex items-center gap-[5px]">
+            <Kbd className="group-hover:border-brass-dim group-hover:text-brass">
+              ⌘
+            </Kbd>
+            <Kbd className="group-hover:border-brass-dim group-hover:text-brass">
+              space
+            </Kbd>
             <span>palette</span>
           </span>
-          <span className="sidebar-footer-hint-row">
-            <span className="kbd">?</span>
+          <span className="inline-flex items-center gap-[5px]">
+            <Kbd className="group-hover:border-brass-dim group-hover:text-brass">
+              ?
+            </Kbd>
             <span>help</span>
           </span>
         </button>
       </div>
 
-      <div className="sidebar-resize" onMouseDown={onDown} />
+      <div
+        className="absolute top-0 -right-[3px] z-5 h-full w-1.5 cursor-col-resize after:absolute after:top-0 after:bottom-0 after:left-0.5 after:w-0.5 after:content-[''] hover:after:bg-brass"
+        onMouseDown={onDown}
+      />
     </aside>
   );
 }

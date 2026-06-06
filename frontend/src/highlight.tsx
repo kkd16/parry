@@ -7,7 +7,9 @@ export function highlight(text: string, query: string): ReactNode {
   return (
     <>
       {text.slice(0, idx)}
-      <span className="mark">{text.slice(idx, idx + query.length)}</span>
+      <span className="border-b border-brass text-brass">
+        {text.slice(idx, idx + query.length)}
+      </span>
       {text.slice(idx + query.length)}
     </>
   );

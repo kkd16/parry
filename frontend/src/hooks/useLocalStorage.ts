@@ -20,7 +20,10 @@ function write(key: string, value: unknown) {
   }
 }
 
-export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((prev: T) => T)) => void] {
+export function useLocalStorage<T>(
+  key: string,
+  initial: T,
+): [T, (v: T | ((prev: T) => T)) => void] {
   const [value, setValue] = useState<T>(() => read(key, initial));
   const ref = useRef(value);
 
@@ -42,7 +45,8 @@ export function useLocalStorage<T>(key: string, initial: T): [T, (v: T | ((prev:
 
   const set = useCallback(
     (next: T | ((prev: T) => T)) => {
-      const resolved = typeof next === "function" ? (next as (p: T) => T)(ref.current) : next;
+      const resolved =
+        typeof next === "function" ? (next as (p: T) => T)(ref.current) : next;
       ref.current = resolved;
       write(key, resolved);
       setValue(resolved);

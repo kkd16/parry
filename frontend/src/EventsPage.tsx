@@ -6,7 +6,10 @@ import FilterChips from "./components/FilterChips";
 import PageHeader from "./components/PageHeader";
 import EventsTable from "./components/events/EventsTable";
 import EventsToolbar from "./components/events/EventsToolbar";
-import type { ColumnSizing, ColumnVisibility } from "./components/events/columns";
+import type {
+  ColumnSizing,
+  ColumnVisibility,
+} from "./components/events/columns";
 import { useToast } from "./components/Toasts";
 import { useBookmarks } from "./hooks/useBookmarks";
 import { useEventsCommands } from "./hooks/useEventsCommands";
@@ -21,7 +24,7 @@ import { useEventsQuery } from "./hooks/useEventsQuery";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { downloadCsv, downloadJson } from "./utils/eventsExport";
 import { useNowTick } from "./utils/relativeTime";
-import "./EventsPage.css";
+import { Btn, ErrorBox } from "./components/ui";
 
 interface Props {
   onCountChange: (n: number) => void;
@@ -45,18 +48,18 @@ export default function EventsPage({ onCountChange, onLiveChange }: Props) {
   const toast = useToast();
   const bookmarks = useBookmarks();
   const nowTick = useNowTick(30_000);
-  const [density, setDensity] = useLocalStorage<"compact" | "normal" | "comfortable">(
-    "parry-density",
-    "normal",
+  const [density, setDensity] = useLocalStorage<
+    "compact" | "normal" | "comfortable"
+  >("parry-density", "normal");
+  const [columnSizing, setColumnSizing] = useLocalStorage<ColumnSizing>(
+    "parry-col-sizing",
+    {},
   );
-  const [columnSizing, setColumnSizing] = useLocalStorage<ColumnSizing>("parry-col-sizing", {});
-  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
-    "parry-col-visibility",
-    {
+  const [columnVisibility, setColumnVisibility] =
+    useLocalStorage<ColumnVisibility>("parry-col-visibility", {
       raw_name: false,
       session: false,
-    },
-  );
+    });
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [colMenuOpen, setColMenuOpen] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
@@ -75,16 +78,19 @@ export default function EventsPage({ onCountChange, onLiveChange }: Props) {
     let out = events;
     if (workdir) out = out.filter((e) => e.workdir === workdir);
     const cutoff = timeFilterCutoff(time);
-    if (cutoff != null) out = out.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
+    if (cutoff != null)
+      out = out.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
     return out;
   }, [events, workdir, time]);
 
   const workdirs = useMemo(
-    () => Array.from(new Set(events.map((e) => e.workdir).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(events.map((e) => e.workdir).filter(Boolean))).sort(),
     [events],
   );
   const binaries = useMemo(
-    () => Array.from(new Set(events.map((e) => e.binary).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(events.map((e) => e.binary).filter(Boolean))).sort(),
     [events],
   );
 
@@ -124,7 +130,8 @@ export default function EventsPage({ onCountChange, onLiveChange }: Props) {
   const chips = [
     ...FILTER_KEYS.map((k) => ({
       label: CHIP_LABELS[k],
-      value: k === "session" ? filters.values[k].slice(0, 8) : filters.values[k],
+      value:
+        k === "session" ? filters.values[k].slice(0, 8) : filters.values[k],
       onClear: () => filters.set(k, ""),
     })),
     { label: "search", value: filters.search, onClear: filters.clearSearch },
@@ -157,7 +164,7 @@ export default function EventsPage({ onCountChange, onLiveChange }: Props) {
         setColumnVisibility={setColumnVisibility}
       />
 
-      {error && <div className="error">{error}</div>}
+      {error && <ErrorBox>{error}</ErrorBox>}
 
       <EventsTable
         events={filteredEvents}
@@ -177,30 +184,30 @@ export default function EventsPage({ onCountChange, onLiveChange }: Props) {
         onFilterWorkdir={(w) => filters.set("workdir", w)}
       />
 
-      <div className="pagination">
+      <div className="mt-4 flex items-center justify-between px-1 py-1.5 font-mono text-meta text-ink-dim">
         <span>
           showing {filteredEvents.length}
           {clientFiltered ? " filtered" : ""} of {total.toLocaleString()}
         </span>
         {!clientFiltered && (
-          <div className="pagination-controls">
-            <button
-              className="btn"
+          <div className="flex items-center gap-2">
+            <Btn
               disabled={filters.offset === 0}
-              onClick={() => filters.setOffset(Math.max(0, filters.offset - PAGE_SIZE))}
+              onClick={() =>
+                filters.setOffset(Math.max(0, filters.offset - PAGE_SIZE))
+              }
             >
               prev
-            </button>
+            </Btn>
             <span>
               page {page} / {totalPages}
             </span>
-            <button
-              className="btn"
+            <Btn
               disabled={filters.offset + PAGE_SIZE >= total}
               onClick={() => filters.setOffset(filters.offset + PAGE_SIZE)}
             >
               next
-            </button>
+            </Btn>
           </div>
         )}
       </div>

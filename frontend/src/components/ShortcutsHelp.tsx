@@ -1,6 +1,11 @@
-import Dialog from "./Dialog";
+import Dialog, {
+  dialogEyebrowCls,
+  dialogHeaderCls,
+  dialogPanelCls,
+  dialogTitleCls,
+} from "./Dialog";
+import { Kbd } from "./ui";
 import { TABS } from "../tabs";
-import "./ShortcutsHelp.css";
 
 interface Props {
   open: boolean;
@@ -47,23 +52,32 @@ const GROUPS: ShortcutGroup[] = [
 
 export default function ShortcutsHelp({ open, onClose }: Props) {
   return (
-    <Dialog open={open} onClose={onClose} className="shortcuts-dialog">
-      <div className="shortcuts-header">
-        <div className="shortcuts-eyebrow">reference card</div>
-        <h2 className="shortcuts-title">Keyboard shortcuts</h2>
+    <Dialog open={open} onClose={onClose} className={dialogPanelCls}>
+      <div className={dialogHeaderCls}>
+        <div className={dialogEyebrowCls}>reference card</div>
+        <h2 className={dialogTitleCls}>Keyboard shortcuts</h2>
       </div>
-      <div className="shortcuts-body">
+      <div className="grid max-h-[60vh] grid-cols-2 gap-7 overflow-y-auto px-7 pt-5.5 pb-2">
         {GROUPS.map((g) => (
-          <div key={g.title} className="shortcuts-group">
-            <div className="shortcuts-group-title">{g.title}</div>
+          <div key={g.title}>
+            <div className="mb-2.5 border-b border-dashed border-rule pb-1.5 font-mono text-[0.6rem] tracking-[0.18em] text-ink-mute uppercase">
+              {g.title}
+            </div>
             {g.items.map((item) => (
-              <div key={item.label} className="shortcuts-row">
-                <span className="shortcuts-row-label">{item.label}</span>
-                <span className="shortcuts-row-keys">
+              <div
+                key={item.label}
+                className="flex items-center justify-between gap-3 py-[7px] font-mono text-[0.76rem]"
+              >
+                <span className="text-ink-dim">{item.label}</span>
+                <span className="inline-flex items-center gap-1">
                   {item.keys.map((k, i) => (
                     <span key={i}>
-                      {i > 0 && <span className="shortcuts-sep">+</span>}
-                      <span className="kbd">{k}</span>
+                      {i > 0 && (
+                        <span className="mx-0.5 text-tiny text-ink-mute">
+                          +
+                        </span>
+                      )}
+                      <Kbd>{k}</Kbd>
                     </span>
                   ))}
                 </span>
@@ -72,7 +86,9 @@ export default function ShortcutsHelp({ open, onClose }: Props) {
           </div>
         ))}
       </div>
-      <div className="shortcuts-footer">press esc or click outside to close</div>
+      <div className="border-t border-rule px-7 pt-3 pb-4 text-center font-mono text-tiny text-ink-mute">
+        press esc or click outside to close
+      </div>
     </Dialog>
   );
 }

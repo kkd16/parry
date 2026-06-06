@@ -1,10 +1,21 @@
 import PageHeader from "./components/PageHeader";
-import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
+import {
+  formatAbsolute,
+  formatRelative,
+  useNowTick,
+} from "./utils/relativeTime";
 import { basename } from "./utils/format";
-import { ACTION_COLORS, actionBadge, healthClass } from "./policyBadges";
+import { ACTION_COLORS, actionBadge } from "./policyBadges";
+import {
+  Card,
+  ErrorBox,
+  Eyebrow,
+  FieldLabel,
+  FieldValue,
+  HealthDot,
+} from "./components/ui";
 import type { ActionCount, DayBucket, Event, OverviewResponse } from "./types";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
-import "./BridgePage.css";
 
 interface Props {
   policyOverview: PolicyOverviewState;
@@ -23,11 +34,11 @@ function Sparkline({ data }: { data: DayBucket[] }) {
     .map((d, i) => `${i * step},${h - (d.count / max) * (h - 4) - 2}`)
     .join(" ");
   return (
-    <svg width={w} height={h} className="bridge-sparkline">
+    <svg width={w} height={h} className="block">
       <polyline
         points={points}
         fill="none"
-        stroke="var(--brass)"
+        stroke="var(--color-brass)"
         strokeWidth={1.5}
       />
       {data.map((d, i) => (
@@ -36,7 +47,7 @@ function Sparkline({ data }: { data: DayBucket[] }) {
             cx={i * step}
             cy={h - (d.count / max) * (h - 4) - 2}
             r={2}
-            fill="var(--brass-bright)"
+            fill="var(--color-brass-bright)"
           />
           <title>{`${d.date}: ${d.count}`}</title>
         </g>
@@ -49,19 +60,25 @@ function Donut({ data }: { data: ActionCount[] }) {
   const total = data.reduce((s, d) => s + d.count, 0) || 1;
   const r = 44;
   const c = 2 * Math.PI * r;
-  const segments = data.reduce<{ action: string; dash: number; offset: number }[]>(
-    (acc, d) => {
-      const dash = (d.count / total) * c;
-      const offset = acc.reduce((s, x) => s + x.dash, 0);
-      acc.push({ action: d.action, dash, offset });
-      return acc;
-    },
-    [],
-  );
+  const segments = data.reduce<
+    { action: string; dash: number; offset: number }[]
+  >((acc, d) => {
+    const dash = (d.count / total) * c;
+    const offset = acc.reduce((s, x) => s + x.dash, 0);
+    acc.push({ action: d.action, dash, offset });
+    return acc;
+  }, []);
   return (
-    <div className="bridge-donut-wrap">
+    <div className="flex items-center gap-4">
       <svg width={120} height={120} viewBox="0 0 120 120">
-        <circle cx={60} cy={60} r={r} fill="none" stroke="var(--rule)" strokeWidth={14} />
+        <circle
+          cx={60}
+          cy={60}
+          r={r}
+          fill="none"
+          stroke="var(--color-rule)"
+          strokeWidth={14}
+        />
         {segments.map((s) => (
           <circle
             key={s.action}
@@ -69,7 +86,7 @@ function Donut({ data }: { data: ActionCount[] }) {
             cy={60}
             r={r}
             fill="none"
-            stroke={ACTION_COLORS[s.action] ?? "var(--ink-mute)"}
+            stroke={ACTION_COLORS[s.action] ?? "var(--color-ink-mute)"}
             strokeWidth={14}
             strokeDasharray={`${s.dash} ${c - s.dash}`}
             strokeDashoffset={-s.offset}
@@ -80,7 +97,7 @@ function Donut({ data }: { data: ActionCount[] }) {
           x={60}
           y={62}
           textAnchor="middle"
-          fill="var(--ink)"
+          fill="var(--color-ink)"
           fontSize={20}
           fontFamily="Instrument Serif, serif"
           fontStyle="italic"
@@ -88,15 +105,17 @@ function Donut({ data }: { data: ActionCount[] }) {
           {total.toLocaleString()}
         </text>
       </svg>
-      <div className="bridge-donut-legend">
+      <div className="flex flex-1 flex-col gap-1 font-mono text-meta">
         {data.map((d) => (
-          <div key={d.action} className="bridge-donut-legend-row">
+          <div key={d.action} className="flex items-center gap-2">
             <span
-              className="bridge-donut-swatch"
-              style={{ background: ACTION_COLORS[d.action] ?? "var(--ink-mute)" }}
+              className="h-2 w-2 rounded-[1px]"
+              style={{
+                background: ACTION_COLORS[d.action] ?? "var(--color-ink-mute)",
+              }}
             />
-            <span className="bridge-donut-action">{d.action}</span>
-            <span className="bridge-donut-count">{d.count.toLocaleString()}</span>
+            <span className="flex-1 text-ink-dim">{d.action}</span>
+            <span className="text-ink">{d.count.toLocaleString()}</span>
           </div>
         ))}
       </div>
@@ -107,14 +126,14 @@ function Donut({ data }: { data: ActionCount[] }) {
 function ActionBar({ actions }: { actions: Record<string, number> }) {
   const total = Object.values(actions).reduce((a, b) => a + b, 0) || 1;
   return (
-    <div className="bridge-action-bar">
+    <div className="flex h-2 w-full overflow-hidden rounded-[1px] bg-bg">
       {Object.entries(actions).map(([a, c]) => (
         <span
           key={a}
-          className="bridge-action-bar-seg"
+          className="h-full"
           style={{
             width: `${(c / total) * 100}%`,
-            background: ACTION_COLORS[a] ?? "var(--ink-mute)",
+            background: ACTION_COLORS[a] ?? "var(--color-ink-mute)",
           }}
           title={`${a}: ${c}`}
         />
@@ -139,74 +158,85 @@ export default function BridgePage({
     <>
       <PageHeader eyebrow="instrument · 00" title="Bridge" />
 
-      {error && <div className="error">{error}</div>}
+      {error && <ErrorBox>{error}</ErrorBox>}
       {!data ? (
-        <div className="muted" style={{ padding: 40, textAlign: "center" }}>
+        <div className="p-10 text-center text-ink-mute italic">
           assembling the watch report…
         </div>
       ) : (
-        <div className="bridge-grid">
-          <div className="card bridge-card bridge-card-wide">
-            <div className="card-eyebrow">activity</div>
-            <div className="bridge-card-row">
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="col-span-2 flex flex-col">
+            <Eyebrow>activity</Eyebrow>
+            <div className="flex items-end gap-4">
               <div>
-                <div className="bridge-big-num">{data.today.toLocaleString()}</div>
-                <div className="bridge-card-sub">events today</div>
+                <div className="font-display text-[3.4rem] leading-[0.9] text-ink italic">
+                  {data.today.toLocaleString()}
+                </div>
+                <div className="mt-1.5 font-mono text-[0.7rem] text-ink-dim">
+                  events today
+                </div>
               </div>
-              <div style={{ flex: 1 }} />
+              <div className="flex-1" />
               <Sparkline data={data.last_7d} />
             </div>
-            <div className="bridge-card-foot">
+            <div className="mt-3 border-t border-rule-soft pt-2.5 font-mono text-[0.68rem] text-ink-mute">
               <span>{data.total.toLocaleString()} total recorded</span>
             </div>
-          </div>
+          </Card>
 
-          <div className="card bridge-card">
-            <div className="card-eyebrow">action distribution</div>
+          <Card className="flex flex-col">
+            <Eyebrow>action distribution</Eyebrow>
             <Donut data={data.by_action} />
-          </div>
+          </Card>
 
-          <div className="card bridge-card">
-            <div className="card-eyebrow">policy heartbeat</div>
-            <div className="bridge-heart">
-              <div className="field-row bridge-heart-row">
-                <span className="field-label">mode</span>
-                <span className="field-value">{policy?.mode ?? "—"}</span>
+          <Card className="flex flex-col">
+            <Eyebrow>policy heartbeat</Eyebrow>
+            <div className="flex flex-col gap-2 font-mono text-body">
+              <div className="flex items-center justify-between gap-3">
+                <FieldLabel>mode</FieldLabel>
+                <FieldValue>{policy?.mode ?? "—"}</FieldValue>
               </div>
-              <div className="field-row bridge-heart-row">
-                <span className="field-label">version</span>
-                <span className="field-value">{policy?.version ?? "—"}</span>
+              <div className="flex items-center justify-between gap-3">
+                <FieldLabel>version</FieldLabel>
+                <FieldValue>{policy?.version ?? "—"}</FieldValue>
               </div>
-              <div className="field-row bridge-heart-row">
-                <span className="field-label">default</span>
-                <span className="field-value">{policy?.default_action ?? "—"}</span>
+              <div className="flex items-center justify-between gap-3">
+                <FieldLabel>default</FieldLabel>
+                <FieldValue>{policy?.default_action ?? "—"}</FieldValue>
               </div>
-              <div className="field-row bridge-heart-row">
-                <span className="field-label">notify</span>
-                <span className="field-value">
-                  <span className={`health-dot ${healthClass(health?.status)}`} />
+              <div className="flex items-center justify-between gap-3">
+                <FieldLabel>notify</FieldLabel>
+                <FieldValue>
+                  <HealthDot status={health?.status} />
                   {policy?.notifications?.provider ?? "none"}
-                </span>
+                </FieldValue>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="card bridge-card">
-            <div className="card-eyebrow">top binaries</div>
+          <Card className="flex flex-col">
+            <Eyebrow>top binaries</Eyebrow>
             {data.top_binaries.length === 0 ? (
-              <div className="muted">no binary calls recorded yet</div>
+              <div className="text-ink-mute italic">
+                no binary calls recorded yet
+              </div>
             ) : (
-              <table className="bridge-bin-table">
+              <table className="w-full border-collapse font-mono text-body [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2">
                 <tbody>
                   {data.top_binaries.map((b) => (
                     <tr key={b.binary}>
                       <td>
-                        <button className="bridge-bin-link" onClick={() => onFilterBinary(b.binary)}>
+                        <button
+                          className="cursor-pointer text-ink hover:text-brass"
+                          onClick={() => onFilterBinary(b.binary)}
+                        >
                           {b.binary}
                         </button>
                       </td>
-                      <td className="bridge-bin-count">{b.count.toLocaleString()}</td>
-                      <td className="bridge-bin-bar">
+                      <td className="w-[70px] text-right text-ink-dim">
+                        {b.count.toLocaleString()}
+                      </td>
+                      <td className="w-1/2">
                         <ActionBar actions={b.actions} />
                       </td>
                     </tr>
@@ -214,40 +244,53 @@ export default function BridgePage({
                 </tbody>
               </table>
             )}
-          </div>
+          </Card>
 
-          <div className="card bridge-card">
-            <div className="card-eyebrow">most active project</div>
+          <Card className="flex flex-col">
+            <Eyebrow>most active project</Eyebrow>
             {data.top_project ? (
               <>
-                <div className="bridge-project-name">{basename(data.top_project.workdir)}</div>
-                <div className="bridge-project-path">{data.top_project.workdir}</div>
-                <div className="bridge-project-count">
+                <div className="mb-1 font-display text-[1.6rem] text-ink italic">
+                  {basename(data.top_project.workdir)}
+                </div>
+                <div className="mb-2 font-mono text-[0.7rem] break-all text-ink-mute">
+                  {data.top_project.workdir}
+                </div>
+                <div className="font-mono text-body text-brass">
                   {data.top_project.count.toLocaleString()} events
                 </div>
               </>
             ) : (
-              <div className="muted">no projects yet</div>
+              <div className="text-ink-mute italic">no projects yet</div>
             )}
-          </div>
+          </Card>
 
-          <div className="card bridge-card bridge-card-full">
-            <div className="card-eyebrow">recent blocks</div>
+          <Card className="col-span-full flex flex-col">
+            <Eyebrow>recent blocks</Eyebrow>
             {data.recent_blocks.length === 0 ? (
-              <div className="muted" style={{ padding: 12 }}>
+              <div className="p-3 text-ink-mute italic">
                 no blocks recorded — clean watch
               </div>
             ) : (
-              <table className="bridge-blocks">
+              <table className="w-full border-collapse text-[0.76rem] [&_td]:px-2.5 [&_td]:py-[7px]">
                 <tbody>
                   {data.recent_blocks.map((e) => (
-                    <tr key={e.id} onClick={() => onEventClick(e)}>
-                      <td className="mono nowrap" title={formatAbsolute(e.timestamp)}>
+                    <tr
+                      key={e.id}
+                      className="cursor-pointer border-b border-rule-soft hover:bg-bg-hover"
+                      onClick={() => onEventClick(e)}
+                    >
+                      <td
+                        className="font-mono text-[0.75rem] whitespace-nowrap"
+                        title={formatAbsolute(e.timestamp)}
+                      >
                         {formatRelative(e.timestamp, nowTick)}
                       </td>
                       <td>{actionBadge(e.action)}</td>
-                      <td className="mono">{e.binary || e.tool_name}</td>
-                      <td className="mono muted bridge-blocks-input">
+                      <td className="font-mono text-[0.75rem]">
+                        {e.binary || e.tool_name}
+                      </td>
+                      <td className="w-full max-w-0 truncate font-mono text-[0.75rem] text-ink-mute italic">
                         {JSON.stringify(e.tool_input).slice(0, 80)}
                       </td>
                     </tr>
@@ -255,7 +298,7 @@ export default function BridgePage({
                 </tbody>
               </table>
             )}
-          </div>
+          </Card>
         </div>
       )}
     </>

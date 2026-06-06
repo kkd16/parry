@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Event } from "../types";
 import { ACTION_COLORS } from "../policyBadges";
-import "./EventsTimeline.css";
 
 interface Props {
   events: Event[];
@@ -69,15 +68,17 @@ export default function EventsTimeline({ events }: Props) {
   const hoverBucket = hover ? data.buckets[hover.idx] : null;
 
   return (
-    <div className="events-timeline">
-      <div className="events-timeline-label">activity</div>
-      <div className="events-timeline-canvas">
+    <div className="mb-3.5 rounded-md border border-rule bg-bg-raised px-4 py-3">
+      <div className="mb-1.5 font-mono text-eyebrow tracking-[0.18em] text-brass uppercase">
+        activity
+      </div>
+      <div className="relative">
         <svg
           width="100%"
           height={h}
           viewBox={`0 0 ${w} ${h}`}
           preserveAspectRatio="none"
-          className="events-timeline-svg"
+          className="block h-[70px] w-full [&_g]:cursor-crosshair"
           onMouseLeave={() => setHover(null)}
         >
           {data.buckets.map((b, i) => {
@@ -88,15 +89,18 @@ export default function EventsTimeline({ events }: Props) {
               <g
                 key={i}
                 onMouseEnter={(e) => {
-                  const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
+                  const rect = (
+                    e.currentTarget.ownerSVGElement as SVGSVGElement
+                  ).getBoundingClientRect();
                   setHover({ idx: i, x: e.clientX - rect.left });
                 }}
                 onMouseMove={(e) => {
-                  const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
+                  const rect = (
+                    e.currentTarget.ownerSVGElement as SVGSVGElement
+                  ).getBoundingClientRect();
                   setHover({ idx: i, x: e.clientX - rect.left });
                 }}
               >
-                {/* invisible hit-target spans full height */}
                 <rect
                   x={i * barW}
                   y={0}
@@ -105,60 +109,67 @@ export default function EventsTimeline({ events }: Props) {
                   fill="transparent"
                 />
                 {b.total > 0 &&
-                  (["allow", "observe", "confirm", "block"] as const).map((action) => {
-                    const c = b.counts[action] ?? 0;
-                    if (c === 0) return null;
-                    const seg = (c / b.total) * barH;
-                    yCursor -= seg;
-                    return (
-                      <rect
-                        key={action}
-                        x={i * barW + 0.15}
-                        y={yCursor}
-                        width={barW - 0.3}
-                        height={seg}
-                        fill={ACTION_COLORS[action]}
-                        opacity={hover && !isHovered ? 0.45 : 1}
-                      />
-                    );
-                  })}
+                  (["allow", "observe", "confirm", "block"] as const).map(
+                    (action) => {
+                      const c = b.counts[action] ?? 0;
+                      if (c === 0) return null;
+                      const seg = (c / b.total) * barH;
+                      yCursor -= seg;
+                      return (
+                        <rect
+                          key={action}
+                          x={i * barW + 0.15}
+                          y={yCursor}
+                          width={barW - 0.3}
+                          height={seg}
+                          fill={ACTION_COLORS[action]}
+                          opacity={hover && !isHovered ? 0.45 : 1}
+                        />
+                      );
+                    },
+                  )}
               </g>
             );
           })}
         </svg>
         {hoverBucket && hover && (
           <div
-            className="events-timeline-tooltip"
+            className="pointer-events-none absolute bottom-[calc(100%+6px)] z-5 -translate-x-1/2 rounded border border-brass-dim bg-[rgba(5,6,10,0.97)] px-3 py-2 font-mono text-[0.7rem] whitespace-nowrap text-ink shadow-[0_6px_24px_rgba(0,0,0,0.5)]"
             style={{ left: hover.x }}
           >
-            <div className="events-timeline-tooltip-time">
+            <div className="text-tiny text-brass">
               {formatTimeRange(hoverBucket.start, hoverBucket.end)}
             </div>
-            <div className="events-timeline-tooltip-total">
+            <div className="mt-0.5 mb-1.5 text-body text-ink">
               {hoverBucket.total} {hoverBucket.total === 1 ? "event" : "events"}
             </div>
             {hoverBucket.total > 0 && (
-              <div className="events-timeline-tooltip-rows">
-                {(["allow", "confirm", "observe", "block"] as const).map((a) => {
-                  const c = hoverBucket.counts[a] ?? 0;
-                  if (c === 0) return null;
-                  return (
-                    <div key={a} className="events-timeline-tooltip-row">
-                      <span
-                        className="events-timeline-tooltip-swatch"
-                        style={{ background: ACTION_COLORS[a] }}
-                      />
-                      <span className="events-timeline-tooltip-action">{a}</span>
-                      <span className="events-timeline-tooltip-count">{c}</span>
-                    </div>
-                  );
-                })}
+              <div className="flex flex-col gap-0.5 border-t border-rule pt-1">
+                {(["allow", "confirm", "observe", "block"] as const).map(
+                  (a) => {
+                    const c = hoverBucket.counts[a] ?? 0;
+                    if (c === 0) return null;
+                    return (
+                      <div
+                        key={a}
+                        className="flex items-center gap-1.5 text-tiny"
+                      >
+                        <span
+                          className="inline-block h-[7px] w-[7px] rounded-[1px]"
+                          style={{ background: ACTION_COLORS[a] }}
+                        />
+                        <span className="flex-1 text-ink-dim">{a}</span>
+                        <span className="font-medium text-ink">{c}</span>
+                      </div>
+                    );
+                  },
+                )}
               </div>
             )}
           </div>
         )}
       </div>
-      <div className="events-timeline-foot">
+      <div className="mt-1 flex justify-between font-mono text-micro text-ink-mute">
         <span>{data.startLabel}</span>
         <span>{data.endLabel}</span>
       </div>

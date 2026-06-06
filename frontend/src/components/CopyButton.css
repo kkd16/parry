@@ -1,8 +1,0 @@
-.copy-btn {
-  margin-left: 8px;
-  background: transparent;
-  border: none;
-  color: var(--ink-mute);
-  font-size: 0.7rem;
-}
-.copy-btn:hover { color: var(--brass); }

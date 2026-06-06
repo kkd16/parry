@@ -1,7 +1,20 @@
-import { Bell, BookOpen, Gauge, Orbit, ScrollText, Workflow } from "lucide-react";
+import {
+  Bell,
+  BookOpen,
+  Gauge,
+  Orbit,
+  ScrollText,
+  Workflow,
+} from "lucide-react";
 import type { ElementType } from "react";
 
-export type Tab = "bridge" | "logbook" | "orrery" | "charter" | "beacon" | "devdocs";
+export type Tab =
+  | "bridge"
+  | "logbook"
+  | "orrery"
+  | "charter"
+  | "beacon"
+  | "devdocs";
 
 export interface TabSpec {
   id: Tab;

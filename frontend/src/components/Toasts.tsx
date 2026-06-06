@@ -7,8 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import clsx from "clsx";
 import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
-import "./Toasts.css";
 
 type ToastKind = "success" | "error" | "info";
 
@@ -25,6 +25,18 @@ interface Ctx {
   error: (title: string, detail?: string) => void;
   info: (title: string, detail?: string) => void;
 }
+
+const barByKind: Record<ToastKind, string> = {
+  success: "border-l-allow",
+  error: "border-l-block",
+  info: "border-l-confirm",
+};
+
+const iconByKind: Record<ToastKind, string> = {
+  success: "text-allow",
+  error: "text-block",
+  info: "text-confirm",
+};
 
 const ToastsContext = createContext<Ctx | null>(null);
 
@@ -57,28 +69,38 @@ export function ToastsProvider({ children }: { children: ReactNode }) {
   return (
     <ToastsContext.Provider value={ctx}>
       {children}
-      <div className="toast-stack">
+      <div className="pointer-events-none fixed right-6 bottom-6 z-200 flex flex-col gap-2.5">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
               key={t.id}
-              className={`toast toast-${t.kind}`}
+              className={clsx(
+                "pointer-events-auto flex max-w-[400px] min-w-[280px] items-start gap-3 rounded border border-l-3 border-rule bg-bg-raised px-3.5 py-3 font-mono text-[0.74rem] shadow-[0_12px_40px_rgba(0,0,0,0.5)]",
+                barByKind[t.kind],
+              )}
               initial={{ opacity: 0, x: 40, scale: 0.96 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 40, scale: 0.96 }}
               transition={{ type: "spring", damping: 26, stiffness: 360 }}
               layout
             >
-              <span className="toast-icon">
+              <span className={clsx("mt-px shrink-0", iconByKind[t.kind])}>
                 {t.kind === "success" && <CheckCircle2 size={16} />}
                 {t.kind === "error" && <AlertTriangle size={16} />}
                 {t.kind === "info" && <Info size={16} />}
               </span>
-              <div className="toast-body">
-                <div className="toast-title">{t.title}</div>
-                {t.detail && <div className="toast-detail">{t.detail}</div>}
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-ink">{t.title}</div>
+                {t.detail && (
+                  <div className="mt-0.5 text-tiny text-ink-mute">
+                    {t.detail}
+                  </div>
+                )}
               </div>
-              <button className="toast-close" onClick={() => remove(t.id)}>
+              <button
+                className="text-ink-mute hover:text-brass"
+                onClick={() => remove(t.id)}
+              >
                 <X size={12} />
               </button>
             </motion.div>

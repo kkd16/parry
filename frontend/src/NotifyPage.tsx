@@ -1,14 +1,19 @@
 import { useCallback, useState } from "react";
+import clsx from "clsx";
 import { Bell, Copy, Send } from "lucide-react";
 import CopyButton from "./components/CopyButton";
 import PageHeader from "./components/PageHeader";
 import { useToast } from "./components/Toasts";
+import { Btn, Eyebrow, FieldLabel, FieldValue } from "./components/ui";
 import { healthClass } from "./policyBadges";
 import { getEvents, postNotifyTest } from "./api";
 import { useApi } from "./hooks/useApi";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
-import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
-import "./NotifyPage.css";
+import {
+  formatAbsolute,
+  formatRelative,
+  useNowTick,
+} from "./utils/relativeTime";
 
 interface ProviderField {
   key: string;
@@ -69,12 +74,26 @@ interface Props {
   onGoToEvents: () => void;
 }
 
+const ORB_CLS: Record<string, string> = {
+  ok: "border border-allow bg-allow/10 text-allow shadow-[0_0_28px_rgba(127,196,154,0.2)]",
+  err: "border border-block bg-block/10 text-block shadow-[0_0_28px_rgba(224,90,76,0.2)]",
+  none: "border border-ink-mute bg-ink-mute/8 text-ink-mute after:animate-none",
+};
+
+const STATE_CLS: Record<string, string> = {
+  ok: "text-allow",
+  err: "text-block",
+  none: "text-ink-mute",
+};
+
 function CopyBlock({ text }: { text: string }) {
   return (
-    <div className="notify-yaml">
-      <pre>{text}</pre>
+    <div className="relative rounded border border-rule bg-bg px-4 py-3.5">
+      <pre className="m-0 font-mono text-[0.74rem] leading-[1.65] whitespace-pre-wrap text-ink">
+        {text}
+      </pre>
       <CopyButton
-        className="notify-yaml-copy"
+        className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-[3px] border border-rule bg-bg-raised px-2 py-[3px] font-mono text-[0.6rem] tracking-[0.1em] text-ink-mute uppercase hover:border-brass hover:text-brass"
         text={text}
         label={
           <>
@@ -94,11 +113,14 @@ function CopyBlock({ text }: { text: string }) {
 }
 
 function CopyValue({ value }: { value: string }) {
-  if (!value) return <span className="muted">—</span>;
+  if (!value) return <span className="text-ink-mute italic">—</span>;
   return (
-    <span className="notify-copy-value">
+    <span className="inline-flex items-center gap-2 break-all text-ink">
       <span>{value}</span>
-      <CopyButton className="notify-copy-btn" text={value} />
+      <CopyButton
+        className="rounded-[3px] border border-rule px-2 py-0.5 font-mono text-micro tracking-[0.1em] text-ink-mute uppercase hover:border-brass hover:text-brass"
+        text={value}
+      />
     </span>
   );
 }
@@ -112,7 +134,10 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
   const recentApi = useApi(
     useCallback(
       (signal: AbortSignal) =>
-        getEvents(new URLSearchParams({ action: "confirm", limit: "10" }), signal),
+        getEvents(
+          new URLSearchParams({ action: "confirm", limit: "10" }),
+          signal,
+        ),
       [],
     ),
   );
@@ -121,7 +146,11 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
   const status = health?.status ?? "unconfigured";
   const orbClass = healthClass(status);
   const statusText =
-    status === "ok" ? "connected" : status === "error" ? "unreachable" : "unconfigured";
+    status === "ok"
+      ? "connected"
+      : status === "error"
+        ? "unreachable"
+        : "unconfigured";
 
   const providerId = policy?.notifications?.provider ?? "";
   const cfg = (policy?.notifications?.extra ?? {}) as Record<string, unknown>;
@@ -155,77 +184,108 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
 
   return (
     <>
-      <div className="notify-hero">
+      <div className="mb-8 flex items-end justify-between gap-8">
         <PageHeader
           eyebrow="instrument · 04"
           title="Beacon"
           sub="push approvals for risky tool calls"
+          flush
         />
-        <div className="notify-hero-status">
-          <div className={`notify-orb ${orbClass}`}>
+        <div className="flex min-w-[320px] items-center gap-5.5 rounded-md border border-l-3 border-rule border-l-brass bg-bg-raised px-6.5 py-5.5">
+          <div
+            className={clsx(
+              "relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full after:absolute after:-inset-1.5 after:animate-orb-pulse after:rounded-full after:border after:border-current after:opacity-25 after:content-['']",
+              ORB_CLS[orbClass],
+            )}
+          >
             <Bell size={26} />
           </div>
-          <div className="notify-hero-meta">
-            <div className="notify-hero-provider">
-              {providerId || "none"} <span className="notify-hero-dot">·</span>{" "}
-              <span className={`notify-hero-state ${orbClass}`}>{statusText}</span>
+          <div className="flex flex-col gap-1.5">
+            <div className="font-display text-[1.5rem] leading-[1.1] text-ink italic">
+              {providerId || "none"}{" "}
+              <span className="mx-1 text-ink-mute">·</span>{" "}
+              <span
+                className={clsx(
+                  "font-mono text-[0.7rem] tracking-[0.12em] uppercase not-italic",
+                  STATE_CLS[orbClass],
+                )}
+              >
+                {statusText}
+              </span>
             </div>
-            {health?.error && <div className="notify-hero-error">{health.error}</div>}
-            <button
-              className="btn notify-test-btn"
+            {health?.error && (
+              <div className="mb-1 font-mono text-[0.7rem] text-block">
+                {health.error}
+              </div>
+            )}
+            <Btn
+              className="mt-1 self-start disabled:cursor-not-allowed disabled:opacity-40"
               onClick={runTest}
               disabled={!policy?.notifications?.provider || testing}
             >
               <Send /> {testing ? "sending…" : "send test"}
-            </button>
+            </Btn>
           </div>
         </div>
       </div>
 
-      <div className="notify-grid">
-        <div className="card">
-          <div className="card-eyebrow">active configuration</div>
-          <div className="notify-config-rows">
-            <div className="field-row notify-config-row">
-              <span className="field-label notify-config-label">provider</span>
-              <span className="field-value notify-config-value">{providerId || "—"}</span>
+      <div className="mb-8 grid grid-cols-2 gap-4">
+        <div className="rounded-md border border-rule bg-bg-raised px-5.5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]">
+          <Eyebrow>active configuration</Eyebrow>
+          <div className="flex flex-col gap-2.5 font-mono text-body">
+            <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
+              <FieldLabel className="min-w-[90px]">provider</FieldLabel>
+              <FieldValue className="break-all">{providerId || "—"}</FieldValue>
             </div>
-            <div className="field-row notify-config-row">
-              <span className="field-label notify-config-label">timeout</span>
-              <span className="field-value notify-config-value">{timeout}</span>
+            <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
+              <FieldLabel className="min-w-[90px]">timeout</FieldLabel>
+              <FieldValue className="break-all">{timeout}</FieldValue>
             </div>
             {providerId === "ntfy" && (
               <>
-                <div className="field-row notify-config-row">
-                  <span className="field-label notify-config-label">topic</span>
+                <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
+                  <FieldLabel className="min-w-[90px]">topic</FieldLabel>
                   <CopyValue value={topic} />
                 </div>
-                <div className="field-row notify-config-row">
-                  <span className="field-label notify-config-label">server</span>
+                <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
+                  <FieldLabel className="min-w-[90px]">server</FieldLabel>
                   <CopyValue value={server || "https://ntfy.sh"} />
                 </div>
               </>
             )}
           </div>
-          <div className="notify-config-foot">
-            on timeout, falls back to <span className="mono">check_mode_confirm</span>.
+          <div className="mt-3.5 border-t border-rule-soft pt-3 font-mono text-tiny leading-[1.6] text-ink-mute">
+            on timeout, falls back to{" "}
+            <span className="font-mono text-[0.75rem]">check_mode_confirm</span>
+            .
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-eyebrow">recent confirmations</div>
+        <div className="rounded-md border border-rule bg-bg-raised px-5.5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]">
+          <Eyebrow>recent confirmations</Eyebrow>
           {recent.length === 0 ? (
-            <div className="muted notify-empty">no confirmation events yet.</div>
+            <div className="px-1 py-4.5 font-display text-[1rem] text-ink-mute italic">
+              no confirmation events yet.
+            </div>
           ) : (
-            <table className="notify-recent">
+            <table className="w-full border-collapse text-[0.74rem] [&_td]:p-2">
               <tbody>
                 {recent.map((e) => (
-                  <tr key={e.id} onClick={onGoToEvents}>
-                    <td className="mono nowrap" title={formatAbsolute(e.timestamp)}>
+                  <tr
+                    key={e.id}
+                    className="cursor-pointer border-b border-rule-soft hover:bg-bg-hover"
+                    onClick={onGoToEvents}
+                  >
+                    <td
+                      className="font-mono text-[0.75rem] whitespace-nowrap"
+                      title={formatAbsolute(e.timestamp)}
+                    >
                       {formatRelative(e.timestamp, nowTick)}
                     </td>
-                    <td className="mono">{e.binary || e.tool_name}</td>
-                    <td className="mono muted notify-recent-input">
+                    <td className="font-mono text-[0.75rem]">
+                      {e.binary || e.tool_name}
+                    </td>
+                    <td className="w-full max-w-0 truncate font-mono text-[0.75rem] text-ink-mute italic">
                       {(e.tool_input?.["command"] as string | undefined) ??
                         JSON.stringify(e.tool_input).slice(0, 60)}
                     </td>
@@ -237,24 +297,39 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
         </div>
       </div>
 
-      <div className="card-eyebrow notify-catalog-eyebrow">provider catalog</div>
-      <div className="notify-catalog">
+      <Eyebrow className="flex items-center gap-2.5 after:h-px after:flex-1 after:bg-[linear-gradient(90deg,var(--color-brass)_0%,transparent_100%)] after:opacity-35 after:content-['']">
+        provider catalog
+      </Eyebrow>
+      <div className="mb-8 grid grid-cols-2 gap-4">
         {PROVIDERS.map((p) => (
           <div
             key={p.id}
-            className={`card notify-provider${providerId === p.id ? " active" : ""}`}
+            className={clsx(
+              "flex flex-col gap-3 rounded-md border border-l-3 border-rule bg-bg-raised px-6 py-5.5",
+              providerId === p.id
+                ? "border-l-brass-bright shadow-[0_0_0_1px_rgba(212,161,74,0.08),inset_0_1px_0_rgba(255,255,255,0.02)]"
+                : "shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]",
+            )}
           >
-            <div className="notify-provider-head">
-              <h3 className="notify-provider-name">{p.name}</h3>
+            <div className="flex items-baseline gap-3">
+              <h3 className="font-display text-[1.7rem] leading-none font-normal text-ink italic">
+                {p.name}
+              </h3>
               {providerId === p.id && (
-                <span className="notify-provider-active-tag">active</span>
+                <span className="rounded-sm border border-brass-dim bg-brass/12 px-2 py-0.5 font-mono text-eyebrow tracking-[0.18em] text-brass-bright uppercase">
+                  active
+                </span>
               )}
             </div>
-            <div className="notify-provider-desc">{p.desc}</div>
-            <div className="notify-provider-works">{p.works}</div>
+            <div className="text-[0.86rem] leading-[1.55] text-ink">
+              {p.desc}
+            </div>
+            <div className="rounded-r-[3px] border-l border-brass-dim bg-bg px-3 py-2.5 font-mono text-[0.7rem] leading-[1.7] text-ink-dim">
+              {p.works}
+            </div>
 
             {p.fields.length > 0 && (
-              <table className="notify-fields">
+              <table className="mt-1 w-full border-collapse font-mono text-[0.7rem] [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2 [&_td]:align-top [&_td]:text-ink [&_th]:border-b [&_th]:border-rule [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-mono [&_th]:text-eyebrow [&_th]:font-semibold [&_th]:tracking-[0.14em] [&_th]:text-ink-mute [&_th]:uppercase">
                 <thead>
                   <tr>
                     <th>field</th>
@@ -266,9 +341,9 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
                 <tbody>
                   {p.fields.map((f) => (
                     <tr key={f.key}>
-                      <td className="mono">{f.key}</td>
+                      <td className="font-mono text-brass">{f.key}</td>
                       <td>{f.required ? "yes" : "no"}</td>
-                      <td className="mono muted">{f.default ?? "—"}</td>
+                      <td className="font-mono italic">{f.default ?? "—"}</td>
                       <td>{f.desc}</td>
                     </tr>
                   ))}
@@ -276,14 +351,20 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               </table>
             )}
 
-            <div className="notify-provider-yaml-label">setup snippet</div>
+            <div className="mt-1 font-mono text-eyebrow tracking-[0.18em] text-ink-mute uppercase">
+              setup snippet
+            </div>
             <CopyBlock text={p.yaml} />
           </div>
         ))}
       </div>
 
-      <div className="notify-footer">
-        change provider with <span className="mono">parry config notify</span>.
+      <div className="border-t border-dashed border-rule pt-4.5 pb-2 text-center font-display text-[1rem] text-ink-dim italic">
+        change provider with{" "}
+        <span className="font-mono text-[0.75rem] text-brass not-italic">
+          parry config notify
+        </span>
+        .
       </div>
     </>
   );

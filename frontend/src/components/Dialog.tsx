@@ -1,6 +1,16 @@
 import { motion, AnimatePresence } from "motion/react";
 import type { ReactNode } from "react";
-import "./Dialog.css";
+
+export const dialogPanelCls =
+  "w-[min(640px,92vw)] overflow-hidden rounded-lg border border-rule bg-bg-raised shadow-[0_40px_120px_rgba(0,0,0,0.65),0_0_0_1px_rgba(212,161,74,0.08)]";
+
+export const dialogHeaderCls = "border-b border-rule px-7 pt-6 pb-4.5";
+
+export const dialogEyebrowCls =
+  "mb-2 font-mono text-[0.6rem] tracking-[0.22em] text-brass uppercase";
+
+export const dialogTitleCls =
+  "font-display text-[2rem] leading-none font-normal text-ink italic";
 
 interface Props {
   open: boolean;
@@ -14,7 +24,7 @@ export default function Dialog({ open, onClose, className, children }: Props) {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="cmdk-overlay"
+          className="fixed inset-0 z-100 flex items-start justify-center bg-[rgba(5,6,10,0.75)] pt-[14vh] backdrop-blur-[6px]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

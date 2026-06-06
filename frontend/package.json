@@ -7,15 +7,19 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "format": "prettier --write src",
     "preview": "vite preview",
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "lucide-react": "^1.17.0",
     "motion": "^12.40.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -27,6 +31,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "prettier": "^3.8.3",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.60.1",
     "vite": "^8.0.16"

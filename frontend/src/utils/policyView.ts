@@ -4,7 +4,11 @@ export type ActionName = "allow" | "confirm" | "block";
 
 export const ACTIONS: ActionName[] = ["allow", "confirm", "block"];
 
-export const STRICTNESS: Record<ActionName, number> = { block: 3, confirm: 2, allow: 1 };
+export const STRICTNESS: Record<ActionName, number> = {
+  block: 3,
+  confirm: 2,
+  allow: 1,
+};
 
 export function entryLabel(entry: RuleEntry): string {
   const parts = [entry.binary];
@@ -35,7 +39,11 @@ function chipOrder(a: ClusterChip, b: ClusterChip): number {
 }
 
 export function actionClusters(rule: Rule): Record<ActionName, ClusterChip[]> {
-  const out: Record<ActionName, ClusterChip[]> = { allow: [], confirm: [], block: [] };
+  const out: Record<ActionName, ClusterChip[]> = {
+    allow: [],
+    confirm: [],
+    block: [],
+  };
   for (const action of ACTIONS) {
     const byBinary = new Map<string, RuleEntry[]>();
     for (const e of rule[action] ?? []) {
@@ -50,7 +58,9 @@ export function actionClusters(rule: Rule): Record<ActionName, ClusterChip[]> {
         label: entries.length === 1 ? entryLabel(entries[0]) : binary,
         count: entries.length,
         qualified: entries.some((e) => e.positional?.length || e.flags?.length),
-        searchText: [binary, ...entries.map(entryLabel)].map((s) => s.toLowerCase()),
+        searchText: [binary, ...entries.map(entryLabel)].map((s) =>
+          s.toLowerCase(),
+        ),
       });
     }
     chips.sort(chipOrder);
@@ -96,7 +106,9 @@ function entryToRuleEntry(e: BinaryEntry, binary: string): RuleEntry {
 // mirrors the winner selection in internal/policy/binary.go:
 // most specific match wins; strictest action wins specificity ties
 function byPrecedence(a: BinaryEntry, b: BinaryEntry): number {
-  return b.specificity - a.specificity || STRICTNESS[b.action] - STRICTNESS[a.action];
+  return (
+    b.specificity - a.specificity || STRICTNESS[b.action] - STRICTNESS[a.action]
+  );
 }
 
 function rowReason(entries: BinaryEntry[], i: number): string {
@@ -158,7 +170,10 @@ function exampleFor(
 }
 
 function yamlScalar(s: string): string {
-  if (/^(true|false|null|yes|no|on|off|~)$/i.test(s) || /[:#{}[\],&*?|<>=!%@`'"]/.test(s)) {
+  if (
+    /^(true|false|null|yes|no|on|off|~)$/i.test(s) ||
+    /[:#{}[\],&*?|<>=!%@`'"]/.test(s)
+  ) {
     return JSON.stringify(s);
   }
   return s;
@@ -198,7 +213,11 @@ function yamlFor(
   return lines.join("\n");
 }
 
-export function explainBinary(binary: string, rule: Rule, globalDefault: string): BinaryExplanation {
+export function explainBinary(
+  binary: string,
+  rule: Rule,
+  globalDefault: string,
+): BinaryExplanation {
   const entries: BinaryEntry[] = [];
   for (const action of ACTIONS) {
     for (const e of rule[action] ?? []) {
@@ -236,7 +255,8 @@ export function explainBinary(binary: string, rule: Rule, globalDefault: string)
   if (entries.length) {
     examples.push(exampleFor(entries[0], entries, binary, equivalents));
     const last = entries[entries.length - 1];
-    if (entries.length > 1) examples.push(exampleFor(last, entries, binary, equivalents));
+    if (entries.length > 1)
+      examples.push(exampleFor(last, entries, binary, equivalents));
   }
   const hasBare = entries.some((e) => e.specificity === 0);
   if (!hasBare) {

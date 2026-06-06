@@ -1,9 +1,16 @@
 import { getAbout } from "../api";
 import { useApi } from "../hooks/useApi";
 import CopyButton from "./CopyButton";
-import Dialog from "./Dialog";
+import Dialog, {
+  dialogEyebrowCls,
+  dialogHeaderCls,
+  dialogPanelCls,
+  dialogTitleCls,
+} from "./Dialog";
+import { FieldLabel } from "./ui";
 import { useToast } from "./Toasts";
-import "./AboutDialog.css";
+import clsx from "clsx";
+import type { ReactNode } from "react";
 
 interface Props {
   open: boolean;
@@ -13,7 +20,20 @@ interface Props {
 function CopyBtn({ value }: { value: string }) {
   const toast = useToast();
   if (!value) return null;
-  return <CopyButton text={value} onCopied={() => toast.success("copied", value)} />;
+  return (
+    <CopyButton text={value} onCopied={() => toast.success("copied", value)} />
+  );
+}
+
+function AboutRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-dashed border-rule py-[9px] font-mono text-[0.76rem] last:border-b-0">
+      <FieldLabel>{label}</FieldLabel>
+      <span className="inline-flex items-center gap-2.5 text-right font-mono text-[0.75rem] break-all text-ink-dim">
+        {children}
+      </span>
+    </div>
+  );
 }
 
 function AboutContent() {
@@ -21,46 +41,41 @@ function AboutContent() {
 
   return (
     <>
-      <div className="shortcuts-header">
-        <div className="shortcuts-eyebrow">about</div>
-        <h2 className="shortcuts-title about-title">
+      <div className={dialogHeaderCls}>
+        <div className={dialogEyebrowCls}>about</div>
+        <h2 className={clsx(dialogTitleCls, "flex items-baseline gap-3.5")}>
           Parry
-          <span className="about-version">v{info?.version ?? "…"}</span>
+          <span className="font-mono text-body font-normal tracking-[0.04em] text-brass not-italic">
+            v{info?.version ?? "…"}
+          </span>
         </h2>
       </div>
-      <div className="shortcuts-body about-body">
-        <div className="field-row about-row">
-          <span className="field-label">go</span>
-          <span className="about-row-value mono">{info?.go_version || "—"}</span>
-        </div>
-        <div className="field-row about-row">
-          <span className="field-label">commit</span>
-          <span className="about-row-value mono">
-            {info?.commit || <span className="muted">unknown</span>}
-            {info?.commit && <CopyBtn value={info.commit} />}
-          </span>
-        </div>
-        <div className="field-row about-row">
-          <span className="field-label">built</span>
-          <span className="about-row-value mono">
-            {info?.built || <span className="muted">unknown</span>}
-          </span>
-        </div>
-        <div className="field-row about-row">
-          <span className="field-label">platform</span>
-          <span className="about-row-value mono">{info?.platform || "—"}</span>
-        </div>
-        <div className="field-row about-row">
-          <span className="field-label">data dir</span>
-          <span className="about-row-value mono">
-            {info?.data_dir || <span className="muted">—</span>}
-            {info?.data_dir && <CopyBtn value={info.data_dir} />}
-          </span>
-        </div>
+      <div className="px-7 pt-4.5 pb-3.5">
+        <AboutRow label="go">{info?.go_version || "—"}</AboutRow>
+        <AboutRow label="commit">
+          {info?.commit || (
+            <span className="text-ink-mute italic">unknown</span>
+          )}
+          {info?.commit && <CopyBtn value={info.commit} />}
+        </AboutRow>
+        <AboutRow label="built">
+          {info?.built || <span className="text-ink-mute italic">unknown</span>}
+        </AboutRow>
+        <AboutRow label="platform">{info?.platform || "—"}</AboutRow>
+        <AboutRow label="data dir">
+          {info?.data_dir || <span className="text-ink-mute italic">—</span>}
+          {info?.data_dir && <CopyBtn value={info.data_dir} />}
+        </AboutRow>
       </div>
-      <div className="shortcuts-footer about-footer">
-        <span className="about-tagline">your agent decides · parry enforces</span>
-        <a href="https://github.com/kkd16/parry" target="_blank" rel="noreferrer">
+      <div className="flex items-center justify-between gap-4 border-t border-rule px-7 pt-3 pb-4 font-mono text-tiny text-ink-mute">
+        <span className="font-display text-[0.92rem] text-ink-dim italic">
+          your agent decides · parry enforces
+        </span>
+        <a
+          href="https://github.com/kkd16/parry"
+          target="_blank"
+          rel="noreferrer"
+        >
           github.com/kkd16/parry
         </a>
       </div>
@@ -70,7 +85,7 @@ function AboutContent() {
 
 export default function AboutDialog({ open, onClose }: Props) {
   return (
-    <Dialog open={open} onClose={onClose} className="shortcuts-dialog about-dialog">
+    <Dialog open={open} onClose={onClose} className={dialogPanelCls}>
       <AboutContent />
     </Dialog>
   );

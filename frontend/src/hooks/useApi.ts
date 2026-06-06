@@ -34,7 +34,11 @@ export function useApi<T>(fn: Fetcher<T> | null, debounceMs = 0): ApiState<T> {
         })
         .catch((e: unknown) => {
           if (ctrl.signal.aborted || isAbortError(e)) return;
-          setSettled({ fn, nonce, error: e instanceof Error ? e.message : String(e) });
+          setSettled({
+            fn,
+            nonce,
+            error: e instanceof Error ? e.message : String(e),
+          });
         });
     };
     if (debounceMs > 0) {
@@ -49,7 +53,8 @@ export function useApi<T>(fn: Fetcher<T> | null, debounceMs = 0): ApiState<T> {
   }, [fn, nonce, debounceMs]);
 
   if (!fn) return { data, loading: false, error: null, refetch };
-  const current = settled !== null && settled.fn === fn && settled.nonce === nonce;
+  const current =
+    settled !== null && settled.fn === fn && settled.nonce === nonce;
   return {
     data,
     loading: !current,

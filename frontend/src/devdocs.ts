@@ -46,18 +46,19 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "Every tool call an agent makes — a shell command, a file edit, a file read — fires a pre-tool-use hook before it executes. The hook pipes the tool-call JSON to parry check and waits for a verdict.",
+        text: "Every tool call an agent makes — a shell command, a file edit, a file read — fires a pre-tool-use hook before it executes. The hook pipes the tool-call JSON to parry check and waits for a verdict.",
       },
       {
         kind: "para",
-        text:
-          "Parry runs outside the agent process. The agent cannot override, ignore, or reason its way around the decision; by the time the model sees anything, enforcement has already happened.",
+        text: "Parry runs outside the agent process. The agent cannot override, ignore, or reason its way around the decision; by the time the model sees anything, enforcement has already happened.",
       },
       {
         kind: "packages",
         label: "hook configuration",
-        paths: ["~/.claude/settings.json · PreToolUse", "~/.cursor/hooks.json · preToolUse"],
+        paths: [
+          "~/.claude/settings.json · PreToolUse",
+          "~/.cursor/hooks.json · preToolUse",
+        ],
       },
     ],
     seeAlso: ["check"],
@@ -74,13 +75,11 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "The single enforcement entrypoint. Reads hook JSON on stdin, runs the decision pipeline, and prints a verdict the agent understands. Exit code 2 blocks the call outright.",
+        text: "The single enforcement entrypoint. Reads hook JSON on stdin, runs the decision pipeline, and prints a verdict the agent understands. Exit code 2 blocks the call outright.",
       },
       {
         kind: "para",
-        text:
-          "Fail closed: if Parry crashes or the policy cannot load, the tool call is blocked. Silent failure is never an option for enforcement software.",
+        text: "Fail closed: if Parry crashes or the policy cannot load, the tool call is blocked. Silent failure is never an option for enforcement software.",
       },
       { kind: "packages", paths: ["cmd/parry", "internal/check"] },
     ],
@@ -97,19 +96,20 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "Each agent names its tools differently (Bash vs Shell, Edit vs Write). A per-agent mapping table folds them into canonical tools — shell, file_edit, file_read — so one policy file works across every integration.",
+        text: "Each agent names its tools differently (Bash vs Shell, Edit vs Write). A per-agent mapping table folds them into canonical tools — shell, file_edit, file_read — so one policy file works across every integration.",
       },
       {
         kind: "para",
-        text:
-          "Unmapped tools, including MCP tools, classify as unknown. The original tool name is preserved for the audit log.",
+        text: "Unmapped tools, including MCP tools, classify as unknown. The original tool name is preserved for the audit log.",
       },
       {
         kind: "components",
         label: "integrations",
         items: [
-          { name: "Claude Code", oneliner: "PreToolUse hook, installed by parry config hook claude" },
+          {
+            name: "Claude Code",
+            oneliner: "PreToolUse hook, installed by parry config hook claude",
+          },
           { name: "Cursor", oneliner: "preToolUse hook with failClosed: true" },
           { name: "GitHub Copilot", status: "planned" },
         ],
@@ -130,8 +130,7 @@ export const DOC_NODES: DocNode[] = [
       { kind: "note", tone: "planned", text: "Phase 2 — not yet implemented." },
       {
         kind: "para",
-        text:
-          "parry wrap will sit between the agent and real MCP servers (stdio or HTTP), forwarding JSON-RPC and intercepting every tools/call with the same policy engine check mode uses today.",
+        text: "parry wrap will sit between the agent and real MCP servers (stdio or HTTP), forwarding JSON-RPC and intercepting every tools/call with the same policy engine check mode uses today.",
       },
     ],
     seeAlso: ["normalize"],
@@ -147,13 +146,11 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "Shell commands are parsed with mvdan.cc/sh into a full AST — pipes, && chains, subshells, bash -c wrappers — and every stage becomes a structured Command{Binary, Positional, ShortFlags, LongFlags}.",
+        text: "Shell commands are parsed with mvdan.cc/sh into a full AST — pipes, && chains, subshells, bash -c wrappers — and every stage becomes a structured Command{Binary, Positional, ShortFlags, LongFlags}.",
       },
       {
         kind: "para",
-        text:
-          "Classification is structural, not string matching: rm -rf, rm -fr, rm -r -f, and /bin/rm --recursive --force all resolve to the same shape. Arguments that cannot be resolved statically mark the command unresolved and short-circuit to block.",
+        text: "Classification is structural, not string matching: rm -rf, rm -fr, rm -r -f, and /bin/rm --recursive --force all resolve to the same shape. Arguments that cannot be resolved statically mark the command unresolved and short-circuit to block.",
       },
       { kind: "packages", paths: ["internal/shellparse"] },
     ],
@@ -171,8 +168,7 @@ export const DOC_NODES: DocNode[] = [
       { kind: "note", tone: "planned", text: "Phase 4 — not yet implemented." },
       {
         kind: "para",
-        text:
-          "A local DeBERTa-v3 model (~5ms per inference) will score tool inputs and MCP results for prompt injection. ML provides signals only — deterministic rules still make every enforcement decision.",
+        text: "A local DeBERTa-v3 model (~5ms per inference) will score tool inputs and MCP results for prompt injection. ML provides signals only — deterministic rules still make every enforcement decision.",
       },
     ],
     seeAlso: ["classify"],
@@ -188,21 +184,31 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "The YAML policy compiles at load time into per-binary matchers. A match requires exact binary equality, a positional prefix, and flag-set intersection through semantic flag equivalents; the most specific rule wins, strictest on ties.",
+        text: "The YAML policy compiles at load time into per-binary matchers. A match requires exact binary equality, a positional prefix, and flag-set intersection through semantic flag equivalents; the most specific rule wins, strictest on ties.",
       },
       {
         kind: "para",
-        text:
-          "Protected paths (~/.ssh, ~/.aws, …) are checked across all tools before rule matching. Compound commands take the strictest verdict of any pipeline stage.",
+        text: "Protected paths (~/.ssh, ~/.aws, …) are checked across all tools before rule matching. Compound commands take the strictest verdict of any pipeline stage.",
       },
       {
         kind: "components",
         items: [
-          { name: "compiled matchers", oneliner: "structured {binary, positional, flags} rules" },
-          { name: "protected paths", oneliner: "one list, enforced across every tool" },
-          { name: "flag equivalents", oneliner: "semantic names cover every flag spelling" },
-          { name: "decide pipeline", oneliner: "policy + rate limit + notify + store" },
+          {
+            name: "compiled matchers",
+            oneliner: "structured {binary, positional, flags} rules",
+          },
+          {
+            name: "protected paths",
+            oneliner: "one list, enforced across every tool",
+          },
+          {
+            name: "flag equivalents",
+            oneliner: "semantic names cover every flag spelling",
+          },
+          {
+            name: "decide pipeline",
+            oneliner: "policy + rate limit + notify + store",
+          },
         ],
       },
       { kind: "packages", paths: ["internal/policy", "internal/runtime"] },
@@ -220,8 +226,7 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "Sessions derive from the working directory, so agents in different projects get separate budgets automatically. Exceeding the window triggers the configured on_exceed action (default: block) — defense in depth against a compromised agent moving fast.",
+        text: "Sessions derive from the working directory, so agents in different projects get separate budgets automatically. Exceeding the window triggers the configured on_exceed action (default: block) — defense in depth against a compromised agent moving fast.",
       },
       { kind: "packages", paths: ["internal/runtime", "internal/store"] },
     ],
@@ -239,15 +244,20 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "A confirm verdict holds the hook process open and pushes an approval request through the configured notifier. Approve and the call proceeds; deny, time out, or run without a notifier and it blocks — fail closed.",
+        text: "A confirm verdict holds the hook process open and pushes an approval request through the configured notifier. Approve and the call proceeds; deny, time out, or run without a notifier and it blocks — fail closed.",
       },
       {
         kind: "components",
         label: "notifiers",
         items: [
-          { name: "system", oneliner: "OS-native notifications, zero setup — the default" },
-          { name: "ntfy", oneliner: "self-hostable push, approve from your phone" },
+          {
+            name: "system",
+            oneliner: "OS-native notifications, zero setup — the default",
+          },
+          {
+            name: "ntfy",
+            oneliner: "self-hostable push, approve from your phone",
+          },
           { name: "slack", status: "planned" },
         ],
       },
@@ -266,8 +276,7 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "An immutable audit log of every tool call and verdict — timestamp, session, binary, action, mode. Exportable as JSON or CSV from the dashboard.",
+        text: "An immutable audit log of every tool call and verdict — timestamp, session, binary, action, mode. Exportable as JSON or CSV from the dashboard.",
       },
       { kind: "packages", paths: ["internal/store"] },
     ],
@@ -284,8 +293,7 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "A REST API plus this frontend, embedded in the binary via go:embed — no separate install. Timeline, policy explorer, file-access map, notification health, and this page.",
+        text: "A REST API plus this frontend, embedded in the binary via go:embed — no separate install. Timeline, policy explorer, file-access map, notification health, and this page.",
       },
       { kind: "packages", paths: ["internal/dashboard", "frontend/"] },
     ],
@@ -303,13 +311,11 @@ export const DOC_NODES: DocNode[] = [
     detail: [
       {
         kind: "para",
-        text:
-          "The decision returns to the agent as hook JSON: allow lets the tool call run, block refuses it with a reason the model can read. Anything unmatched falls through to the configured default action.",
+        text: "The decision returns to the agent as hook JSON: allow lets the tool call run, block refuses it with a reason the model can read. Anything unmatched falls through to the configured default action.",
       },
       {
         kind: "para",
-        text:
-          "In observe mode verdicts are logged but not enforced — install, watch the dashboard for a few days, then flip to enforce.",
+        text: "In observe mode verdicts are logged but not enforced — install, watch the dashboard for a few days, then flip to enforce.",
       },
       { kind: "packages", paths: ["internal/check"] },
     ],
@@ -359,7 +365,15 @@ export function layoutDocs(nodes: DocNode[]): {
   const placed = nodes.map((n) => {
     const x = PAD + n.lane * (NODE_W + LANE_GAP_X);
     const y = PAD + n.order * (NODE_H + ROW_GAP_Y);
-    return { ...n, x, y, w: NODE_W, h: NODE_H, cx: x + NODE_W / 2, cy: y + NODE_H / 2 };
+    return {
+      ...n,
+      x,
+      y,
+      w: NODE_W,
+      h: NODE_H,
+      cx: x + NODE_W / 2,
+      cy: y + NODE_H / 2,
+    };
   });
   const maxLane = Math.max(...nodes.map((n) => n.lane));
   const maxOrder = Math.max(...nodes.map((n) => n.order));

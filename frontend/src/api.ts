@@ -39,14 +39,24 @@ export function getEvents(
   return request(`/api/events?${params}`, { signal });
 }
 
-export async function getOverview(signal?: AbortSignal): Promise<OverviewResponse> {
-  const data = await request<OverviewResponse & { error?: string }>("/api/overview", { signal });
+export async function getOverview(
+  signal?: AbortSignal,
+): Promise<OverviewResponse> {
+  const data = await request<OverviewResponse & { error?: string }>(
+    "/api/overview",
+    { signal },
+  );
   if (data.error) throw new Error(data.error);
   return data;
 }
 
-export async function getHeatmap(signal?: AbortSignal): Promise<HeatmapResponse> {
-  const data = await request<HeatmapResponse & { error?: string }>("/api/heatmap", { signal });
+export async function getHeatmap(
+  signal?: AbortSignal,
+): Promise<HeatmapResponse> {
+  const data = await request<HeatmapResponse & { error?: string }>(
+    "/api/heatmap",
+    { signal },
+  );
   if (data.error) throw new Error(data.error);
   return data;
 }
@@ -72,7 +82,9 @@ export function getRuleSuggestion(
   return request(`/api/rule-suggestion?${params}`, { signal });
 }
 
-export function postNotifyTest(signal?: AbortSignal): Promise<NotifyTestResult> {
+export function postNotifyTest(
+  signal?: AbortSignal,
+): Promise<NotifyTestResult> {
   return request("/api/notify/test", { method: "POST", signal });
 }
 

@@ -55,7 +55,11 @@ export function CommandsProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ commands, register }), [commands, register]);
 
-  return <CommandsContext.Provider value={value}>{children}</CommandsContext.Provider>;
+  return (
+    <CommandsContext.Provider value={value}>
+      {children}
+    </CommandsContext.Provider>
+  );
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -70,7 +74,10 @@ export function useCommands(): RegistryValue {
  * dependency list — the commands re-register whenever deps change.
  */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useRegisterCommands(commands: Command[], deps: React.DependencyList) {
+export function useRegisterCommands(
+  commands: Command[],
+  deps: React.DependencyList,
+) {
   const { register } = useCommands();
   useEffect(() => {
     return register(commands);

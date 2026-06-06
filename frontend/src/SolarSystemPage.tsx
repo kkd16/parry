@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import clsx from "clsx";
 import { Maximize2, Minus, Orbit, Plus, RotateCcw } from "lucide-react";
 import PageHeader from "./components/PageHeader";
+import { Btn, ErrorBox } from "./components/ui";
 import { useUrlParam } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
 import { basename } from "./utils/format";
 import type { HeatmapProject, HeatmapResponse } from "./types";
-import "./SolarSystemPage.css";
 
 interface Body {
   x: number;
@@ -44,6 +45,16 @@ const INNER_ORBIT = 90;
 const ORBIT_SPAN = 220;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
+const emptyCls =
+  "p-[60px] text-center font-display text-[1.6rem] text-ink-dim italic [&_code]:font-mono [&_code]:text-[0.9rem] [&_code]:text-brass [&_code]:not-italic";
+
+const overlayCls =
+  "absolute z-5 rounded border border-rule bg-[rgba(17,19,28,0.92)] px-4 py-3.5 font-mono text-meta text-ink-dim backdrop-blur-[6px]";
+
+const tallyLabelCls = "text-eyebrow tracking-[0.18em] text-ink-mute uppercase";
+
+const tallyValueCls = "truncate text-[0.92rem] whitespace-nowrap text-ink";
+
 function buildSystems(projects: HeatmapProject[]): System[] {
   return projects.map((p, idx) => {
     const col = idx % COLS;
@@ -81,7 +92,11 @@ function buildSystems(projects: HeatmapProject[]): System[] {
   });
 }
 
-function seededStars(count: number, w: number, h: number): { x: number; y: number; r: number }[] {
+function seededStars(
+  count: number,
+  w: number,
+  h: number,
+): { x: number; y: number; r: number }[] {
   const stars: { x: number; y: number; r: number }[] = [];
   let seed = 1337;
   const rand = () => {
@@ -114,7 +129,12 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
   const [hover, setHover] = useState<Hover | null>(null);
   const [filterProject, setFilterProject] = useUrlParam("project", "");
   const containerRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const dragState = useRef<{
+    x: number;
+    y: number;
+    tx: number;
+    ty: number;
+  } | null>(null);
   const viewRef = useRef(view);
   const animRaf = useRef<number | null>(null);
 
@@ -126,10 +146,8 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     const main = document.querySelector(".shell-main") as HTMLElement | null;
     const prev = main?.style.overflow ?? "";
     if (main) main.style.overflow = "hidden";
-    document.body.classList.add("solar-mode");
     return () => {
       if (main) main.style.overflow = prev;
-      document.body.classList.remove("solar-mode");
     };
   }, []);
 
@@ -139,9 +157,15 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     };
   }, []);
 
-  const allSystems = useMemo(() => (heatmap ? buildSystems(heatmap.projects) : []), [heatmap]);
+  const allSystems = useMemo(
+    () => (heatmap ? buildSystems(heatmap.projects) : []),
+    [heatmap],
+  );
   const systems = useMemo(
-    () => (filterProject ? allSystems.filter((s) => s.workdir === filterProject) : allSystems),
+    () =>
+      filterProject
+        ? allSystems.filter((s) => s.workdir === filterProject)
+        : allSystems,
     [allSystems, filterProject],
   );
 
@@ -294,12 +318,21 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
   }, [systems, worldBounds.w, worldBounds.h, animateView]);
 
   const onMouseDown = (e: React.MouseEvent) => {
-    dragState.current = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty };
+    dragState.current = {
+      x: e.clientX,
+      y: e.clientY,
+      tx: view.tx,
+      ty: view.ty,
+    };
   };
   const onMouseMove = (e: React.MouseEvent) => {
     const d = dragState.current;
     if (!d) return;
-    setView((v) => ({ ...v, tx: d.tx + (e.clientX - d.x), ty: d.ty + (e.clientY - d.y) }));
+    setView((v) => ({
+      ...v,
+      tx: d.tx + (e.clientX - d.x),
+      ty: d.ty + (e.clientY - d.y),
+    }));
   };
   const onMouseUp = () => {
     dragState.current = null;
@@ -309,7 +342,11 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     const el = containerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.shiftKey ? 1 / 1.8 : 1.8);
+    zoomAt(
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+      e.shiftKey ? 1 / 1.8 : 1.8,
+    );
   };
 
   useEffect(() => {
@@ -346,7 +383,8 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     for (const p of heatmap.projects) {
       totalEvents += p.total;
       totalFiles += p.fileCount;
-      if (p.total > topProject.count) topProject = { workdir: p.workdir, count: p.total };
+      if (p.total > topProject.count)
+        topProject = { workdir: p.workdir, count: p.total };
       for (const f of p.files) {
         if (f.count > topFile.count) topFile = { path: f.path, count: f.count };
       }
@@ -364,23 +402,23 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     return (
       <>
         <PageHeader eyebrow="instrument · 02" title="Orrery" />
-        <div className="error">{error}</div>
+        <ErrorBox>{error}</ErrorBox>
       </>
     );
   if (!heatmap)
     return (
       <>
         <PageHeader eyebrow="instrument · 02" title="Orrery" />
-        <div className="heatmap-empty">charting the heavens…</div>
+        <div className={emptyCls}>charting the heavens…</div>
       </>
     );
   if (allSystems.length === 0) {
     return (
       <>
         <PageHeader eyebrow="instrument · 02" title="Orrery" />
-        <div className="heatmap-empty">
+        <div className={emptyCls}>
           the sky is empty.
-          <div style={{ fontSize: "0.8rem", marginTop: 12, fontStyle: "normal" }}>
+          <div className="mt-3 text-[0.8rem] not-italic">
             run some tool calls with <code>parry check</code> first.
           </div>
         </div>
@@ -392,7 +430,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
 
   return (
     <div
-      className="heatmap-canvas orrery-fullscreen"
+      className="relative h-screen w-full cursor-grab [touch-action:none] overflow-hidden [overscroll-behavior:contain] bg-[radial-gradient(ellipse_at_center,#060912_0%,#000000_100%)] select-none active:cursor-grabbing [&_svg]:block"
       ref={containerRef}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
@@ -400,34 +438,41 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
       onMouseLeave={onMouseUp}
       onDoubleClick={onDoubleClick}
     >
-      <div className="orrery-header-overlay">
+      <div className="pointer-events-none absolute top-8 right-10 left-10 z-8 flex items-start justify-between gap-6 [&>*]:pointer-events-auto">
         <PageHeader
           eyebrow="instrument · 02"
           title="Orrery"
           sub="files orbit their projects · drag to pan · scroll to zoom"
+          flush
+          className="bg-[linear-gradient(180deg,rgba(10,11,16,0.7)_0%,transparent_100%)] pt-1 pr-4 pb-4.5"
+          titleClassName="[text-shadow:0_2px_24px_rgba(0,0,0,0.8)]"
         />
         {stats && (
-          <div className="orrery-tally">
-            <div className="orrery-tally-title">tally</div>
-            <div className="orrery-tally-stat">
-              <span className="orrery-tally-label">projects</span>
-              <span className="orrery-tally-value">{stats.projects}</span>
+          <div className="flex shrink-0 items-center gap-5.5 rounded-md border border-brass-dim bg-[rgba(17,19,28,0.82)] px-5.5 py-3.5 font-mono backdrop-blur-[8px]">
+            <div className="border-r border-rule pr-5.5 font-display text-[1.4rem] text-brass italic">
+              tally
             </div>
-            <div className="orrery-tally-stat">
-              <span className="orrery-tally-label">files</span>
-              <span className="orrery-tally-value">{stats.totalFiles}</span>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className={tallyLabelCls}>projects</span>
+              <span className={tallyValueCls}>{stats.projects}</span>
             </div>
-            <div className="orrery-tally-stat">
-              <span className="orrery-tally-label">events</span>
-              <span className="orrery-tally-value">
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className={tallyLabelCls}>files</span>
+              <span className={tallyValueCls}>{stats.totalFiles}</span>
+            </div>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className={tallyLabelCls}>events</span>
+              <span className={tallyValueCls}>
                 {stats.totalEvents.toLocaleString()}
               </span>
             </div>
-            <div className="orrery-tally-stat orrery-tally-stat-wide">
-              <span className="orrery-tally-label">hottest</span>
-              <span className="orrery-tally-value">
+            <div className="flex max-w-[240px] min-w-0 flex-col gap-0.5">
+              <span className={tallyLabelCls}>hottest</span>
+              <span className={tallyValueCls}>
                 {basename(stats.topFile.path)}{" "}
-                <span className="orrery-tally-mute">×{stats.topFile.count}</span>
+                <span className="ml-1 text-[0.74rem] text-brass">
+                  ×{stats.topFile.count}
+                </span>
               </span>
             </div>
           </div>
@@ -435,167 +480,176 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
       </div>
 
       <svg width="100%" height="100%">
-          <defs>
-            <filter id="bodyGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id="sunGlow" x="-100%" y="-100%" width="300%" height="300%">
-              <feGaussianBlur stdDeviation="6" />
-            </filter>
-          </defs>
-          <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
-            {stars.map((s, i) => (
-              <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#2a3040" />
-            ))}
+        <defs>
+          <filter id="bodyGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="sunGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="6" />
+          </filter>
+        </defs>
+        <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
+          {stars.map((s, i) => (
+            <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#2a3040" />
+          ))}
 
-            {systems.map((sys) => (
-              <g key={sys.workdir}>
-                {sys.orbitRadii.map((r, i) => (
-                  <circle
-                    key={i}
-                    cx={sys.cx}
-                    cy={sys.cy}
-                    r={r}
-                    fill="none"
-                    stroke="#1d2030"
-                    strokeWidth={1}
-                    strokeDasharray="2 7"
-                  />
-                ))}
+          {systems.map((sys) => (
+            <g key={sys.workdir}>
+              {sys.orbitRadii.map((r, i) => (
                 <circle
+                  key={i}
                   cx={sys.cx}
                   cy={sys.cy}
-                  r={42}
-                  fill={SUN_FILL}
-                  opacity={0.18}
-                  filter="url(#sunGlow)"
+                  r={r}
+                  fill="none"
+                  stroke="#1d2030"
+                  strokeWidth={1}
+                  strokeDasharray="2 7"
                 />
-                <circle cx={sys.cx} cy={sys.cy} r={20} fill={SUN_FILL} />
-                <text
-                  x={sys.cx}
-                  y={sys.cy + 56}
-                  textAnchor="middle"
-                  fill="#eae3d2"
-                  fontSize={18}
-                  fontFamily="Instrument Serif, serif"
-                  fontStyle="italic"
-                  style={{ pointerEvents: "none" }}
-                >
-                  {sys.label}
-                </text>
-
-                {sys.bodies.map((b, i) => (
-                  <g
-                    key={i}
-                    onMouseEnter={(e) => {
-                      const rect = containerRef.current?.getBoundingClientRect();
-                      if (!rect) return;
-                      setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, body: b });
-                    }}
-                    onMouseMove={(e) => {
-                      const rect = containerRef.current?.getBoundingClientRect();
-                      if (!rect) return;
-                      setHover({ x: e.clientX - rect.left, y: e.clientY - rect.top, body: b });
-                    }}
-                    onMouseLeave={() => setHover(null)}
-                  >
-                    <circle
-                      cx={b.x}
-                      cy={b.y}
-                      r={b.r}
-                      fill={BODY_FILL}
-                      stroke={BODY_STROKE}
-                      strokeWidth={1.5}
-                      filter="url(#bodyGlow)"
-                    />
-                    {showLabels && (
-                      <text
-                        x={b.x + b.r + 4}
-                        y={b.y + 3}
-                        fill="#8a8478"
-                        fontSize={9}
-                        fontFamily="JetBrains Mono, monospace"
-                        style={{ pointerEvents: "none" }}
-                      >
-                        {b.name}
-                      </text>
-                    )}
-                  </g>
-                ))}
-              </g>
-            ))}
-          </g>
-        </svg>
-
-        <div className="heatmap-overlay legend">
-          <div className="heatmap-overlay-title">legend</div>
-          <div style={{ marginBottom: 8, lineHeight: 1.6 }}>
-            inner orbit · hottest
-            <br />
-            larger body · more accesses
-          </div>
-          <div style={{ borderTop: "1px solid var(--rule)", paddingTop: 8, marginTop: 4 }}>
-            <div style={{ color: "var(--ink-mute)", marginBottom: 4 }}>systems</div>
-            {allSystems.map((s) => (
-              <button
-                key={s.workdir}
-                className={`legend-map-entry${filterProject === s.workdir ? " active" : ""}`}
-                onClick={() => flyToSystem(s)}
-                onDoubleClick={() =>
-                  setFilterProject(filterProject === s.workdir ? "" : s.workdir)
-                }
-                title="click: fly to · double-click: isolate"
+              ))}
+              <circle
+                cx={sys.cx}
+                cy={sys.cy}
+                r={42}
+                fill={SUN_FILL}
+                opacity={0.18}
+                filter="url(#sunGlow)"
+              />
+              <circle cx={sys.cx} cy={sys.cy} r={20} fill={SUN_FILL} />
+              <text
+                x={sys.cx}
+                y={sys.cy + 56}
+                textAnchor="middle"
+                fill="#eae3d2"
+                fontSize={18}
+                fontFamily="Instrument Serif, serif"
+                fontStyle="italic"
+                className="pointer-events-none"
               >
-                · {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
+                {sys.label}
+              </text>
 
-        <div className="heatmap-overlay controls">
-          <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
-            <button
-              className="btn"
-              style={{ flex: 1 }}
-              onClick={() => zoomCentered(1.4)}
-              title="zoom in"
-            >
-              +
-            </button>
-            <button
-              className="btn"
-              style={{ flex: 1 }}
-              onClick={() => zoomCentered(1 / 1.4)}
-              title="zoom out"
-            >
-              −
-            </button>
-          </div>
-          {filterProject && (
-            <button
-              className="btn"
-              style={{ marginBottom: 6, width: "100%" }}
-              onClick={() => setFilterProject("")}
-            >
-              show all
-            </button>
-          )}
-          <button className="btn" style={{ width: "100%" }} onClick={resetView}>
-            reset view
-          </button>
+              {sys.bodies.map((b, i) => (
+                <g
+                  key={i}
+                  onMouseEnter={(e) => {
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (!rect) return;
+                    setHover({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top,
+                      body: b,
+                    });
+                  }}
+                  onMouseMove={(e) => {
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (!rect) return;
+                    setHover({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top,
+                      body: b,
+                    });
+                  }}
+                  onMouseLeave={() => setHover(null)}
+                >
+                  <circle
+                    cx={b.x}
+                    cy={b.y}
+                    r={b.r}
+                    fill={BODY_FILL}
+                    stroke={BODY_STROKE}
+                    strokeWidth={1.5}
+                    filter="url(#bodyGlow)"
+                  />
+                  {showLabels && (
+                    <text
+                      x={b.x + b.r + 4}
+                      y={b.y + 3}
+                      fill="#8a8478"
+                      fontSize={9}
+                      fontFamily="JetBrains Mono, monospace"
+                      className="pointer-events-none"
+                    >
+                      {b.name}
+                    </text>
+                  )}
+                </g>
+              ))}
+            </g>
+          ))}
+        </g>
+      </svg>
+
+      <div className={clsx(overlayCls, "bottom-4 left-4 max-w-[220px]")}>
+        <div className="mb-2 font-display text-[1rem] text-brass italic">
+          legend
         </div>
+        <div className="mb-2 leading-[1.6]">
+          inner orbit · hottest
+          <br />
+          larger body · more accesses
+        </div>
+        <div className="mt-1 border-t border-rule pt-2">
+          <div className="mb-1 text-ink-mute">systems</div>
+          {allSystems.map((s) => (
+            <button
+              key={s.workdir}
+              className={clsx(
+                "block w-full rounded-[3px] px-1.5 py-1 text-left font-mono text-meta text-ink hover:bg-brass/8 hover:text-brass",
+                filterProject === s.workdir && "bg-brass/12 text-brass",
+              )}
+              onClick={() => flyToSystem(s)}
+              onDoubleClick={() =>
+                setFilterProject(filterProject === s.workdir ? "" : s.workdir)
+              }
+              title="click: fly to · double-click: isolate"
+            >
+              · {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={clsx(overlayCls, "right-4 bottom-4 max-w-[260px]")}>
+        <div className="mb-1.5 flex gap-1">
+          <Btn
+            className="flex-1"
+            onClick={() => zoomCentered(1.4)}
+            title="zoom in"
+          >
+            +
+          </Btn>
+          <Btn
+            className="flex-1"
+            onClick={() => zoomCentered(1 / 1.4)}
+            title="zoom out"
+          >
+            −
+          </Btn>
+        </div>
+        {filterProject && (
+          <Btn className="mb-1.5 w-full" onClick={() => setFilterProject("")}>
+            show all
+          </Btn>
+        )}
+        <Btn className="w-full" onClick={resetView}>
+          reset view
+        </Btn>
+      </div>
 
       {hover && (
         <div
-          className="heatmap-tooltip"
+          className="pointer-events-none absolute z-10 max-w-[420px] rounded border border-brass-dim bg-[rgba(5,6,10,0.96)] px-3 py-2 font-mono text-meta"
           style={{ left: hover.x + 12, top: hover.y + 12 }}
         >
-          <div className="heatmap-tooltip-path">{hover.body.path}</div>
-          <div className="heatmap-tooltip-count">{hover.body.count} events</div>
+          <div className="break-all text-ink">{hover.body.path}</div>
+          <div className="mt-[3px] text-tiny text-brass">
+            {hover.body.count} events
+          </div>
         </div>
       )}
     </div>

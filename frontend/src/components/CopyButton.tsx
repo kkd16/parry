@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import "./CopyButton.css";
 
 interface Props {
   text: string;
@@ -11,7 +10,7 @@ interface Props {
 
 export default function CopyButton({
   text,
-  className = "copy-btn",
+  className = "ml-2 text-[0.7rem] text-ink-mute hover:text-brass",
   label = "copy",
   copiedLabel = "copied",
   onCopied,

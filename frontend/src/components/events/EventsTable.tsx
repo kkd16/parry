@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import clsx from "clsx";
 import type { Event } from "../../types";
 import {
   EVENT_COLUMNS,
@@ -8,7 +9,6 @@ import {
   type ColumnSpec,
   type ColumnVisibility,
 } from "./columns";
-import "./EventsTable.css";
 
 interface Props {
   events: Event[];
@@ -21,12 +21,20 @@ interface Props {
   sortOrder: string;
   onToggleSort: (id: string) => void;
   columnSizing: ColumnSizing;
-  setColumnSizing: (v: ColumnSizing | ((prev: ColumnSizing) => ColumnSizing)) => void;
+  setColumnSizing: (
+    v: ColumnSizing | ((prev: ColumnSizing) => ColumnSizing),
+  ) => void;
   columnVisibility: ColumnVisibility;
   onRowClick: (e: Event) => void;
   onFilterBinary: (b: string) => void;
   onFilterWorkdir: (w: string) => void;
 }
+
+const tdByDensity: Record<string, string> = {
+  compact: "px-3 py-1 text-[0.74rem]",
+  normal: "px-3 py-2",
+  comfortable: "px-3.5 py-3",
+};
 
 export default function EventsTable({
   events,
@@ -84,24 +92,42 @@ export default function EventsTable({
   );
 
   return (
-    <div className={`table-wrap${loading ? " loading" : ""}`}>
-      {loading && <div className="loading-bar" />}
-      <table className="events-table" data-density={density} style={{ width: totalWidth }}>
+    <div
+      className={clsx(
+        "relative overflow-x-auto overflow-y-hidden rounded-md border border-rule bg-bg-raised",
+        loading && "opacity-55 transition-opacity duration-200",
+      )}
+    >
+      {loading && (
+        <div className="absolute top-0 right-0 left-0 z-2 h-0.5 animate-loading-slide bg-brass" />
+      )}
+      <table
+        className="w-full table-fixed border-separate border-spacing-0 text-body"
+        style={{ width: totalWidth }}
+      >
         <thead>
           <tr>
             {visibleColumns.map((c) => {
-              const sorted = sortId === c.id ? (sortOrder === "asc" ? "asc" : "desc") : "";
+              const sorted =
+                sortId === c.id ? (sortOrder === "asc" ? "asc" : "desc") : "";
               return (
                 <th
                   key={c.id}
                   style={{ width: colWidth(c) }}
-                  className={`${c.sortable ? "sortable" : ""}${sorted ? " sorted" : ""}`}
+                  className={clsx(
+                    "sticky top-0 z-1 border-b border-rule bg-bg-raised px-3 py-2.5 text-left font-mono text-micro font-semibold tracking-[0.12em] text-ink-mute uppercase select-none",
+                    c.sortable && "cursor-pointer hover:text-brass",
+                    sorted && "text-brass",
+                  )}
                   onClick={c.sortable ? () => onToggleSort(c.id) : undefined}
                 >
                   {c.label}
                   {sorted === "asc" ? " ▲" : sorted === "desc" ? " ▼" : ""}
                   <div
-                    className={`col-resizer${resizingId === c.id ? " resizing" : ""}`}
+                    className={clsx(
+                      "absolute top-0 right-0 h-full w-[5px] cursor-col-resize bg-transparent select-none hover:bg-brass",
+                      resizingId === c.id && "bg-brass",
+                    )}
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => {
                       e.preventDefault();
@@ -119,14 +145,7 @@ export default function EventsTable({
             <tr>
               <td
                 colSpan={visibleColumns.length}
-                style={{
-                  textAlign: "center",
-                  padding: 60,
-                  fontFamily: "var(--font-display)",
-                  fontStyle: "italic",
-                  fontSize: "1.4rem",
-                  color: "var(--ink-dim)",
-                }}
+                className="p-[60px] text-center font-display text-[1.4rem] text-ink-dim italic"
               >
                 the logbook is empty.
               </td>
@@ -135,11 +154,23 @@ export default function EventsTable({
             events.map((e) => (
               <tr
                 key={e.id}
-                className={`${selectedId === e.id ? "selected" : ""}${freshIds.has(e.id) ? " is-fresh" : ""}`}
+                className={clsx(
+                  "cursor-pointer transition-colors duration-[140ms] hover:bg-bg-hover",
+                  selectedId === e.id &&
+                    "bg-brass/6 shadow-[inset_2px_0_0_var(--color-brass)]",
+                  freshIds.has(e.id) && "animate-row-fresh",
+                )}
                 onClick={() => onRowClick(e)}
               >
                 {visibleColumns.map((c) => (
-                  <td key={c.id} style={{ width: colWidth(c) }}>
+                  <td
+                    key={c.id}
+                    style={{ width: colWidth(c) }}
+                    className={clsx(
+                      "truncate text-ink",
+                      tdByDensity[density] ?? tdByDensity.normal,
+                    )}
+                  >
                     {c.render(e, ctx)}
                   </td>
                 ))}

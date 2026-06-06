@@ -38,7 +38,10 @@ function autoName(qs: string): string {
 }
 
 export function useBookmarks(): BookmarksApi {
-  const [bookmarks, setBookmarks] = useLocalStorage<Bookmark[]>(STORAGE_KEY, []);
+  const [bookmarks, setBookmarks] = useLocalStorage<Bookmark[]>(
+    STORAGE_KEY,
+    [],
+  );
 
   const add = useCallback(
     (qs: string, name?: string) => {
@@ -60,7 +63,9 @@ export function useBookmarks(): BookmarksApi {
 
   const rename = useCallback(
     (id: string, name: string) =>
-      setBookmarks((prev) => prev.map((b) => (b.id === id ? { ...b, name } : b))),
+      setBookmarks((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, name } : b)),
+      ),
     [setBookmarks],
   );
 

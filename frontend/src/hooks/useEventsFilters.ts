@@ -18,7 +18,14 @@ export function timeFilterCutoff(value: string): number | null {
   return opt ? Date.now() - opt.ms : null;
 }
 
-export const FILTER_KEYS = ["action", "tool", "workdir", "binary", "session", "time"] as const;
+export const FILTER_KEYS = [
+  "action",
+  "tool",
+  "workdir",
+  "binary",
+  "session",
+  "time",
+] as const;
 export type FilterKey = (typeof FILTER_KEYS)[number];
 
 const URL_KEYS = [...FILTER_KEYS, "q", "offset", "sort", "order"] as const;
@@ -66,7 +73,10 @@ export function useEventsFilters(): EventsFiltersApi {
     (v: string) => {
       setSearchInput(v);
       clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => setParams({ q: v, offset: "" }), 300);
+      debounceRef.current = setTimeout(
+        () => setParams({ q: v, offset: "" }),
+        300,
+      );
     },
     [setParams],
   );
@@ -91,7 +101,10 @@ export function useEventsFilters(): EventsFiltersApi {
   const clearAll = useCallback(() => {
     clearTimeout(debounceRef.current);
     setSearchInput("");
-    const cleared: Partial<Record<(typeof URL_KEYS)[number], string>> = { q: "", offset: "" };
+    const cleared: Partial<Record<(typeof URL_KEYS)[number], string>> = {
+      q: "",
+      offset: "",
+    };
     for (const k of FILTER_KEYS) cleared[k] = "";
     setParams(cleared);
   }, [setParams]);
@@ -118,7 +131,8 @@ export function useEventsFilters(): EventsFiltersApi {
   );
 
   const tailQuery = useCallback(
-    (sinceId: number) => serverQuery({ limit: "50", since_id: String(sinceId) }),
+    (sinceId: number) =>
+      serverQuery({ limit: "50", since_id: String(sinceId) }),
     [serverQuery],
   );
 

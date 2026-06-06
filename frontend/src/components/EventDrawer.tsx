@@ -1,18 +1,30 @@
 import { useCallback, useMemo, useState } from "react";
+import clsx from "clsx";
 import type { Event } from "../types";
 import { getRuleSuggestion } from "../api";
 import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
 import CopyButton from "./CopyButton";
-import Drawer from "./Drawer";
+import Drawer, { DrawerActions, DrawerField, yamlBlockCls } from "./Drawer";
+import { Btn, btnCls, inputCls } from "./ui";
 import { useRegisterCommands, type Command } from "../commands";
-import "./EventDrawer.css";
 
 interface Props {
   event: Event | null;
   onClose: () => void;
-  onApplyFilter?: (key: "binary" | "workdir" | "session", value: string) => void;
+  onApplyFilter?: (
+    key: "binary" | "workdir" | "session",
+    value: string,
+  ) => void;
 }
+
+const JSON_CLS: Record<string, string> = {
+  key: "text-brass",
+  str: "text-allow",
+  num: "text-confirm",
+  bool: "text-block",
+  null: "text-ink-mute italic",
+};
 
 function highlightJson(value: unknown): string {
   const json = JSON.stringify(value, null, 2);
@@ -23,13 +35,13 @@ function highlightJson(value: unknown): string {
     .replace(
       /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
       (match) => {
-        let cls = "json-num";
+        let cls = JSON_CLS.num;
         if (/^"/.test(match)) {
-          cls = /:$/.test(match) ? "json-key" : "json-str";
+          cls = /:$/.test(match) ? JSON_CLS.key : JSON_CLS.str;
         } else if (/true|false/.test(match)) {
-          cls = "json-bool";
+          cls = JSON_CLS.bool;
         } else if (/null/.test(match)) {
-          cls = "json-null";
+          cls = JSON_CLS.null;
         }
         return `<span class="${cls}">${match}</span>`;
       },
@@ -38,13 +50,10 @@ function highlightJson(value: unknown): string {
 
 function CopyField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="drawer-field">
-      <div className="drawer-field-label">{label}</div>
-      <div className="drawer-field-value">
-        {value || <span className="muted">—</span>}
-        {value && <CopyButton text={value} />}
-      </div>
-    </div>
+    <DrawerField label={label}>
+      {value || <span className="text-ink-mute italic">—</span>}
+      {value && <CopyButton text={value} />}
+    </DrawerField>
   );
 }
 
@@ -52,7 +61,11 @@ const SUGGEST_ACTIONS = ["allow", "confirm", "block"] as const;
 type SuggestAction = (typeof SUGGEST_ACTIONS)[number];
 
 function initialSuggestAction(event: Event | null): SuggestAction {
-  if (event?.action === "allow" || event?.action === "confirm" || event?.action === "block") {
+  if (
+    event?.action === "allow" ||
+    event?.action === "confirm" ||
+    event?.action === "block"
+  ) {
     return event.action;
   }
   return "confirm";
@@ -69,21 +82,26 @@ function RuleSuggestionPanel({
 }) {
   const api = useApi(
     useCallback(
-      (signal: AbortSignal) => getRuleSuggestion(event.id, targetAction, signal),
+      (signal: AbortSignal) =>
+        getRuleSuggestion(event.id, targetAction, signal),
       [event.id, targetAction],
     ),
   );
   const suggestion = api.loading ? null : api.data;
 
   return (
-    <section className="rule-suggestion">
-      <div className="rule-suggestion-head">
+    <section className="mt-5 rounded border border-rule bg-[linear-gradient(135deg,rgba(212,161,74,0.08),rgba(12,15,20,0.55))] p-4">
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="drawer-field-label">suggest rule</div>
-          <div className="rule-suggestion-sub">copy YAML into policy.yaml</div>
+          <div className="min-w-[100px] pt-[3px] font-mono text-micro tracking-[0.12em] text-ink-mute uppercase">
+            suggest rule
+          </div>
+          <div className="mt-1 font-display text-[0.86rem] text-ink-mute italic">
+            copy YAML into policy.yaml
+          </div>
         </div>
         <select
-          className="input rule-suggestion-select"
+          className={clsx(inputCls, "min-w-[120px]")}
           value={targetAction}
           onChange={(e) => setTargetAction(e.target.value as SuggestAction)}
         >
@@ -95,19 +113,31 @@ function RuleSuggestionPanel({
         </select>
       </div>
 
-      {api.loading && <div className="rule-suggestion-status">building suggestion…</div>}
-      {api.error && <div className="rule-suggestion-error">{api.error}</div>}
+      {api.loading && (
+        <div className="font-mono text-meta text-ink-mute">
+          building suggestion…
+        </div>
+      )}
+      {api.error && (
+        <div className="my-2.5 font-mono text-meta text-block">{api.error}</div>
+      )}
       {suggestion && (
         <>
-          <div className="rule-suggestion-meta">
+          <div className="mb-2.5 flex flex-wrap gap-2 font-mono text-meta tracking-[0.1em] text-ink-mute uppercase">
             <span>{suggestion.tool}</span>
-            {suggestion.duplicate && <span className="rule-suggestion-duplicate">already covered</span>}
+            {suggestion.duplicate && (
+              <span className="text-allow">already covered</span>
+            )}
           </div>
-          {suggestion.warning && <div className="rule-suggestion-warning">{suggestion.warning}</div>}
-          <pre className="rule-suggestion-yaml">{suggestion.yaml}</pre>
+          {suggestion.warning && (
+            <div className="my-2.5 font-mono text-meta text-brass-bright">
+              {suggestion.warning}
+            </div>
+          )}
+          <pre className={yamlBlockCls}>{suggestion.yaml}</pre>
           <CopyButton
             key={targetAction}
-            className="btn"
+            className={btnCls}
             text={suggestion.yaml}
             label="copy yaml"
             copiedLabel="copied yaml"
@@ -119,7 +149,9 @@ function RuleSuggestionPanel({
 }
 
 export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
-  const [targetAction, setTargetAction] = useState<SuggestAction>(() => initialSuggestAction(event));
+  const [targetAction, setTargetAction] = useState<SuggestAction>(() =>
+    initialSuggestAction(event),
+  );
 
   const commands = useMemo<Command[]>(
     () =>
@@ -150,58 +182,48 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
     >
       {event && (
         <>
-          <div className="drawer-field">
-            <div className="drawer-field-label">timestamp</div>
-            <div className="drawer-field-value">{new Date(event.timestamp).toLocaleString()}</div>
-          </div>
-          <div className="drawer-field">
-            <div className="drawer-field-label">action</div>
-            <div className="drawer-field-value">{actionBadge(event.action)}</div>
-          </div>
+          <DrawerField label="timestamp">
+            {new Date(event.timestamp).toLocaleString()}
+          </DrawerField>
+          <DrawerField label="action">{actionBadge(event.action)}</DrawerField>
           {event.would_action && (
-            <div className="drawer-field">
-              <div className="drawer-field-label">would be</div>
-              <div className="drawer-field-value">{actionBadge(event.would_action)}</div>
-            </div>
+            <DrawerField label="would be">
+              {actionBadge(event.would_action)}
+            </DrawerField>
           )}
-          <div className="drawer-field">
-            <div className="drawer-field-label">mode</div>
-            <div className="drawer-field-value">{event.mode}</div>
-          </div>
-          <div className="drawer-field">
-            <div className="drawer-field-label">raw name</div>
-            <div className="drawer-field-value">{event.raw_name || "—"}</div>
-          </div>
+          <DrawerField label="mode">{event.mode}</DrawerField>
+          <DrawerField label="raw name">{event.raw_name || "—"}</DrawerField>
           <CopyField label="binary" value={event.binary} />
           <CopyField label="file" value={event.file} />
           <CopyField label="workdir" value={event.workdir} />
           <CopyField label="session" value={event.session} />
-          <div className="drawer-actions">
+          <DrawerActions>
             {onApplyFilter &&
               filterButtons.map(
                 (b) =>
                   event[b.key] && (
-                    <button
+                    <Btn
                       key={b.key}
-                      className="btn"
                       onClick={() => {
                         onApplyFilter(b.key, event[b.key]);
                         onClose();
                       }}
                     >
                       {b.label}
-                    </button>
+                    </Btn>
                   ),
               )}
-          </div>
+          </DrawerActions>
           <RuleSuggestionPanel
             event={event}
             targetAction={targetAction}
             setTargetAction={setTargetAction}
           />
           <div
-            className="drawer-json"
-            dangerouslySetInnerHTML={{ __html: highlightJson(event.tool_input) }}
+            className="mt-5 overflow-x-auto rounded border border-rule bg-bg p-3.5 font-mono text-meta leading-[1.6] wrap-break-word whitespace-pre-wrap text-ink-dim"
+            dangerouslySetInnerHTML={{
+              __html: highlightJson(event.tool_input),
+            }}
           />
         </>
       )}

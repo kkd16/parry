@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, type ReactNode } from "react";
-import "./Drawer.css";
+import clsx from "clsx";
 
 interface Props {
   open: boolean;
@@ -11,7 +11,55 @@ interface Props {
   children: ReactNode;
 }
 
-export default function Drawer({ open, onClose, eyebrow, title, bodyKey, children }: Props) {
+export const yamlBlockCls =
+  "my-3 rounded border border-rule-soft bg-bg p-3 font-mono text-meta leading-[1.55] whitespace-pre-wrap wrap-break-word text-ink";
+
+export function DrawerField({
+  label,
+  children,
+}: {
+  label: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex gap-3.5 border-b border-dashed border-rule-soft py-2.5 text-body">
+      <div className="min-w-[100px] pt-[3px] font-mono text-micro tracking-[0.12em] text-ink-mute uppercase">
+        {label}
+      </div>
+      <div className="flex-1 font-mono text-body break-all text-ink">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function DrawerActions({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={clsx(
+        "mt-4.5 flex flex-wrap gap-2 border-t border-dashed border-rule-soft pt-3.5",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+export default function Drawer({
+  open,
+  onClose,
+  eyebrow,
+  title,
+  bodyKey,
+  children,
+}: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -26,7 +74,7 @@ export default function Drawer({ open, onClose, eyebrow, title, bodyKey, childre
       {open && (
         <>
           <motion.div
-            className="drawer-backdrop"
+            className="fixed inset-0 z-80 bg-[rgba(5,6,10,0.65)] backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -34,22 +82,32 @@ export default function Drawer({ open, onClose, eyebrow, title, bodyKey, childre
             onClick={onClose}
           />
           <motion.aside
-            className="drawer"
+            className="fixed top-0 right-0 bottom-0 z-90 flex w-[min(560px,90vw)] flex-col border-l border-rule bg-bg-raised shadow-[-20px_0_60px_rgba(0,0,0,0.5)]"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 280 }}
           >
-            <div className="drawer-header">
+            <div className="flex items-start justify-between gap-4 border-b border-rule px-8 pt-7 pb-5">
               <div>
-                <div className="drawer-eyebrow">{eyebrow}</div>
-                <h2 className="drawer-title">{title}</h2>
+                <div className="mb-2 font-mono text-[0.6rem] tracking-[0.22em] text-brass uppercase">
+                  {eyebrow}
+                </div>
+                <h2 className="font-display text-[2rem] leading-none font-bold text-ink italic">
+                  {title}
+                </h2>
               </div>
-              <button className="drawer-close" onClick={onClose}>
+              <button
+                className="shrink-0 rounded border border-rule px-2 py-1 font-mono text-[0.7rem] text-ink-dim hover:border-brass hover:text-brass"
+                onClick={onClose}
+              >
                 close · esc
               </button>
             </div>
-            <div className="drawer-body" key={bodyKey}>
+            <div
+              className="flex-1 overflow-y-auto px-8 pt-6 pb-8"
+              key={bodyKey}
+            >
               {children}
             </div>
           </motion.aside>

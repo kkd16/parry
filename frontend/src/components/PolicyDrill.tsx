@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import clsx from "clsx";
 import type { CommandExplanation, RuleEntry } from "../types";
 import { postPolicyEvaluate } from "../api";
 import { useApi } from "../hooks/useApi";
@@ -13,6 +14,9 @@ const PLACEHOLDER: Record<DrillTool, string> = {
   file_read: "try a path… e.g. ~/.ssh/id_rsa",
   file_edit: "try a path… e.g. /etc/passwd",
 };
+
+const calloutBlockCls =
+  "rounded-r border-l-2 border-block bg-block/12 px-3 py-2 text-[0.82rem] leading-[1.5] text-ink [&_code]:font-mono [&_code]:text-body [&_code]:text-brass-bright";
 
 function entryLabel(e: RuleEntry): string {
   const parts = [e.binary, ...(e.positional ?? [])];
@@ -32,15 +36,23 @@ function Stage({
   onOpenBinary: (b: string) => void;
 }) {
   return (
-    <div className="policy-drill-stage">
-      {total > 1 && <span className="policy-drill-stage-n">stage {index + 1}</span>}
-      <span className="policy-drill-stage-bin mono">{stage.binary}</span>
+    <div className="flex items-center gap-2.5 py-1">
+      {total > 1 && (
+        <span className="min-w-[52px] font-mono text-[0.64rem] tracking-[0.12em] text-ink-mute uppercase">
+          stage {index + 1}
+        </span>
+      )}
+      <span className="min-w-[80px] font-mono text-[0.82rem] text-ink">
+        {stage.binary}
+      </span>
       {actionBadge(stage.action)}
       {stage.matched.is_default || !stage.matched.entry ? (
-        <span className="policy-drill-chip is-default">shell default</span>
+        <span className="rounded-full border border-dashed border-rule bg-bg px-2.5 py-[3px] font-mono text-[0.68rem] text-ink-mute">
+          shell default
+        </span>
       ) : (
         <button
-          className="policy-drill-chip"
+          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-[3px] font-mono text-[0.68rem] text-ink-dim transition-all duration-150 hover:border-brass-dim hover:text-brass"
           title="open this rule"
           onClick={() => onOpenBinary(stage.binary)}
         >
@@ -51,7 +63,11 @@ function Stage({
   );
 }
 
-export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string) => void }) {
+export default function PolicyDrill({
+  onOpenBinary,
+}: {
+  onOpenBinary: (b: string) => void;
+}) {
   const [tool, setTool] = useState<DrillTool>("shell");
   const [text, setText] = useState("");
   const trimmed = text.trim();
@@ -60,7 +76,8 @@ export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string
     useMemo(() => {
       if (!trimmed) return null;
       const input = tool === "shell" ? { command: trimmed } : { path: trimmed };
-      return (signal: AbortSignal) => postPolicyEvaluate({ tool, tool_input: input }, signal);
+      return (signal: AbortSignal) =>
+        postPolicyEvaluate({ tool, tool_input: input }, signal);
     }, [trimmed, tool]),
     280,
   );
@@ -68,13 +85,16 @@ export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string
   const result = trimmed && !api.loading && !api.error ? api.data : null;
 
   return (
-    <div className="policy-drill">
-      <div className="policy-drill-controls">
-        <div className="policy-drill-tools">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="inline-flex overflow-hidden rounded border border-rule">
           {TOOLS.map((id) => (
             <button
               key={id}
-              className={`policy-drill-tool${tool === id ? " active" : ""}`}
+              className={clsx(
+                "cursor-pointer bg-bg px-3 py-[7px] font-mono text-[0.7rem] tracking-[0.06em] text-ink-dim transition-all duration-150 not-first:border-l not-first:border-rule hover:text-ink",
+                tool === id && "bg-bg-active text-brass",
+              )}
               onClick={() => setTool(id)}
             >
               {id}
@@ -82,7 +102,7 @@ export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string
           ))}
         </div>
         <input
-          className="input mono policy-drill-input"
+          className="min-w-[260px] flex-1 rounded border border-rule bg-bg px-2.5 py-1.5 font-mono text-[0.75rem] text-ink transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-ink-mute placeholder:italic focus:border-brass focus:shadow-[0_0_0_2px_rgba(212,161,74,0.15)]"
           placeholder={PLACEHOLDER[tool]}
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -90,31 +110,34 @@ export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string
         />
       </div>
 
-      {error && <div className="policy-drill-callout is-block">{error}</div>}
+      {error && <div className={calloutBlockCls}>{error}</div>}
 
       {result && (
-        <div className="policy-drill-result">
-          <div className="policy-drill-verdict">
-            <span className="policy-drill-verdict-label">verdict</span>
+        <div className="flex flex-col gap-2.5 rounded-md border border-rule-soft bg-bg-raised px-4 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-tiny font-semibold tracking-[0.18em] text-ink-mute uppercase">
+              verdict
+            </span>
             {actionBadge(result.action)}
           </div>
 
           {result.unresolved && (
-            <div className="policy-drill-callout is-block">
-              unresolved syntax — parry cannot fully resolve this command, so it fails closed to
-              block
+            <div className={calloutBlockCls}>
+              unresolved syntax — parry cannot fully resolve this command, so it
+              fails closed to block
             </div>
           )}
 
           {result.protected && (
-            <div className="policy-drill-callout is-block">
+            <div className={calloutBlockCls}>
               protected path <code>{result.protected.pattern}</code> matched{" "}
-              <code>{result.protected.arg}</code> — blocked before any rule is consulted
+              <code>{result.protected.arg}</code> — blocked before any rule is
+              consulted
             </div>
           )}
 
           {!!result.commands?.length && (
-            <div className="policy-drill-stages">
+            <div className="flex flex-col gap-1.5">
               {result.commands.map((c, i) => (
                 <Stage
                   key={`${i}-${c.binary}`}
@@ -127,11 +150,13 @@ export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string
             </div>
           )}
 
-          {!result.unresolved && !result.protected && !result.commands?.length && (
-            <div className="policy-drill-callout">
-              no rule consulted — falls to the {result.tool} default
-            </div>
-          )}
+          {!result.unresolved &&
+            !result.protected &&
+            !result.commands?.length && (
+              <div className="border-l-2 border-rule py-1 pl-3 text-[0.82rem] leading-[1.5] text-ink-dim">
+                no rule consulted — falls to the {result.tool} default
+              </div>
+            )}
         </div>
       )}
     </div>

@@ -47,7 +47,11 @@ export function setUrlParams(updates: Record<string, string>) {
     else params.delete(key);
   }
   const qs = params.toString();
-  window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : ""));
+  window.history.replaceState(
+    null,
+    "",
+    window.location.pathname + (qs ? "?" + qs : ""),
+  );
   dispatch();
 }
 

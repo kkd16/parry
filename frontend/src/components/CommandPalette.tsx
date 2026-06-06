@@ -2,7 +2,6 @@ import { Command as CmdkCommand } from "cmdk";
 import { useMemo } from "react";
 import { useCommands } from "../commands";
 import Dialog from "./Dialog";
-import "./CommandPalette.css";
 
 interface Props {
   open: boolean;
@@ -23,15 +22,33 @@ export default function CommandPalette({ open, onClose }: Props) {
   }, [commands]);
 
   return (
-    <Dialog open={open} onClose={onClose} className="cmdk-dialog">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      className="w-[min(580px,92vw)] overflow-hidden rounded-lg border border-rule bg-bg-raised shadow-[0_40px_120px_rgba(0,0,0,0.65),0_0_0_1px_rgba(212,161,74,0.08)]"
+    >
       <CmdkCommand label="Command palette">
-        <CmdkCommand.Input placeholder="what would you like to observe…" autoFocus />
-        <CmdkCommand.List>
-          <CmdkCommand.Empty>no matching command.</CmdkCommand.Empty>
+        <CmdkCommand.Input
+          className="w-full border-b border-rule bg-transparent px-5.5 py-4.5 font-mono text-[0.9rem] text-ink outline-none placeholder:font-display placeholder:text-[1rem] placeholder:text-ink-mute placeholder:italic"
+          placeholder="what would you like to observe…"
+          autoFocus
+        />
+        <CmdkCommand.List className="max-h-[380px] overflow-y-auto p-2">
+          <CmdkCommand.Empty className="p-8 text-center font-display text-[1.1rem] text-ink-mute italic">
+            no matching command.
+          </CmdkCommand.Empty>
           {grouped.map(([group, items]) => (
-            <CmdkCommand.Group key={group} heading={group}>
+            <CmdkCommand.Group
+              key={group}
+              heading={
+                <span className="block px-3 pt-3 pb-1.5 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase">
+                  {group}
+                </span>
+              }
+            >
               {items.map((c) => (
                 <CmdkCommand.Item
+                  className="flex cursor-pointer items-center gap-3 rounded px-3 py-2.5 text-[0.82rem] text-ink-dim data-[selected=true]:bg-bg-hover data-[selected=true]:text-ink [&_svg]:h-3.5 [&_svg]:w-3.5 [&_svg]:shrink-0 [&_svg]:text-brass"
                   key={c.id}
                   value={`${c.label} ${(c.keywords ?? []).join(" ")}`}
                   onSelect={() => {
@@ -41,7 +58,11 @@ export default function CommandPalette({ open, onClose }: Props) {
                 >
                   {c.icon}
                   <span>{c.label}</span>
-                  {c.hint && <span className="cmdk-item-hint">{c.hint}</span>}
+                  {c.hint && (
+                    <span className="ml-auto font-mono text-micro text-ink-mute">
+                      {c.hint}
+                    </span>
+                  )}
                 </CmdkCommand.Item>
               ))}
             </CmdkCommand.Group>

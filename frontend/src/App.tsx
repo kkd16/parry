@@ -1,4 +1,12 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Bell, Bookmark, Filter, Search } from "lucide-react";
 import Sidebar from "./components/Sidebar";
 import CommandPalette from "./components/CommandPalette";
@@ -14,8 +22,11 @@ import { openUrl, setUrlParams, usePath } from "./hooks/useUrlState";
 import { TIME_OPTIONS } from "./hooks/useEventsFilters";
 import { useBookmarks, type BookmarksApi } from "./hooks/useBookmarks";
 import { TABS, type Tab } from "./tabs";
-import { CommandsProvider, useRegisterCommands, type Command } from "./commands";
-import "./Shell.css";
+import {
+  CommandsProvider,
+  useRegisterCommands,
+  type Command,
+} from "./commands";
 
 const BridgePage = lazy(() => import("./BridgePage"));
 const DevDocsPage = lazy(() => import("./DevDocsPage"));
@@ -25,7 +36,11 @@ const PolicyPage = lazy(() => import("./PolicyPage"));
 const NotifyPage = lazy(() => import("./NotifyPage"));
 
 const ACTION_FILTERS = [
-  { value: "block", label: "Show blocked events", keywords: ["block", "denied"] },
+  {
+    value: "block",
+    label: "Show blocked events",
+    keywords: ["block", "denied"],
+  },
   { value: "confirm", label: "Show confirm events", keywords: ["confirm"] },
   { value: "allow", label: "Show allowed events", keywords: ["allow"] },
   { value: "observe", label: "Show observed events", keywords: ["observe"] },
@@ -200,9 +215,13 @@ function AppShell() {
 
   return (
     <>
-      <GlobalCommands setTab={setTab} openShortcuts={openShortcuts} openAbout={openAbout} />
+      <GlobalCommands
+        setTab={setTab}
+        openShortcuts={openShortcuts}
+        openAbout={openAbout}
+      />
       <BookmarkCommands bookmarks={bookmarks} onOpen={openBookmark} />
-      <div className="shell">
+      <div className="grid h-screen grid-cols-[var(--sidebar-w)_1fr] grid-rows-1 overflow-hidden">
         <Sidebar
           tab={tab}
           setTab={setTab}
@@ -215,8 +234,14 @@ function AppShell() {
           counts={counts}
           onOpenBookmark={openBookmark}
         />
-        <main className="shell-main">
-          <div className="shell-main-inner">
+        <main className="shell-main relative overflow-x-hidden overflow-y-auto">
+          <div
+            className={
+              tab === "orrery"
+                ? "h-screen"
+                : "mx-auto max-w-[1440px] px-14 pt-14 pb-10"
+            }
+          >
             <Suspense fallback={null}>
               {tab === "bridge" && (
                 <BridgePage
@@ -231,10 +256,16 @@ function AppShell() {
                 />
               )}
               {tab === "logbook" && (
-                <EventsPage onCountChange={setEventCount} onLiveChange={setLive} />
+                <EventsPage
+                  onCountChange={setEventCount}
+                  onLiveChange={setLive}
+                />
               )}
               {tab === "orrery" && (
-                <SolarSystemPage heatmap={heatmapApi.data} error={heatmapApi.error} />
+                <SolarSystemPage
+                  heatmap={heatmapApi.data}
+                  error={heatmapApi.error}
+                />
               )}
               {tab === "charter" && <PolicyPage {...policyOverview} />}
               {tab === "beacon" && (

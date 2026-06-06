@@ -1,18 +1,45 @@
-import "./PageHeader.css";
+import clsx from "clsx";
+
 interface Props {
   eyebrow?: string;
   title: string;
   sub?: string;
+  flush?: boolean;
+  className?: string;
+  titleClassName?: string;
 }
 
-export default function PageHeader({ eyebrow, title, sub }: Props) {
+export default function PageHeader({
+  eyebrow,
+  title,
+  sub,
+  flush,
+  className,
+  titleClassName,
+}: Props) {
   return (
-    <header className="page-header">
-      {eyebrow && <div className="page-header-eyebrow">{eyebrow}</div>}
-      <h1 className="page-header-title">{title}</h1>
-      {sub && <div className="page-header-sub">{sub}</div>}
-      <div className="ornament-line" aria-hidden>
-        <span className="ornament-dot" />
+    <header
+      className={clsx("animate-fade-up", flush ? "flex-1" : "mb-9", className)}
+    >
+      {eyebrow && (
+        <div className="mb-2.5 font-mono text-micro tracking-[0.24em] text-brass uppercase">
+          {eyebrow}
+        </div>
+      )}
+      <h1
+        className={clsx(
+          "mb-3.5 font-display text-[3.6rem] leading-none font-bold tracking-[-0.015em] text-ink italic",
+          titleClassName,
+        )}
+      >
+        {title}
+      </h1>
+      {sub && <div className="font-mono text-body text-ink-dim">{sub}</div>}
+      <div
+        className="flex max-w-[320px] flex-1 items-center gap-1.5 before:h-px before:flex-1 before:bg-rule before:content-[''] after:h-px after:flex-1 after:bg-rule after:content-['']"
+        aria-hidden
+      >
+        <span className="h-1 w-1 shrink-0 rounded-full bg-brass" />
       </div>
     </header>
   );

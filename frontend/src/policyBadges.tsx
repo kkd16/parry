@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
+import { Badge } from "./components/ui";
 
 export const ACTION_COLORS: Record<string, string> = {
-  allow: "var(--allow)",
-  block: "var(--block)",
-  observe: "var(--observe)",
-  confirm: "var(--confirm)",
+  allow: "var(--color-allow)",
+  block: "var(--color-block)",
+  observe: "var(--color-observe)",
+  confirm: "var(--color-confirm)",
 };
 
 export function healthClass(status: string | undefined): string {
@@ -12,25 +13,9 @@ export function healthClass(status: string | undefined): string {
 }
 
 export function actionBadge(action: string): ReactNode {
-  let cls = "badge";
-  switch (action) {
-    case "allow":
-      cls += " badge-allow";
-      break;
-    case "block":
-      cls += " badge-block";
-      break;
-    case "confirm":
-      cls += " badge-confirm";
-      break;
-    case "observe":
-      cls += " badge-observe";
-      break;
-  }
-  return <span className={cls}>{action}</span>;
+  return <Badge action={action}>{action}</Badge>;
 }
 
 export function modeBadge(mode: string): ReactNode {
-  const cls = mode === "enforce" ? "badge badge-block" : "badge badge-allow";
-  return <span className={cls}>{mode}</span>;
+  return <Badge action={mode === "enforce" ? "block" : "allow"}>{mode}</Badge>;
 }
