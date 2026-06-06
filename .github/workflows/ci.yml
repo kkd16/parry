@@ -22,15 +22,19 @@ jobs:
         with:
           go-version: "1.26"
 
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: frontend/package.json
+
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - run: cd frontend && npm ci
-      - run: cd frontend && npm run lint
-      - run: cd frontend && npm run build
+      - run: cd frontend && pnpm install --frozen-lockfile
+      - run: cd frontend && pnpm run lint
+      - run: cd frontend && pnpm run build
 
       - run: go test ./... -race -count=1 -coverprofile=coverage.txt
 

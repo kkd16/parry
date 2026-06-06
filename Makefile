@@ -13,11 +13,11 @@ build: frontend
 
 frontend:
 	@echo "=== Building frontend ==="
-	@echo "1) npm ci"
-	@cd frontend && npm ci
+	@echo "1) pnpm install --frozen-lockfile"
+	@cd frontend && pnpm install --frozen-lockfile
 	@echo "   ✓ Done"
-	@echo "2) npm run build"
-	@cd frontend && npm run build
+	@echo "2) pnpm run build"
+	@cd frontend && pnpm run build
 	@echo "   ✓ Done"
 	@echo "✓ Frontend build complete"
 
@@ -44,8 +44,8 @@ lint-go:
 	@echo "   ✓ Done"
 
 lint-frontend:
-	@echo "2) Frontend (npm run lint)"
-	@cd frontend && npm ci && npm run lint
+	@echo "2) Frontend (pnpm run lint)"
+	@cd frontend && pnpm install --frozen-lockfile && pnpm run lint
 	@echo "   ✓ Done"
 
 lint-fix:
@@ -71,6 +71,6 @@ update:
 	@go get -u ./... && go mod tidy
 	@echo "   ✓ Done"
 	@echo "2) Frontend"
-	@cd frontend && npx -y npm-check-updates -u --target minor && npm install
+	@cd frontend && pnpm dlx npm-check-updates -u --target minor && pnpm install
 	@echo "   ✓ Done"
 	@echo "✓ All dependencies updated"
