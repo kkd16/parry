@@ -404,6 +404,46 @@ a { color: var(--brass); }
   gap: 5px;
 }
 
+.sidebar-footer-docs-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.sidebar-footer-docs-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.sidebar-footer-docs-btn .kbd {
+  margin-left: auto;
+}
+
+.sidebar-footer-docs-btn:hover {
+  color: var(--brass);
+  border-color: var(--brass-dim);
+}
+
+.sidebar-footer-docs-btn.active {
+  color: var(--brass);
+  border-color: var(--brass-dim);
+  background: var(--observe-bg);
+}
+
 .kbd {
   font-family: var(--font-mono);
   font-size: 0.62rem;
@@ -3072,3 +3112,285 @@ body.solar-mode .shell-main-inner {
   border: 2px solid var(--bg);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--brass-dim); }
+
+/* ─── dev docs ─────────────────────────────────────────── */
+
+.devdocs-canvas {
+  background: var(--bg-raised);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 16px 12px 14px;
+}
+
+.devdocs-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.devdocs-node {
+  cursor: pointer;
+  outline: none;
+}
+
+.devdocs-node-rect {
+  fill: var(--bg);
+  stroke: var(--rule);
+  stroke-width: 1.2;
+  transition: stroke 150ms ease, fill 150ms ease;
+}
+
+.devdocs-node:hover .devdocs-node-rect,
+.devdocs-node:focus-visible .devdocs-node-rect {
+  stroke: var(--brass);
+  fill: var(--bg-hover);
+}
+
+.devdocs-node-rect.accent-brass { stroke: var(--brass-dim); }
+.devdocs-node-rect.accent-confirm { stroke: rgba(111, 179, 210, 0.55); }
+.devdocs-node-rect.accent-block { stroke: rgba(224, 90, 76, 0.55); }
+.devdocs-node-rect.accent-allow { stroke: rgba(127, 196, 154, 0.55); }
+
+.devdocs-node.planned { opacity: 0.5; }
+.devdocs-node.planned:hover { opacity: 0.85; }
+.devdocs-node.planned .devdocs-node-rect { stroke-dasharray: 4 3; }
+
+.devdocs-node-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 550;
+  fill: var(--ink);
+}
+
+.devdocs-node-pkg {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  fill: var(--ink-mute);
+}
+
+.devdocs-node-flag rect {
+  fill: var(--bg-raised);
+  stroke: var(--brass-dim);
+  stroke-dasharray: 3 2;
+}
+
+.devdocs-node-flag text {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: var(--brass);
+}
+
+.devdocs-edge {
+  fill: none;
+  stroke: var(--rule);
+  stroke-width: 1.4;
+}
+
+.devdocs-edge.main {
+  stroke: var(--brass-dim);
+  opacity: 0.6;
+}
+
+.devdocs-edge.tap { stroke-dasharray: 4 4; }
+.devdocs-edge.to-planned { opacity: 0.35; }
+
+.devdocs-edge-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--ink-mute);
+}
+
+.devdocs-pulse {
+  fill: none;
+  stroke: var(--brass-bright);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 7 93;
+  opacity: 0.85;
+  animation: docs-pulse 2.6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes docs-pulse {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .devdocs-pulse { animation: none; opacity: 0; }
+}
+
+.devdocs-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 10px;
+  padding: 8px 10px 0;
+  border-top: 1px dashed var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.devdocs-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.devdocs-legend-swatch {
+  width: 22px;
+  border-top: 2px solid var(--brass-dim);
+}
+
+.devdocs-legend-swatch.tap {
+  border-top: 2px dashed var(--rule);
+}
+
+.devdocs-legend-chip {
+  width: 14px;
+  height: 10px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--bg);
+}
+
+.devdocs-legend-chip.planned {
+  border-style: dashed;
+  border-color: var(--brass-dim);
+  opacity: 0.6;
+}
+
+.devdocs-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.devdocs-badge-shipped {
+  color: var(--allow);
+  background: var(--allow-bg);
+  border-color: rgba(127, 196, 154, 0.35);
+}
+
+.devdocs-badge-planned {
+  color: var(--observe);
+  background: var(--observe-bg);
+  border-color: rgba(212, 161, 74, 0.35);
+  border-style: dashed;
+}
+
+.devdocs-drawer-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.devdocs-lede {
+  font-size: 0.88rem;
+  color: var(--ink);
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+
+.devdocs-para {
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+  line-height: 1.65;
+  margin: 14px 0 0;
+}
+
+.devdocs-drawer-section {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--rule-soft);
+}
+
+.devdocs-drawer-section .drawer-field-label {
+  margin-bottom: 10px;
+}
+
+.devdocs-pkg-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.devdocs-pkg {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--brass);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 3px 8px;
+}
+
+.devdocs-subcomp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.devdocs-subcomp {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.devdocs-subcomp-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.devdocs-subcomp-name {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--ink);
+}
+
+.devdocs-subcomp-oneliner {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--ink-mute);
+}
+
+.devdocs-note {
+  margin-top: 14px;
+  padding: 9px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--bg);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+.devdocs-note-planned {
+  border-style: dashed;
+  border-color: var(--brass-dim);
+  background: var(--observe-bg);
+  color: var(--observe);
+}
+
+.devdocs-seealso {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

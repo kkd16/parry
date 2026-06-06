@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Bell, BookOpen, Bookmark, Gauge, Orbit, ScrollText, X } from "lucide-react";
+import { Bell, BookOpen, Bookmark, Gauge, Orbit, ScrollText, Workflow, X } from "lucide-react";
 import type { Tab } from "../App";
 import type { PolicyOverviewState } from "../usePolicyOverview";
 import { useLocalStorage } from "../hooks/useLocalStorage";
@@ -219,6 +219,14 @@ export default function Sidebar({
             {live ? "on" : "off"}
           </span>
         </div>
+        <button
+          className={`sidebar-footer-docs-btn${tab === "devdocs" ? " active" : ""}`}
+          onClick={() => setTab("devdocs")}
+        >
+          <Workflow />
+          <span>Dev Docs</span>
+          <span className="kbd">g d</span>
+        </button>
         <button className="sidebar-footer-hint-btn" onClick={onShowHelp}>
           <span className="sidebar-footer-hint-row">
             <span className="kbd">⌘</span>

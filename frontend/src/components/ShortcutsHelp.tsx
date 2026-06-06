@@ -19,6 +19,7 @@ const GROUPS: ShortcutGroup[] = [
       { keys: ["g", "o"], label: "Go to Orrery" },
       { keys: ["g", "c"], label: "Go to Charter" },
       { keys: ["g", "b"], label: "Go to Beacon" },
+      { keys: ["g", "d"], label: "Go to Dev Docs" },
     ],
   },
   {

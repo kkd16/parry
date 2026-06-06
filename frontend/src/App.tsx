@@ -1,6 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Bell, BookOpen, Bookmark, Filter, Gauge, Orbit, ScrollText, Search } from "lucide-react";
+import {
+  Bell,
+  BookOpen,
+  Bookmark,
+  Filter,
+  Gauge,
+  Orbit,
+  ScrollText,
+  Search,
+  Workflow,
+} from "lucide-react";
 import BridgePage from "./BridgePage";
+import DevDocsPage from "./DevDocsPage";
 import EventsPage from "./EventsPage";
 import SolarSystemPage from "./SolarSystemPage";
 import PolicyPage from "./PolicyPage";
@@ -22,7 +33,7 @@ import {
   type QuickFilter,
 } from "./commands";
 
-export type Tab = "bridge" | "logbook" | "orrery" | "charter" | "beacon";
+export type Tab = "bridge" | "logbook" | "orrery" | "charter" | "beacon" | "devdocs";
 
 interface ShellState {
   setTab: (t: Tab) => void;
@@ -78,6 +89,15 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts, openAbout }: 
         icon: <Bell />,
         keywords: ["beacon", "notification", "alert", "ntfy", "provider", "beacon"],
         perform: () => setTab("beacon"),
+      },
+      {
+        id: "nav.devdocs",
+        group: "Navigate",
+        label: "Go to Dev Docs",
+        hint: "g d",
+        icon: <Workflow />,
+        keywords: ["docs", "architecture", "diagram", "dev", "flow"],
+        perform: () => setTab("devdocs"),
       },
       {
         id: "notify.test",
@@ -311,6 +331,7 @@ function AppShell() {
     onGoOrrery: () => setTab("orrery"),
     onGoCharter: () => setTab("charter"),
     onGoBeacon: () => setTab("beacon"),
+    onGoDevDocs: () => setTab("devdocs"),
     onOpenPalette: () => setPaletteOpen((v) => !v),
     onFocusSearch: focusSearch,
     onShowHelp: openShortcuts,
@@ -371,6 +392,7 @@ function AppShell() {
             {tab === "beacon" && (
               <NotifyPage overview={overview} onGoToEvents={() => setTab("logbook")} />
             )}
+            {tab === "devdocs" && <DevDocsPage />}
           </div>
         </main>
         <CommandPalette open={paletteOpen} onClose={closePalette} />

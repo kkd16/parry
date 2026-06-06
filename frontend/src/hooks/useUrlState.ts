@@ -27,7 +27,14 @@ function dispatch() {
   window.dispatchEvent(new Event(URL_EVENT));
 }
 
-const VALID_PATHS = new Set(["/bridge", "/logbook", "/orrery", "/charter", "/beacon"]);
+const VALID_PATHS = new Set([
+  "/bridge",
+  "/logbook",
+  "/orrery",
+  "/charter",
+  "/beacon",
+  "/devdocs",
+]);
 
 function normalizePath(p: string): string {
   if (VALID_PATHS.has(p)) return p;

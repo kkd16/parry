@@ -8,6 +8,7 @@ interface Handlers {
   onGoOrrery?: Handler;
   onGoCharter?: Handler;
   onGoBeacon?: Handler;
+  onGoDevDocs?: Handler;
   onOpenPalette?: Handler;
   onFocusSearch?: Handler;
   onShowHelp?: Handler;
@@ -72,6 +73,7 @@ export function useKeyboardNav(handlers: Handlers) {
         else if (e.key === "o") ref.current.onGoOrrery?.();
         else if (e.key === "c") ref.current.onGoCharter?.();
         else if (e.key === "b") ref.current.onGoBeacon?.();
+        else if (e.key === "d") ref.current.onGoDevDocs?.();
         resetLeader();
         return;
       }
