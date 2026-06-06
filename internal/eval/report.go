@@ -79,4 +79,3 @@ func inputPreview(e Entry) string {
 	}
 	return ""
 }
-
