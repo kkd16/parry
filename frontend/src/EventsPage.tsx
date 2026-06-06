@@ -499,7 +499,7 @@ export default function EventsPage({
         label: "Refresh logbook",
         icon: <RotateCcw />,
         keywords: ["reload", "refetch"],
-        perform: () => fetchEvents(),
+        perform: refresh,
       },
       {
         id: "events.toggle-live",
@@ -565,7 +565,7 @@ export default function EventsPage({
         perform: () => setDensity("comfortable"),
       },
     ],
-    [autoRefresh, fetchEvents, filteredEvents, clearAllFilters, setDensity],
+    [autoRefresh, refresh, filteredEvents, clearAllFilters, setDensity],
   );
   useRegisterCommands(eventsCommands, [eventsCommands]);
 
