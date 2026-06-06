@@ -20,3 +20,13 @@ updates:
       minor-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+
+  # Frontend (pnpm)
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: daily
+    groups:
+      minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
