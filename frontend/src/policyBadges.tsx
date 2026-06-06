@@ -8,10 +8,6 @@ export const ACTION_COLORS: Record<string, string> = {
   confirm: "var(--color-confirm)",
 };
 
-export function healthClass(status: string | undefined): string {
-  return status === "ok" ? "ok" : status === "error" ? "err" : "none";
-}
-
 export function actionBadge(action: string): ReactNode {
   return <Badge action={action}>{action}</Badge>;
 }

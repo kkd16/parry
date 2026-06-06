@@ -31,6 +31,9 @@
   --text-meta: 0.72rem;
   --text-body: 0.78rem;
 
+  --shadow-panel:
+    inset 0 1px 0 rgba(255, 255, 255, 0.02), 0 1px 0 rgba(0, 0, 0, 0.3);
+
   --animate-fade-up: fade-up 600ms ease both;
   --animate-docs-pulse: docs-pulse 2.6s linear infinite;
   --animate-orb-pulse: notify-orb-pulse 2.4s ease-in-out infinite;

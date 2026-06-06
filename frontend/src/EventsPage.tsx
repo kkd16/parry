@@ -6,6 +6,7 @@ import FilterChips from "./components/FilterChips";
 import PageHeader from "./components/PageHeader";
 import EventsTable from "./components/events/EventsTable";
 import EventsToolbar from "./components/events/EventsToolbar";
+import { focusSearchInput } from "./utils/dom";
 import type {
   ColumnSizing,
   ColumnVisibility,
@@ -39,10 +40,6 @@ const CHIP_LABELS: Record<FilterKey, string> = {
   session: "session",
   time: "time",
 };
-
-function focusSearchInput() {
-  document.querySelector<HTMLInputElement>(".search-input")?.focus();
-}
 
 export default function EventsPage({ onCountChange, onLiveChange }: Props) {
   const toast = useToast();

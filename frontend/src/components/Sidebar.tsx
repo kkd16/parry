@@ -6,9 +6,7 @@ import type { PolicyOverviewState } from "../hooks/usePolicyOverview";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import type { BookmarksApi } from "../hooks/useBookmarks";
 import type { DashboardCounts } from "../types";
-import { healthClass } from "../policyBadges";
 import { FieldLabel, HealthDot, Kbd } from "./ui";
-import { healthDotVariants } from "./variants";
 
 interface Props {
   tab: Tab;
@@ -103,7 +101,6 @@ export default function Sidebar({
 
   const { policy, health } = policyOverview;
   const notify = policy?.notifications;
-  const healthCls = healthClass(health?.status);
 
   const ruleCount = policy
     ? Object.values(policy.rules ?? {}).reduce((sum, rule) => {
@@ -142,14 +139,7 @@ export default function Sidebar({
       renderBadge(eventCount > 0 ? eventCount : null),
     orrery: renderBadge(counts.projects),
     charter: renderBadge(ruleCount),
-    beacon: (
-      <span
-        className={clsx(
-          "ml-auto h-2 w-2 rounded-full",
-          healthDotVariants[healthCls],
-        )}
-      />
-    ),
+    beacon: <HealthDot status={health?.status} className="ml-auto" />,
     devdocs: null,
   };
 

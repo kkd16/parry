@@ -4,8 +4,15 @@ import { Bell, Copy, Send } from "lucide-react";
 import CopyButton from "./components/CopyButton";
 import PageHeader from "./components/PageHeader";
 import { useToast } from "./components/Toasts";
-import { Btn, Card, Eyebrow, FieldLabel, FieldValue } from "./components/ui";
-import { healthClass } from "./policyBadges";
+import {
+  Btn,
+  Card,
+  chipBtnCls,
+  Eyebrow,
+  FieldLabel,
+  FieldValue,
+} from "./components/ui";
+import { healthClass } from "./components/variants";
 import { getEvents, postNotifyTest } from "./api";
 import { useApi } from "./hooks/useApi";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
@@ -108,7 +115,7 @@ function CopyBlock({ text }: { text: string }) {
         {text}
       </pre>
       <CopyButton
-        className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-[3px] border border-rule bg-bg-raised px-2 py-[3px] font-mono text-[0.6rem] tracking-[0.1em] text-ink-mute uppercase hover:border-brass hover:text-brass"
+        className={clsx("absolute top-2 right-2 bg-bg-raised", chipBtnCls)}
         text={text}
         label={
           <>
@@ -132,10 +139,7 @@ function CopyValue({ value }: { value: string }) {
   return (
     <span className="inline-flex items-center gap-2 break-all text-ink">
       <span>{value}</span>
-      <CopyButton
-        className="rounded-[3px] border border-rule px-2 py-0.5 font-mono text-micro tracking-[0.1em] text-ink-mute uppercase hover:border-brass hover:text-brass"
-        text={value}
-      />
+      <CopyButton className={chipBtnCls} text={value} />
     </span>
   );
 }
@@ -320,7 +324,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               "flex flex-col gap-3 rounded-md border border-l-3 border-rule bg-bg-raised px-6 py-5.5",
               providerId === p.id
                 ? "border-l-brass-bright shadow-[0_0_0_1px_rgba(212,161,74,0.08),inset_0_1px_0_rgba(255,255,255,0.02)]"
-                : "shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]",
+                : "shadow-panel",
             )}
           >
             <div className="flex items-baseline gap-3">

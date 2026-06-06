@@ -1,11 +1,10 @@
 import clsx from "clsx";
 import Dialog, {
-  dialogEyebrowCls,
   dialogHeaderCls,
   dialogPanelCls,
   dialogTitleCls,
 } from "./Dialog";
-import { Kbd } from "./ui";
+import { Eyebrow, Kbd } from "./ui";
 import { TABS } from "../tabs";
 
 interface Props {
@@ -59,7 +58,7 @@ export default function ShortcutsHelp({ open, onClose }: Props) {
       className={clsx("w-[min(640px,92vw)]", dialogPanelCls)}
     >
       <div className={dialogHeaderCls}>
-        <div className={dialogEyebrowCls}>reference card</div>
+        <Eyebrow>reference card</Eyebrow>
         <h2 className={dialogTitleCls}>Keyboard shortcuts</h2>
       </div>
       <div className="grid max-h-[60vh] grid-cols-2 gap-7 overflow-y-auto px-7 pt-5.5 pb-2">

@@ -179,7 +179,7 @@ export default function RuleDrawer({
             <div className="mt-3 flex flex-col">
               {x.rows.map((r) => (
                 <div className={ladderRowCls} key={r.label + r.action}>
-                  <span className="font-mono text-[0.78rem] text-ink">
+                  <span className="font-mono text-body text-ink">
                     {r.label}
                   </span>
                   <span className="inline-flex items-center gap-2">
@@ -191,19 +191,19 @@ export default function RuleDrawer({
                       {r.specificity}
                     </span>
                   </span>
-                  <span className="col-span-full font-display text-[0.78rem] text-ink-mute italic">
+                  <span className="col-span-full font-display text-body text-ink-mute italic">
                     {r.reason}
                   </span>
                 </div>
               ))}
               <div className={clsx(ladderRowCls, "border-dashed")}>
-                <span className="font-mono text-[0.78rem] text-ink-dim italic">
+                <span className="font-mono text-body text-ink-dim italic">
                   anything else
                 </span>
                 <span className="inline-flex items-center gap-2">
                   {actionBadge(x.shellDefault)}
                 </span>
-                <span className="col-span-full font-display text-[0.78rem] text-ink-mute italic">
+                <span className="col-span-full font-display text-body text-ink-mute italic">
                   shell default
                 </span>
               </div>
@@ -214,7 +214,7 @@ export default function RuleDrawer({
             <div className={drawerLabelCls}>how matching works</div>
             <ul
               className={clsx(
-                "mt-2.5 text-[0.78rem] leading-[1.8] text-ink-dim",
+                "mt-2.5 text-body leading-[1.8] text-ink-dim",
                 codeCls,
               )}
             >

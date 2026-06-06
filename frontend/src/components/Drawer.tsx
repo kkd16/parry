@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, type ReactNode } from "react";
 import clsx from "clsx";
+import { Eyebrow } from "./ui";
 
 interface Props {
   open: boolean;
@@ -96,9 +97,7 @@ export default function Drawer({
           >
             <div className="flex items-start justify-between gap-4 border-b border-rule px-8 pt-7 pb-5">
               <div>
-                <div className="mb-2 font-mono text-[0.6rem] tracking-[0.22em] text-brass uppercase">
-                  {eyebrow}
-                </div>
+                <Eyebrow>{eyebrow}</Eyebrow>
                 <h2 className="font-display text-[2rem] leading-none font-bold text-ink italic">
                   {title}
                 </h2>

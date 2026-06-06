@@ -10,3 +10,7 @@ export const healthDotVariants: Record<string, string> = {
   err: "bg-block shadow-[0_0_6px_var(--color-block)]",
   none: "bg-ink-mute",
 };
+
+export function healthClass(status: string | undefined): string {
+  return status === "ok" ? "ok" : status === "error" ? "err" : "none";
+}

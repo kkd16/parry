@@ -2,12 +2,11 @@ import { getAbout } from "../api";
 import { useApi } from "../hooks/useApi";
 import CopyButton from "./CopyButton";
 import Dialog, {
-  dialogEyebrowCls,
   dialogHeaderCls,
   dialogPanelCls,
   dialogTitleCls,
 } from "./Dialog";
-import { FieldLabel } from "./ui";
+import { Eyebrow, FieldLabel } from "./ui";
 import { useToast } from "./Toasts";
 import clsx from "clsx";
 import type { ReactNode } from "react";
@@ -42,7 +41,7 @@ function AboutContent() {
   return (
     <>
       <div className={dialogHeaderCls}>
-        <div className={dialogEyebrowCls}>about</div>
+        <Eyebrow>about</Eyebrow>
         <h2 className={clsx(dialogTitleCls, "flex items-baseline gap-3.5")}>
           Parry
           <span className="font-mono text-body tracking-[0.04em] text-brass not-italic">

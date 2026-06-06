@@ -49,7 +49,7 @@ const emptyCls =
   "p-15 text-center font-display text-[1.6rem] text-ink-dim italic [&_code]:font-mono [&_code]:text-[0.9rem] [&_code]:text-brass [&_code]:not-italic";
 
 const overlayCls =
-  "absolute z-5 rounded border border-rule bg-[rgba(17,19,28,0.92)] px-4 py-3.5 font-mono text-meta text-ink-dim backdrop-blur-[6px]";
+  "absolute z-5 rounded border border-rule bg-bg-raised/92 px-4 py-3.5 font-mono text-meta text-ink-dim backdrop-blur-[6px]";
 
 const tallyLabelCls = "text-eyebrow tracking-[0.18em] text-ink-mute uppercase";
 
@@ -448,7 +448,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
           titleClassName="[text-shadow:0_2px_24px_rgba(0,0,0,0.8)]"
         />
         {stats && (
-          <div className="flex shrink-0 items-center gap-5.5 rounded-md border border-brass-dim bg-[rgba(17,19,28,0.82)] px-5.5 py-3.5 font-mono backdrop-blur-[8px]">
+          <div className="flex shrink-0 items-center gap-5.5 rounded-md border border-brass-dim bg-bg-raised/82 px-5.5 py-3.5 font-mono backdrop-blur-[8px]">
             <div className="border-r border-rule pr-5.5 font-display text-[1.4rem] text-brass italic">
               tally
             </div>

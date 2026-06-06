@@ -13,6 +13,7 @@ import Drawer, {
 } from "./Drawer";
 import { Btn, btnCls, inputCls } from "./ui";
 import { useRegisterCommands, type Command } from "../commands";
+import { formatAbsolute } from "../utils/relativeTime";
 
 interface Props {
   event: Event | null;
@@ -188,7 +189,7 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
       {event && (
         <>
           <DrawerField label="timestamp">
-            {new Date(event.timestamp).toLocaleString()}
+            {formatAbsolute(event.timestamp)}
           </DrawerField>
           <DrawerField label="action">{actionBadge(event.action)}</DrawerField>
           {event.would_action && (

@@ -9,6 +9,7 @@ import {
 } from "react";
 import { Bell, Bookmark, Filter, Search } from "lucide-react";
 import Sidebar from "./components/Sidebar";
+import { focusSearchInput } from "./utils/dom";
 import CommandPalette from "./components/CommandPalette";
 import ShortcutsHelp from "./components/ShortcutsHelp";
 import AboutDialog from "./components/AboutDialog";
@@ -51,10 +52,6 @@ const TOOL_FILTERS = [
   { value: "file_edit", label: "File edits only" },
   { value: "file_read", label: "File reads only" },
 ];
-
-function focusSearchInput() {
-  document.querySelector<HTMLInputElement>(".search-input")?.focus();
-}
 
 interface ShellState {
   setTab: (t: Tab) => void;

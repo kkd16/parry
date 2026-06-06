@@ -4,6 +4,7 @@ import type { CommandExplanation, RuleEntry } from "../types";
 import { postPolicyEvaluate } from "../api";
 import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
+import { inputCls } from "./ui";
 
 type DrillTool = "shell" | "file_read" | "file_edit";
 
@@ -102,7 +103,7 @@ export default function PolicyDrill({
           ))}
         </div>
         <input
-          className="min-w-[260px] flex-1 rounded border border-rule bg-bg px-2.5 py-1.5 font-mono text-[0.75rem] text-ink transition-[border-color,box-shadow] duration-150 outline-none placeholder:text-ink-mute placeholder:italic focus:border-brass focus:shadow-[0_0_0_2px_rgba(212,161,74,0.15)]"
+          className={clsx("min-w-[260px] flex-1", inputCls)}
           placeholder={PLACEHOLDER[tool]}
           value={text}
           onChange={(e) => setText(e.target.value)}

@@ -6,9 +6,6 @@ export const dialogPanelCls =
 
 export const dialogHeaderCls = "border-b border-rule px-7 pt-6 pb-4.5";
 
-export const dialogEyebrowCls =
-  "mb-2 font-mono text-[0.6rem] tracking-[0.22em] text-brass uppercase";
-
 export const dialogTitleCls =
   "font-display text-[2rem] leading-none text-ink italic";
 

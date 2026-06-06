@@ -156,7 +156,7 @@ export default function EventsToolbar({
             <Columns3 /> cols
           </Btn>
           {colMenuOpen && (
-            <div className="absolute top-[calc(100%+6px)] right-0 z-20 min-w-[160px] rounded-md border border-rule bg-bg-raised px-3.5 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]">
+            <div className="absolute top-[calc(100%+6px)] right-0 z-20 min-w-[160px] rounded-md border border-rule bg-bg-raised px-3.5 py-2.5 shadow-panel">
               {EVENT_COLUMNS.map((col) => (
                 <label
                   key={col.id}

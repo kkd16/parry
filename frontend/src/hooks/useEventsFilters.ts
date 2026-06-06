@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUrlParams } from "./useUrlState";
 
 export const PAGE_SIZE = 100;
@@ -53,8 +53,17 @@ export function useEventsFilters(): EventsFiltersApi {
   const [params, setParams] = useUrlParams(URL_KEYS);
   const [searchInput, setSearchInput] = useState(params.q);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const pushedQ = useRef(params.q);
 
   const { action, tool, workdir, binary, session, time, q: search } = params;
+
+  useEffect(() => {
+    if (search !== pushedQ.current) {
+      pushedQ.current = search;
+      clearTimeout(debounceRef.current);
+      setSearchInput(search);
+    }
+  }, [search]);
   const offset = Number(params.offset) || 0;
   const sortId = params.sort || "timestamp";
   const sortOrder = params.order || "desc";
@@ -73,16 +82,17 @@ export function useEventsFilters(): EventsFiltersApi {
     (v: string) => {
       setSearchInput(v);
       clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(
-        () => setParams({ q: v, offset: "" }),
-        300,
-      );
+      debounceRef.current = setTimeout(() => {
+        pushedQ.current = v;
+        setParams({ q: v, offset: "" });
+      }, 300);
     },
     [setParams],
   );
 
   const clearSearch = useCallback(() => {
     clearTimeout(debounceRef.current);
+    pushedQ.current = "";
     setSearchInput("");
     setParams({ q: "", offset: "" });
   }, [setParams]);
@@ -100,6 +110,7 @@ export function useEventsFilters(): EventsFiltersApi {
 
   const clearAll = useCallback(() => {
     clearTimeout(debounceRef.current);
+    pushedQ.current = "";
     setSearchInput("");
     const cleared: Partial<Record<(typeof URL_KEYS)[number], string>> = {
       q: "",
