@@ -190,6 +190,9 @@ type Policy struct {
 	Rules            map[string]*Rule `yaml:"rules" json:"rules"`
 	RateLimit        *RateLimit       `yaml:"rate_limit,omitempty" json:"rate_limit,omitempty"`
 	Notifications    *Notifications   `yaml:"notifications,omitempty" json:"notifications,omitempty"`
+
+	home     string
+	allPaths []string
 }
 
 func (p *Policy) NotificationsEnabled() bool {

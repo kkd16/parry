@@ -13,10 +13,15 @@ func (p *Policy) AllProtectedPaths() []string {
 }
 
 func (p *Policy) AnyPathProtected(paths []string) bool {
+	patterns := p.allPaths
+	if patterns == nil {
+		patterns = p.AllProtectedPaths()
+	}
 	for _, path := range paths {
+		path = p.expandTilde(path)
 		base := filepath.Base(path)
 		isGlob := containsGlobMeta(path)
-		for _, pattern := range p.AllProtectedPaths() {
+		for _, pattern := range patterns {
 			if matched, _ := filepath.Match(pattern, path); matched {
 				return true
 			}
@@ -44,6 +49,19 @@ func (p *Policy) AnyPathProtected(paths []string) bool {
 		}
 	}
 	return false
+}
+
+func (p *Policy) expandTilde(path string) string {
+	if p.home == "" {
+		return path
+	}
+	if path == "~" {
+		return p.home
+	}
+	if strings.HasPrefix(path, "~/") {
+		return p.home + path[1:]
+	}
+	return path
 }
 
 func (e *Engine) anyPathProtected(paths []string) bool {

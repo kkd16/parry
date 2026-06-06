@@ -113,17 +113,18 @@ func (p *Policy) validate() error {
 
 func (p *Policy) expandHome() {
 	home, _ := os.UserHomeDir()
-	if home == "" {
-		return
-	}
-	for i, pattern := range p.ParryPaths {
-		if strings.HasPrefix(pattern, "~/") {
-			p.ParryPaths[i] = filepath.Join(home, pattern[2:])
+	if home != "" {
+		p.home = home
+		for i, pattern := range p.ParryPaths {
+			if strings.HasPrefix(pattern, "~/") {
+				p.ParryPaths[i] = filepath.Join(home, pattern[2:])
+			}
+		}
+		for i, pattern := range p.ProtectedPaths {
+			if strings.HasPrefix(pattern, "~/") {
+				p.ProtectedPaths[i] = filepath.Join(home, pattern[2:])
+			}
 		}
 	}
-	for i, pattern := range p.ProtectedPaths {
-		if strings.HasPrefix(pattern, "~/") {
-			p.ProtectedPaths[i] = filepath.Join(home, pattern[2:])
-		}
-	}
+	p.allPaths = p.AllProtectedPaths()
 }

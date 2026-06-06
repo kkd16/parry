@@ -157,6 +157,30 @@ func TestAnyPathProtected(t *testing.T) {
 			want:      true,
 		},
 		{
+			name:      "literal tilde input matches expanded home glob",
+			protected: []string{"~/.ssh/*"},
+			inputs:    []string{"~/.ssh/id_rsa"},
+			want:      true,
+		},
+		{
+			name:      "literal tilde dir with trailing slash matches dir glob",
+			protected: []string{"~/.aws/*"},
+			inputs:    []string{"~/.aws/"},
+			want:      true,
+		},
+		{
+			name:      "bare tilde does not match home glob",
+			protected: []string{"~/.ssh/*"},
+			inputs:    []string{"~"},
+			want:      false,
+		},
+		{
+			name:      "tilde-user input is not expanded",
+			protected: []string{"~/.ssh/*"},
+			inputs:    []string{"~otheruser/.ssh/id_rsa"},
+			want:      false,
+		},
+		{
 			name:      "input glob with no slash matches bare basename pattern",
 			protected: []string{"shadow"},
 			inputs:    []string{"*shadow*"},

@@ -13,20 +13,18 @@
   notes: "normal file read in project directory"
 
 - id: ft-003
-  bypass: true
   tool: file_edit
   tool_input:
     path: "~/.ssh/config"
   expect: block
-  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; falls to file_edit default=allow"
+  notes: "literal tilde path expanded before protected_paths match; blocked despite file_edit default=allow"
 
 - id: ft-004
-  bypass: true
   tool: file_read
   tool_input:
     path: "~/.gnupg/trustdb.gpg"
   expect: block
-  notes: "KNOWN-BYPASS: tilde path not matched after loader expands ~; falls to file_read default=allow"
+  notes: "literal tilde path expanded before protected_paths match; blocked despite file_read default=allow"
 
 - id: ft-005
   tool: file_read
