@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import "./SearchableSelect.css";
 
 interface Props {
   label: string;

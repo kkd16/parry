@@ -7,9 +7,10 @@ import PolicyDrill from "./components/PolicyDrill";
 import { actionBadge, modeBadge } from "./policyBadges";
 import { highlight } from "./highlight";
 import { actionClusters, chipMatches } from "./utils/policyView";
-import type { PolicyOverviewState } from "./usePolicyOverview";
+import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
 import { useUrlParam, usePath } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
+import "./PolicyPage.css";
 
 interface SectionProps {
   title: string;

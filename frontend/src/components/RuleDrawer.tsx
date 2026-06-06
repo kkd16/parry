@@ -1,7 +1,10 @@
-import { motion, AnimatePresence } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
-import type { Event, EventsResponse, Rule } from "../types";
+import { useCallback, useMemo } from "react";
+import type { Rule } from "../types";
+import { getEvents } from "../api";
+import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
+import CopyButton from "./CopyButton";
+import Drawer from "./Drawer";
 import { formatRelative, useNowTick } from "../utils/relativeTime";
 import {
   explainBinary,
@@ -9,6 +12,7 @@ import {
   type ActionName,
   type BinaryExplanation,
 } from "../utils/policyView";
+import "./RuleDrawer.css";
 
 const PHRASE: Record<ActionName, string> = {
   allow: "runs without interruption",
@@ -54,22 +58,6 @@ function Verdict({ x }: { x: BinaryExplanation }) {
   );
 }
 
-function CopyButton({ text, label = "copy" }: { text: string; label?: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      className="btn"
-      onClick={() => {
-        void navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
-      }}
-    >
-      {copied ? "copied" : label}
-    </button>
-  );
-}
-
 function RecentActivity({
   binary,
   onViewLogbook,
@@ -77,24 +65,14 @@ function RecentActivity({
   binary: string;
   onViewLogbook: (binary: string) => void;
 }) {
-  const [events, setEvents] = useState<Event[] | null>(null);
   const nowTick = useNowTick(30_000);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    const params = new URLSearchParams({ binary, limit: "5" });
-    fetch(`/api/events?${params}`, { signal: ctrl.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(res.statusText);
-        return res.json() as Promise<EventsResponse>;
-      })
-      .then((data) => setEvents(data.events ?? []))
-      .catch((e) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setEvents([]);
-      });
-    return () => ctrl.abort();
-  }, [binary]);
+  const recentApi = useApi(
+    useCallback(
+      (signal: AbortSignal) => getEvents(new URLSearchParams({ binary, limit: "5" }), signal),
+      [binary],
+    ),
+  );
+  const events = recentApi.error ? [] : (recentApi.data?.events ?? null);
 
   return (
     <section className="rule-drawer-section">
@@ -142,135 +120,99 @@ export default function RuleDrawer({ binary, rule, globalDefault, onClose, onVie
     [binary, rule, globalDefault],
   );
 
-  useEffect(() => {
-    if (!binary) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [binary, onClose]);
-
   return (
-    <AnimatePresence>
+    <Drawer open={!!(binary && x)} onClose={onClose} eyebrow="shell rule" title={binary}>
       {binary && x && (
         <>
-          <motion.div
-            className="drawer-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-          <motion.aside
-            className="drawer"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 280 }}
-          >
-            <div className="drawer-header">
-              <div>
-                <div className="drawer-eyebrow">shell rule</div>
-                <h2 className="drawer-title">{binary}</h2>
+          <Verdict x={x} />
+
+          <section className="rule-drawer-section">
+            <div className="drawer-field-label">precedence</div>
+            <div className="rule-ladder">
+              {x.rows.map((r) => (
+                <div className="rule-ladder-row" key={r.label + r.action}>
+                  <span className="rule-ladder-label mono">{r.label}</span>
+                  <span className="rule-ladder-meta">
+                    {actionBadge(r.action)}
+                    <span className="rule-ladder-spec" title="specificity: positional + flags">
+                      {r.specificity}
+                    </span>
+                  </span>
+                  <span className="rule-ladder-reason">{r.reason}</span>
+                </div>
+              ))}
+              <div className="rule-ladder-row rule-ladder-default">
+                <span className="rule-ladder-label mono">anything else</span>
+                <span className="rule-ladder-meta">{actionBadge(x.shellDefault)}</span>
+                <span className="rule-ladder-reason">shell default</span>
               </div>
-              <button className="drawer-close" onClick={onClose}>
-                close · esc
-              </button>
             </div>
-            <div className="drawer-body">
-              <Verdict x={x} />
+          </section>
 
-              <section className="rule-drawer-section">
-                <div className="drawer-field-label">precedence</div>
-                <div className="rule-ladder">
-                  {x.rows.map((r) => (
-                    <div className="rule-ladder-row" key={r.label + r.action}>
-                      <span className="rule-ladder-label mono">{r.label}</span>
-                      <span className="rule-ladder-meta">
-                        {actionBadge(r.action)}
-                        <span className="rule-ladder-spec" title="specificity: positional + flags">
-                          {r.specificity}
-                        </span>
-                      </span>
-                      <span className="rule-ladder-reason">{r.reason}</span>
-                    </div>
-                  ))}
-                  <div className="rule-ladder-row rule-ladder-default">
-                    <span className="rule-ladder-label mono">anything else</span>
-                    <span className="rule-ladder-meta">{actionBadge(x.shellDefault)}</span>
-                    <span className="rule-ladder-reason">shell default</span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="rule-drawer-section">
-                <div className="drawer-field-label">how matching works</div>
-                <ul className="rule-match-notes">
-                  <li>
-                    the command's binary must be exactly <code>{binary}</code> — path prefixes like{" "}
-                    <code>/bin/{binary}</code> resolve to the same rule
-                  </li>
-                  {x.rows.some((r) => r.label.split(" ").length > 1 && !r.label.includes("[")) && (
-                    <li>
-                      positional words match as an ordered prefix: extra arguments after them do
-                      not change the verdict
-                    </li>
-                  )}
-                  {x.flagForms.length > 0 && (
-                    <li>
-                      flags in rules are semantic names — every spelling listed below triggers the
-                      rule, in any order or bundling
-                    </li>
-                  )}
-                </ul>
-              </section>
-
-              {x.flagForms.length > 0 && (
-                <section className="rule-drawer-section">
-                  <div className="drawer-field-label">flag equivalents</div>
-                  <div className="rule-flag-table">
-                    {x.flagForms.map((f) => (
-                      <div className="rule-flag-row" key={f.name}>
-                        <span className="rule-flag-name">{f.name}</span>
-                        <span className="rule-flag-forms mono">{f.forms.join("  ")}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+          <section className="rule-drawer-section">
+            <div className="drawer-field-label">how matching works</div>
+            <ul className="rule-match-notes">
+              <li>
+                the command's binary must be exactly <code>{binary}</code> — path prefixes like{" "}
+                <code>/bin/{binary}</code> resolve to the same rule
+              </li>
+              {x.rows.some((r) => r.label.split(" ").length > 1 && !r.label.includes("[")) && (
+                <li>
+                  positional words match as an ordered prefix: extra arguments after them do not
+                  change the verdict
+                </li>
               )}
+              {x.flagForms.length > 0 && (
+                <li>
+                  flags in rules are semantic names — every spelling listed below triggers the
+                  rule, in any order or bundling
+                </li>
+              )}
+            </ul>
+          </section>
 
-              <section className="rule-drawer-section">
-                <div className="drawer-field-label">examples — illustrative, not exhaustive</div>
-                <ul className="rule-examples">
-                  {x.examples.map((ex) => (
-                    <li key={ex.command}>
-                      <span className="rule-example-cmd mono">{ex.command}</span>
-                      <span className="rule-example-verdict">
-                        {actionBadge(ex.action)}
-                        <span className="rule-example-via">{ex.via}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+          {x.flagForms.length > 0 && (
+            <section className="rule-drawer-section">
+              <div className="drawer-field-label">flag equivalents</div>
+              <div className="rule-flag-table">
+                {x.flagForms.map((f) => (
+                  <div className="rule-flag-row" key={f.name}>
+                    <span className="rule-flag-name">{f.name}</span>
+                    <span className="rule-flag-forms mono">{f.forms.join("  ")}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
-              <section className="rule-drawer-section">
-                <div className="drawer-field-label">as written in policy.yaml</div>
-                <pre className="rule-suggestion-yaml">{x.yaml}</pre>
-                <div className="drawer-actions">
-                  <CopyButton text={x.yaml} label="copy yaml" />
-                </div>
-              </section>
+          <section className="rule-drawer-section">
+            <div className="drawer-field-label">examples — illustrative, not exhaustive</div>
+            <ul className="rule-examples">
+              {x.examples.map((ex) => (
+                <li key={ex.command}>
+                  <span className="rule-example-cmd mono">{ex.command}</span>
+                  <span className="rule-example-verdict">
+                    {actionBadge(ex.action)}
+                    <span className="rule-example-via">{ex.via}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
 
-              <RecentActivity key={binary} binary={binary} onViewLogbook={onViewLogbook} />
-
-              <div className="rule-drawer-footer" />
+          <section className="rule-drawer-section">
+            <div className="drawer-field-label">as written in policy.yaml</div>
+            <pre className="rule-suggestion-yaml">{x.yaml}</pre>
+            <div className="drawer-actions">
+              <CopyButton className="btn" text={x.yaml} label="copy yaml" />
             </div>
-          </motion.aside>
+          </section>
+
+          <RecentActivity key={binary} binary={binary} onViewLogbook={onViewLogbook} />
+
+          <div className="rule-drawer-footer" />
         </>
       )}
-    </AnimatePresence>
+    </Drawer>
   );
 }

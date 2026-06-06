@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Event } from "../types";
+import "./EventsTimeline.css";
 
 interface Props {
   events: Event[];

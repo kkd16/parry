@@ -1,0 +1,36 @@
+.shortcuts-group-title {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink-mute);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.shortcuts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+}
+
+.shortcuts-row-label {
+  color: var(--ink-dim);
+}
+
+.shortcuts-row-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcuts-sep {
+  color: var(--ink-mute);
+  font-size: 0.66rem;
+  margin: 0 2px;
+}

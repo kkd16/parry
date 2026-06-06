@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import "./FilterChips.css";
 
 interface Chip {
   label: string;

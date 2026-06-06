@@ -1,0 +1,61 @@
+.cmdk-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 6, 10, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+}
+
+.shortcuts-dialog {
+  width: min(640px, 92vw);
+  background: var(--bg-raised);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(212, 161, 74, 0.08);
+  overflow: hidden;
+}
+
+.shortcuts-header {
+  padding: 24px 28px 18px 28px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.shortcuts-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--brass);
+  margin-bottom: 8px;
+}
+
+.shortcuts-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 2rem;
+  color: var(--ink);
+  line-height: 1;
+  font-weight: 400;
+}
+
+.shortcuts-body {
+  padding: 22px 28px 8px 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.shortcuts-footer {
+  padding: 12px 28px 16px 28px;
+  border-top: 1px solid var(--rule);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--ink-mute);
+}

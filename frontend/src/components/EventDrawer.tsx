@@ -1,8 +1,11 @@
-import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import type { Event, RuleSuggestion } from "../types";
+import { getRuleSuggestion, isAbortError } from "../api";
 import { actionBadge } from "../policyBadges";
+import CopyButton from "./CopyButton";
+import Drawer from "./Drawer";
 import { useRegisterCommands, type Command } from "../commands";
+import "./EventDrawer.css";
 
 interface Props {
   event: Event | null;
@@ -33,24 +36,12 @@ function highlightJson(value: unknown): string {
 }
 
 function CopyField({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
   return (
     <div className="drawer-field">
       <div className="drawer-field-label">{label}</div>
       <div className="drawer-field-value">
         {value || <span className="muted">—</span>}
-        {value && (
-          <button
-            className="copy-btn"
-            onClick={() => {
-              void navigator.clipboard.writeText(value);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1200);
-            }}
-          >
-            {copied ? "copied" : "copy"}
-          </button>
-        )}
+        {value && <CopyButton text={value} />}
       </div>
     </div>
   );
@@ -76,25 +67,16 @@ function RuleSuggestionPanel({
 }) {
   const [suggestion, setSuggestion] = useState<RuleSuggestion | null>(null);
   const [error, setError] = useState<{ action: SuggestAction; message: string } | null>(null);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const ctrl = new AbortController();
-    const params = new URLSearchParams({
-      event_id: String(event.id),
-      action: targetAction,
-    });
-    fetch(`/api/rule-suggestion?${params}`, { signal: ctrl.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error((await res.text()) || res.statusText);
-        return res.json() as Promise<RuleSuggestion>;
-      })
+    getRuleSuggestion(event.id, targetAction, ctrl.signal)
       .then((data) => {
         setSuggestion(data);
         setError(null);
       })
-      .catch((e) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
+      .catch((e: unknown) => {
+        if (isAbortError(e)) return;
         setError({ action: targetAction, message: e instanceof Error ? e.message : "unknown error" });
       });
     return () => ctrl.abort();
@@ -110,10 +92,7 @@ function RuleSuggestionPanel({
         <select
           className="input rule-suggestion-select"
           value={targetAction}
-          onChange={(e) => {
-            setCopied(false);
-            setTargetAction(e.target.value as SuggestAction);
-          }}
+          onChange={(e) => setTargetAction(e.target.value as SuggestAction)}
         >
           <option value="allow">allow</option>
           <option value="confirm">confirm</option>
@@ -133,16 +112,13 @@ function RuleSuggestionPanel({
           </div>
           {suggestion.warning && <div className="rule-suggestion-warning">{suggestion.warning}</div>}
           <pre className="rule-suggestion-yaml">{suggestion.yaml}</pre>
-          <button
+          <CopyButton
+            key={targetAction}
             className="btn"
-            onClick={() => {
-              void navigator.clipboard.writeText(suggestion.yaml);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1200);
-            }}
-          >
-            {copied ? "copied yaml" : "copy yaml"}
-          </button>
+            text={suggestion.yaml}
+            label="copy yaml"
+            copiedLabel="copied yaml"
+          />
         </>
       )}
     </section>
@@ -187,108 +163,86 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
   useRegisterCommands(commands, [commands]);
 
   return (
-    <AnimatePresence>
+    <Drawer
+      open={!!event}
+      onClose={onClose}
+      eyebrow={event ? `log entry · #${event.id}` : ""}
+      title={event?.tool_name ?? ""}
+    >
       {event && (
         <>
-          <motion.div
-            className="drawer-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-          <motion.aside
-            className="drawer"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 280 }}
-          >
-            <div className="drawer-header">
-              <div>
-                <div className="drawer-eyebrow">log entry · #{event.id}</div>
-                <h2 className="drawer-title">{event.tool_name}</h2>
-              </div>
-              <button className="drawer-close" onClick={onClose}>
-                close · esc
+          <div className="drawer-field">
+            <div className="drawer-field-label">timestamp</div>
+            <div className="drawer-field-value">{new Date(event.timestamp).toLocaleString()}</div>
+          </div>
+          <div className="drawer-field">
+            <div className="drawer-field-label">action</div>
+            <div className="drawer-field-value">{actionBadge(event.action)}</div>
+          </div>
+          {event.would_action && (
+            <div className="drawer-field">
+              <div className="drawer-field-label">would be</div>
+              <div className="drawer-field-value">{actionBadge(event.would_action)}</div>
+            </div>
+          )}
+          <div className="drawer-field">
+            <div className="drawer-field-label">mode</div>
+            <div className="drawer-field-value">{event.mode}</div>
+          </div>
+          <div className="drawer-field">
+            <div className="drawer-field-label">raw name</div>
+            <div className="drawer-field-value">{event.raw_name || "—"}</div>
+          </div>
+          <CopyField label="binary" value={event.binary} />
+          <CopyField label="file" value={event.file} />
+          <CopyField label="workdir" value={event.workdir} />
+          <CopyField label="session" value={event.session} />
+          <div className="drawer-actions">
+            {onApplyFilter && event.binary && (
+              <button
+                className="btn"
+                onClick={() => {
+                  onApplyFilter("binary", event.binary);
+                  onClose();
+                }}
+              >
+                events for {event.binary}
               </button>
-            </div>
-            <div className="drawer-body">
-              <div className="drawer-field">
-                <div className="drawer-field-label">timestamp</div>
-                <div className="drawer-field-value">{new Date(event.timestamp).toLocaleString()}</div>
-              </div>
-              <div className="drawer-field">
-                <div className="drawer-field-label">action</div>
-                <div className="drawer-field-value">{actionBadge(event.action)}</div>
-              </div>
-              {event.would_action && (
-                <div className="drawer-field">
-                  <div className="drawer-field-label">would be</div>
-                  <div className="drawer-field-value">{actionBadge(event.would_action)}</div>
-                </div>
-              )}
-              <div className="drawer-field">
-                <div className="drawer-field-label">mode</div>
-                <div className="drawer-field-value">{event.mode}</div>
-              </div>
-              <div className="drawer-field">
-                <div className="drawer-field-label">raw name</div>
-                <div className="drawer-field-value">{event.raw_name || "—"}</div>
-              </div>
-              <CopyField label="binary" value={event.binary} />
-              <CopyField label="file" value={event.file} />
-              <CopyField label="workdir" value={event.workdir} />
-              <CopyField label="session" value={event.session} />
-              <div className="drawer-actions">
-                {onApplyFilter && event.binary && (
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      onApplyFilter("binary", event.binary);
-                      onClose();
-                    }}
-                  >
-                    events for {event.binary}
-                  </button>
-                )}
-                {onApplyFilter && event.workdir && (
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      onApplyFilter("workdir", event.workdir);
-                      onClose();
-                    }}
-                  >
-                    events in this directory
-                  </button>
-                )}
-                {onApplyFilter && event.session && (
-                  <button
-                    className="btn"
-                    onClick={() => {
-                      onApplyFilter("session", event.session);
-                      onClose();
-                    }}
-                  >
-                    this session's events
-                  </button>
-                )}
-              </div>
-              <RuleSuggestionPanel
-                event={event}
-                targetAction={targetAction}
-                setTargetAction={setTargetAction}
-              />
-              <div
-                className="drawer-json"
-                dangerouslySetInnerHTML={{ __html: highlightJson(event.tool_input) }}
-              />
-            </div>
-          </motion.aside>
+            )}
+            {onApplyFilter && event.workdir && (
+              <button
+                className="btn"
+                onClick={() => {
+                  onApplyFilter("workdir", event.workdir);
+                  onClose();
+                }}
+              >
+                events in this directory
+              </button>
+            )}
+            {onApplyFilter && event.session && (
+              <button
+                className="btn"
+                onClick={() => {
+                  onApplyFilter("session", event.session);
+                  onClose();
+                }}
+              >
+                this session's events
+              </button>
+            )}
+          </div>
+          <RuleSuggestionPanel
+            event={event}
+            targetAction={targetAction}
+            setTargetAction={setTargetAction}
+          />
+          <div
+            className="drawer-json"
+            dangerouslySetInnerHTML={{ __html: highlightJson(event.tool_input) }}
+          />
         </>
       )}
-    </AnimatePresence>
+    </Drawer>
   );
 }

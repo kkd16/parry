@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Bell, BookOpen, Bookmark, Gauge, Orbit, ScrollText, Workflow, X } from "lucide-react";
 import type { Tab } from "../App";
-import type { PolicyOverviewState } from "../usePolicyOverview";
+import type { PolicyOverviewState } from "../hooks/usePolicyOverview";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import type { BookmarksApi } from "../hooks/useBookmarks";
-import type { DashboardCounts } from "../hooks/useDashboardCounts";
+import type { DashboardCounts } from "../types";
+import "./Sidebar.css";
 
 interface Props {
   tab: Tab;
   setTab: (t: Tab) => void;
-  overview: PolicyOverviewState;
+  policyOverview: PolicyOverviewState;
   eventCount: number;
   live: boolean;
   onShowHelp: () => void;
@@ -31,7 +32,7 @@ function formatCount(n: number | null): string {
 export default function Sidebar({
   tab,
   setTab,
-  overview,
+  policyOverview,
   eventCount,
   live,
   onShowHelp,
@@ -72,7 +73,7 @@ export default function Sidebar({
     };
   }, [setWidth]);
 
-  const { policy, health } = overview;
+  const { policy, health } = policyOverview;
   const notify = policy?.notifications;
   const healthClass =
     health?.status === "ok" ? "ok" : health?.status === "error" ? "err" : "none";

@@ -1,5 +1,3 @@
-import { motion, AnimatePresence } from "motion/react";
-import { useEffect } from "react";
 import {
   nodeById,
   type DetailBlock,
@@ -7,6 +5,7 @@ import {
   type NodeStatus,
   type SubComponent,
 } from "../devdocs";
+import Drawer from "./Drawer";
 
 function StatusBadge({ status }: { status: NodeStatus }) {
   return <span className={`devdocs-badge devdocs-badge-${status}`}>{status}</span>;
@@ -68,74 +67,44 @@ interface Props {
 }
 
 export default function DevDocsDrawer({ node, onClose, onNavigate }: Props) {
-  useEffect(() => {
-    if (!node) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [node, onClose]);
-
   const seeAlso = (node?.seeAlso ?? []).flatMap((id) => {
     const target = nodeById(id);
     return target ? [target] : [];
   });
 
   return (
-    <AnimatePresence>
+    <Drawer
+      open={!!node}
+      onClose={onClose}
+      eyebrow="component"
+      title={node?.title ?? ""}
+      bodyKey={node?.id}
+    >
       {node && (
         <>
-          <motion.div
-            className="drawer-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-          <motion.aside
-            className="drawer"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 280 }}
-          >
-            <div className="drawer-header">
-              <div>
-                <div className="drawer-eyebrow">component</div>
-                <h2 className="drawer-title">{node.title}</h2>
-              </div>
-              <button className="drawer-close" onClick={onClose}>
-                close · esc
-              </button>
-            </div>
-            <div className="drawer-body" key={node.id}>
-              <div className="devdocs-drawer-meta">
-                <StatusBadge status={node.status} />
-              </div>
-              <p className="devdocs-lede">{node.oneliner}</p>
+          <div className="devdocs-drawer-meta">
+            <StatusBadge status={node.status} />
+          </div>
+          <p className="devdocs-lede">{node.oneliner}</p>
 
-              {node.detail.map((block, i) => (
-                <Block key={i} block={block} />
-              ))}
+          {node.detail.map((block, i) => (
+            <Block key={i} block={block} />
+          ))}
 
-              {seeAlso.length > 0 && (
-                <section className="devdocs-drawer-section">
-                  <div className="drawer-field-label">see also</div>
-                  <div className="devdocs-seealso">
-                    {seeAlso.map((target) => (
-                      <button key={target.id} className="btn" onClick={() => onNavigate(target.id)}>
-                        {target.title}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )}
-            </div>
-          </motion.aside>
+          {seeAlso.length > 0 && (
+            <section className="devdocs-drawer-section">
+              <div className="drawer-field-label">see also</div>
+              <div className="devdocs-seealso">
+                {seeAlso.map((target) => (
+                  <button key={target.id} className="btn" onClick={() => onNavigate(target.id)}>
+                    {target.title}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
-    </AnimatePresence>
+    </Drawer>
   );
 }

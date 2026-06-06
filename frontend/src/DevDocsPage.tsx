@@ -9,6 +9,7 @@ import {
   type DocEdge,
   type PlacedNode,
 } from "./devdocs";
+import "./DevDocsPage.css";
 
 const TOP_Y = 16;
 const CORNER = 18;

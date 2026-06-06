@@ -1,43 +1,14 @@
-import { useEffect, useState } from "react";
 import PageHeader from "./components/PageHeader";
 import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
 import { actionBadge } from "./policyBadges";
-import type { Event } from "./types";
-import type { PolicyOverviewState } from "./usePolicyOverview";
-
-interface BinaryStat {
-  binary: string;
-  count: number;
-  actions: Record<string, number>;
-}
-
-interface DayBucket {
-  date: string;
-  count: number;
-}
-
-interface ActionCount {
-  action: string;
-  count: number;
-}
-
-interface ProjectStat {
-  workdir: string;
-  count: number;
-}
-
-interface OverviewResponse {
-  total: number;
-  today: number;
-  last_7d: DayBucket[];
-  by_action: ActionCount[];
-  top_binaries: BinaryStat[];
-  top_project?: ProjectStat;
-  recent_blocks: Event[];
-}
+import type { ActionCount, DayBucket, Event, OverviewResponse } from "./types";
+import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
+import "./BridgePage.css";
 
 interface Props {
-  overview: PolicyOverviewState;
+  policyOverview: PolicyOverviewState;
+  overview: OverviewResponse | null;
+  error: string | null;
   onEventClick: (e: Event) => void;
   onFilterBinary: (b: string) => void;
 }
@@ -163,26 +134,17 @@ function ActionBar({ actions }: { actions: Record<string, number> }) {
   );
 }
 
-export default function BridgePage({ overview, onEventClick, onFilterBinary }: Props) {
-  const [data, setData] = useState<OverviewResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export default function BridgePage({
+  policyOverview,
+  overview,
+  error,
+  onEventClick,
+  onFilterBinary,
+}: Props) {
   const nowTick = useNowTick(30_000);
-
-  useEffect(() => {
-    fetch("/api/overview")
-      .then((r) => r.json())
-      .then((j: OverviewResponse | { error: string }) => {
-        if ("error" in j) {
-          setError(j.error);
-          return;
-        }
-        setData(j);
-      })
-      .catch((e: unknown) => setError(String(e)));
-  }, []);
-
-  const policy = overview.policy;
-  const health = overview.health;
+  const data = overview;
+  const policy = policyOverview.policy;
+  const health = policyOverview.health;
 
   return (
     <>

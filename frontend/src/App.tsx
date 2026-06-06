@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Bell,
   BookOpen,
@@ -10,28 +10,32 @@ import {
   Search,
   Workflow,
 } from "lucide-react";
-import BridgePage from "./BridgePage";
-import DevDocsPage from "./DevDocsPage";
-import EventsPage from "./EventsPage";
-import SolarSystemPage from "./SolarSystemPage";
-import PolicyPage from "./PolicyPage";
-import NotifyPage from "./NotifyPage";
 import Sidebar from "./components/Sidebar";
 import CommandPalette from "./components/CommandPalette";
 import ShortcutsHelp from "./components/ShortcutsHelp";
 import AboutDialog from "./components/AboutDialog";
 import { ToastsProvider } from "./components/Toasts";
-import { usePolicyOverview } from "./usePolicyOverview";
+import { usePolicyOverview } from "./hooks/usePolicyOverview";
+import { useApi } from "./hooks/useApi";
+import { getHeatmap, getOverview, postNotifyTest } from "./api";
+import type { DashboardCounts } from "./types";
 import { useKeyboardNav } from "./hooks/useKeyboardNav";
 import { usePath, useUrlParam } from "./hooks/useUrlState";
 import { useBookmarks, type BookmarksApi } from "./hooks/useBookmarks";
-import { useDashboardCounts } from "./hooks/useDashboardCounts";
 import {
   CommandsProvider,
   useRegisterCommands,
   type Command,
   type QuickFilter,
 } from "./commands";
+import "./Shell.css";
+
+const BridgePage = lazy(() => import("./BridgePage"));
+const DevDocsPage = lazy(() => import("./DevDocsPage"));
+const EventsPage = lazy(() => import("./EventsPage"));
+const SolarSystemPage = lazy(() => import("./SolarSystemPage"));
+const PolicyPage = lazy(() => import("./PolicyPage"));
+const NotifyPage = lazy(() => import("./NotifyPage"));
 
 export type Tab = "bridge" | "logbook" | "orrery" | "charter" | "beacon" | "devdocs";
 
@@ -106,7 +110,7 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts, openAbout }: 
         icon: <Bell />,
         keywords: ["test", "ping"],
         perform: () => {
-          void fetch("/api/notify/test", { method: "POST" });
+          void postNotifyTest().catch(() => {});
           setTab("beacon");
         },
       },
@@ -299,7 +303,16 @@ function AppShell() {
   const tab = path.slice(1) as Tab;
   const setTab = useCallback((t: Tab) => setPath("/" + t), [setPath]);
   const bookmarks = useBookmarks();
-  const counts = useDashboardCounts();
+  const overviewApi = useApi(getOverview);
+  const heatmapApi = useApi(getHeatmap);
+  const counts = useMemo<DashboardCounts>(
+    () => ({
+      today: overviewApi.data?.today ?? null,
+      blockedToday: overviewApi.data?.blocked_today ?? null,
+      projects: heatmapApi.data?.projects.length ?? null,
+    }),
+    [overviewApi.data, heatmapApi.data],
+  );
   const openBookmark = useCallback(
     (qs: string) => {
       window.history.pushState(null, "", "/logbook" + (qs ? "?" + qs : ""));
@@ -313,9 +326,21 @@ function AppShell() {
   const [pendingFilter, setPendingFilter] = useState<QuickFilter | null>(null);
   const [eventCount, setEventCount] = useState(0);
   const [live, setLive] = useState(false);
-  const overview = usePolicyOverview();
+  const policyOverview = usePolicyOverview();
   const searchFocusRef = useRef<() => void>(() => {});
   const [, setBinaryParam] = useUrlParam("binary", "");
+
+  const refetchOverview = overviewApi.refetch;
+  const refetchHeatmap = heatmapApi.refetch;
+  const firstTabRef = useRef(true);
+  useEffect(() => {
+    if (firstTabRef.current) {
+      firstTabRef.current = false;
+      return;
+    }
+    if (tab === "bridge") refetchOverview();
+    else if (tab === "orrery") refetchHeatmap();
+  }, [tab, refetchOverview, refetchHeatmap]);
 
   const focusSearch = useCallback(() => searchFocusRef.current?.(), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
@@ -355,7 +380,7 @@ function AppShell() {
         <Sidebar
           tab={tab}
           setTab={setTab}
-          overview={overview}
+          policyOverview={policyOverview}
           eventCount={eventCount}
           live={live}
           onShowHelp={openShortcuts}
@@ -366,33 +391,42 @@ function AppShell() {
         />
         <main className="shell-main">
           <div className="shell-main-inner">
-            {tab === "bridge" && (
-              <BridgePage
-                overview={overview}
-                onEventClick={() => setTab("logbook")}
-                onFilterBinary={(b) => {
-                  setBinaryParam(b);
-                  setTab("logbook");
-                }}
-              />
-            )}
-            {tab === "logbook" && (
-              <EventsPage
-                onCountChange={setEventCount}
-                onLiveChange={setLive}
-                pendingFilter={pendingFilter}
-                consumePendingFilter={() => setPendingFilter(null)}
-                registerSearchFocus={(fn) => {
-                  searchFocusRef.current = fn;
-                }}
-              />
-            )}
-            {tab === "orrery" && <SolarSystemPage />}
-            {tab === "charter" && <PolicyPage {...overview} />}
-            {tab === "beacon" && (
-              <NotifyPage overview={overview} onGoToEvents={() => setTab("logbook")} />
-            )}
-            {tab === "devdocs" && <DevDocsPage />}
+            <Suspense fallback={null}>
+              {tab === "bridge" && (
+                <BridgePage
+                  policyOverview={policyOverview}
+                  overview={overviewApi.data}
+                  error={overviewApi.error}
+                  onEventClick={() => setTab("logbook")}
+                  onFilterBinary={(b) => {
+                    setBinaryParam(b);
+                    setTab("logbook");
+                  }}
+                />
+              )}
+              {tab === "logbook" && (
+                <EventsPage
+                  onCountChange={setEventCount}
+                  onLiveChange={setLive}
+                  pendingFilter={pendingFilter}
+                  consumePendingFilter={() => setPendingFilter(null)}
+                  registerSearchFocus={(fn) => {
+                    searchFocusRef.current = fn;
+                  }}
+                />
+              )}
+              {tab === "orrery" && (
+                <SolarSystemPage heatmap={heatmapApi.data} error={heatmapApi.error} />
+              )}
+              {tab === "charter" && <PolicyPage {...policyOverview} />}
+              {tab === "beacon" && (
+                <NotifyPage
+                  policyOverview={policyOverview}
+                  onGoToEvents={() => setTab("logbook")}
+                />
+              )}
+              {tab === "devdocs" && <DevDocsPage />}
+            </Suspense>
           </div>
         </main>
         <CommandPalette open={paletteOpen} onClose={closePalette} />

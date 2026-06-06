@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CommandExplanation, Explanation, RuleEntry } from "../types";
+import { isAbortError, postPolicyEvaluate } from "../api";
 import { actionBadge } from "../policyBadges";
 
 type DrillTool = "shell" | "file_read" | "file_edit";
@@ -69,23 +70,13 @@ export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string
     const ctrl = new AbortController();
     const timer = setTimeout(() => {
       const input = tool === "shell" ? { command: trimmed } : { path: trimmed };
-      fetch("/api/policy/evaluate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tool, tool_input: input }),
-        signal: ctrl.signal,
-      })
-        .then(async (res) => {
-          const data = (await res.json()) as Explanation & { error?: string };
-          if (!res.ok) throw new Error(data.error ?? res.statusText);
-          return data;
-        })
+      postPolicyEvaluate({ tool, tool_input: input }, ctrl.signal)
         .then((data) => {
           setResult(data);
           setError(null);
         })
-        .catch((e) => {
-          if (e instanceof DOMException && e.name === "AbortError") return;
+        .catch((e: unknown) => {
+          if (isAbortError(e)) return;
           setError(e instanceof Error ? e.message : String(e));
           setResult(null);
         });

@@ -100,3 +100,72 @@ export interface Policy {
   rate_limit?: RateLimit;
   notifications?: Notifications;
 }
+
+export interface BinaryStat {
+  binary: string;
+  count: number;
+  actions: Record<string, number>;
+}
+
+export interface DayBucket {
+  date: string;
+  count: number;
+}
+
+export interface ActionCount {
+  action: string;
+  count: number;
+}
+
+export interface ProjectStat {
+  workdir: string;
+  count: number;
+}
+
+export interface OverviewResponse {
+  total: number;
+  today: number;
+  blocked_today: number;
+  last_7d: DayBucket[];
+  by_action: ActionCount[];
+  top_binaries: BinaryStat[];
+  top_project?: ProjectStat;
+  recent_blocks: Event[];
+}
+
+export interface HeatmapFile {
+  path: string;
+  count: number;
+}
+
+export interface HeatmapProject {
+  workdir: string;
+  files: HeatmapFile[];
+  total: number;
+  fileCount: number;
+}
+
+export interface HeatmapResponse {
+  projects: HeatmapProject[];
+}
+
+export interface AboutInfo {
+  version: string;
+  go_version: string;
+  commit: string;
+  built: string;
+  platform: string;
+  data_dir: string;
+}
+
+export interface NotifyTestResult {
+  ok: boolean;
+  error?: string;
+  sent_at?: string;
+}
+
+export interface DashboardCounts {
+  today: number | null;
+  blockedToday: number | null;
+  projects: number | null;
+}

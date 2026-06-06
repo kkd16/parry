@@ -1,0 +1,21 @@
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: "sidebar main";
+  height: 100vh;
+  overflow: hidden;
+}
+
+.shell-main {
+  grid-area: main;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.shell-main-inner {
+  max-width: 1440px;
+  padding: 56px 56px 40px 56px;
+  margin: 0 auto;
+}

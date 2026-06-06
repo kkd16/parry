@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
+import "./Toasts.css";
 
 type ToastKind = "success" | "error" | "info";
 

@@ -3,22 +3,8 @@ import { Maximize2, Minus, Orbit, Plus, RotateCcw } from "lucide-react";
 import PageHeader from "./components/PageHeader";
 import { useUrlParam } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
-
-interface HeatmapFile {
-  path: string;
-  count: number;
-}
-
-interface HeatmapProject {
-  workdir: string;
-  files: HeatmapFile[];
-  total: number;
-  fileCount: number;
-}
-
-interface HeatmapResponse {
-  projects: HeatmapProject[];
-}
+import type { HeatmapProject, HeatmapResponse } from "./types";
+import "./SolarSystemPage.css";
 
 interface Body {
   x: number;
@@ -116,9 +102,12 @@ interface Hover {
   body: Body;
 }
 
-export default function SolarSystemPage() {
-  const [data, setData] = useState<HeatmapResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+interface Props {
+  heatmap: HeatmapResponse | null;
+  error: string | null;
+}
+
+export default function SolarSystemPage({ heatmap, error }: Props) {
   const [view, setView] = useState({ tx: 0, ty: 0, scale: 1 });
   const [hover, setHover] = useState<Hover | null>(null);
   const [filterProject, setFilterProject] = useUrlParam("project", "");
@@ -137,20 +126,7 @@ export default function SolarSystemPage() {
     };
   }, []);
 
-  useEffect(() => {
-    fetch("/api/heatmap")
-      .then((r) => r.json())
-      .then((json: HeatmapResponse | { error: string }) => {
-        if ("error" in json) {
-          setError(json.error);
-          return;
-        }
-        setData(json);
-      })
-      .catch((e: unknown) => setError(String(e)));
-  }, []);
-
-  const allSystems = useMemo(() => (data ? buildSystems(data.projects) : []), [data]);
+  const allSystems = useMemo(() => (heatmap ? buildSystems(heatmap.projects) : []), [heatmap]);
   const systems = useMemo(
     () => (filterProject ? allSystems.filter((s) => s.workdir === filterProject) : allSystems),
     [allSystems, filterProject],
@@ -378,15 +354,15 @@ export default function SolarSystemPage() {
     };
     el.addEventListener("wheel", handler, { passive: false });
     return () => el.removeEventListener("wheel", handler);
-  }, [zoomAt, data]);
+  }, [zoomAt, heatmap]);
 
   const stats = useMemo(() => {
-    if (!data) return null;
+    if (!heatmap) return null;
     let totalEvents = 0;
     let totalFiles = 0;
     let topFile = { path: "", count: 0 };
     let topProject = { workdir: "", count: 0 };
-    for (const p of data.projects) {
+    for (const p of heatmap.projects) {
       totalEvents += p.total;
       totalFiles += p.fileCount;
       if (p.total > topProject.count) topProject = { workdir: p.workdir, count: p.total };
@@ -395,13 +371,13 @@ export default function SolarSystemPage() {
       }
     }
     return {
-      projects: data.projects.length,
+      projects: heatmap.projects.length,
       totalFiles,
       totalEvents,
       topFile,
       topProject,
     };
-  }, [data]);
+  }, [heatmap]);
 
   if (error)
     return (
@@ -410,7 +386,7 @@ export default function SolarSystemPage() {
         <div className="error">{error}</div>
       </>
     );
-  if (!data)
+  if (!heatmap)
     return (
       <>
         <PageHeader eyebrow="instrument · 02" title="Orrery" />

@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Bell, Copy, Send } from "lucide-react";
+import CopyButton from "./components/CopyButton";
 import PageHeader from "./components/PageHeader";
 import { useToast } from "./components/Toasts";
-import type { Event } from "./types";
-import type { PolicyOverviewState } from "./usePolicyOverview";
+import { getEvents, postNotifyTest } from "./api";
+import { useApi } from "./hooks/useApi";
+import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
 import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
+import "./NotifyPage.css";
 
 interface ProviderField {
   key: string;
@@ -61,71 +64,58 @@ const PROVIDERS: ProviderSpec[] = [
 ];
 
 interface Props {
-  overview: PolicyOverviewState;
+  policyOverview: PolicyOverviewState;
   onGoToEvents: () => void;
 }
 
-interface TestResult {
-  ok: boolean;
-  error?: string;
-  sent_at?: string;
-}
-
 function CopyBlock({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
   return (
     <div className="notify-yaml">
       <pre>{text}</pre>
-      <button
+      <CopyButton
         className="notify-yaml-copy"
-        onClick={() => {
-          void navigator.clipboard.writeText(text);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1200);
-        }}
-      >
-        <Copy size={11} />
-        {copied ? "copied" : "copy"}
-      </button>
+        text={text}
+        label={
+          <>
+            <Copy size={11} />
+            copy
+          </>
+        }
+        copiedLabel={
+          <>
+            <Copy size={11} />
+            copied
+          </>
+        }
+      />
     </div>
   );
 }
 
 function CopyValue({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
   if (!value) return <span className="muted">—</span>;
   return (
     <span className="notify-copy-value">
       <span>{value}</span>
-      <button
-        className="notify-copy-btn"
-        onClick={() => {
-          void navigator.clipboard.writeText(value);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1200);
-        }}
-      >
-        {copied ? "copied" : "copy"}
-      </button>
+      <CopyButton className="notify-copy-btn" text={value} />
     </span>
   );
 }
 
-export default function NotifyPage({ overview, onGoToEvents }: Props) {
+export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
   const toast = useToast();
-  const { policy, health } = overview;
-  const [recent, setRecent] = useState<Event[]>([]);
+  const { policy, health } = policyOverview;
   const [testing, setTesting] = useState(false);
   const nowTick = useNowTick(30_000);
 
-  useEffect(() => {
-    fetch("/api/events?action=confirm&limit=10")
-      .then((r) => r.json())
-      .then((data: { events?: Event[] }) => setRecent(data.events ?? []))
-      .catch(() => {
-        // best effort
-      });
-  }, []);
+  const recentApi = useApi(
+    useCallback(
+      (signal: AbortSignal) =>
+        getEvents(new URLSearchParams({ action: "confirm", limit: "10" }), signal),
+      [],
+    ),
+  );
+  const recent = recentApi.data?.events ?? [];
 
   const status = health?.status ?? "unconfigured";
   const orbClass =
@@ -150,15 +140,14 @@ export default function NotifyPage({ overview, onGoToEvents }: Props) {
     if (testing) return;
     setTesting(true);
     try {
-      const res = await fetch("/api/notify/test", { method: "POST" });
-      const data: TestResult = await res.json();
+      const data = await postNotifyTest();
       if (data.ok) {
         toast.success("test sent", `via ${providerId || "provider"}`);
       } else {
         toast.error("test failed", data.error ?? "unknown");
       }
     } catch (e) {
-      toast.error("test failed", String(e));
+      toast.error("test failed", e instanceof Error ? e.message : String(e));
     } finally {
       setTesting(false);
     }
