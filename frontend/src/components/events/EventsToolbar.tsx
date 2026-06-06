@@ -1,4 +1,5 @@
-import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useRef, type Dispatch, type SetStateAction } from "react";
+import { useClickOutside } from "../../hooks/useClickOutside";
 import clsx from "clsx";
 import { Columns3, Download, FileJson, RefreshCw, Star } from "lucide-react";
 import SearchableSelect from "../SearchableSelect";
@@ -45,19 +46,7 @@ export default function EventsToolbar({
 }: Props) {
   const colMenuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!colMenuOpen) return;
-    const click = (e: MouseEvent) => {
-      if (
-        colMenuRef.current &&
-        !colMenuRef.current.contains(e.target as Node)
-      ) {
-        setColMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", click);
-    return () => document.removeEventListener("mousedown", click);
-  }, [colMenuOpen, setColMenuOpen]);
+  useClickOutside(colMenuRef, colMenuOpen, () => setColMenuOpen(false));
 
   return (
     <>

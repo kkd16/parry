@@ -11,7 +11,3 @@ export const ACTION_COLORS: Record<string, string> = {
 export function actionBadge(action: string): ReactNode {
   return <Badge action={action}>{action}</Badge>;
 }
-
-export function modeBadge(mode: string): ReactNode {
-  return <Badge action={mode === "enforce" ? "block" : "allow"}>{mode}</Badge>;
-}

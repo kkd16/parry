@@ -13,6 +13,12 @@ export const TIME_OPTIONS: { value: string; label: string; ms: number }[] = [
   { value: "30d", label: "last 30 days", ms: 30 * 24 * 60 * 60 * 1000 },
 ];
 
+function qs(vals: Record<string, string>): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(vals)) if (v) p.set(k, v);
+  return p.toString();
+}
+
 export function timeFilterCutoff(value: string): number | null {
   const opt = TIME_OPTIONS.find((o) => o.value === value);
   return opt ? Date.now() - opt.ms : null;
@@ -112,27 +118,25 @@ export function useEventsFilters(): EventsFiltersApi {
     clearTimeout(debounceRef.current);
     pushedQ.current = "";
     setSearchInput("");
-    const cleared: Partial<Record<(typeof URL_KEYS)[number], string>> = {
+    setParams({
+      ...Object.fromEntries(FILTER_KEYS.map((k) => [k, ""])),
       q: "",
       offset: "",
-    };
-    for (const k of FILTER_KEYS) cleared[k] = "";
-    setParams(cleared);
+    });
   }, [setParams]);
 
   const serverQuery = useCallback(
-    (extra: Record<string, string>) => {
-      const p = new URLSearchParams();
-      if (action) p.set("action", action);
-      if (tool) p.set("tool", tool);
-      if (binary) p.set("binary", binary);
-      if (session) p.set("session", session);
-      if (search) p.set("search", search);
-      p.set("sort", sortId);
-      p.set("order", sortOrder);
-      for (const [k, v] of Object.entries(extra)) p.set(k, v);
-      return p.toString();
-    },
+    (extra: Record<string, string>) =>
+      qs({
+        action,
+        tool,
+        binary,
+        session,
+        search,
+        sort: sortId,
+        order: sortOrder,
+        ...extra,
+      }),
     [action, tool, binary, session, search, sortId, sortOrder],
   );
 
@@ -147,12 +151,10 @@ export function useEventsFilters(): EventsFiltersApi {
     [serverQuery],
   );
 
-  const bookmarkQuery = useCallback(() => {
-    const p = new URLSearchParams();
-    const vals = { action, tool, workdir, binary, session, time, q: search };
-    for (const [k, v] of Object.entries(vals)) if (v) p.set(k, v);
-    return p.toString();
-  }, [action, tool, workdir, binary, session, time, search]);
+  const bookmarkQuery = useCallback(
+    () => qs({ action, tool, workdir, binary, session, time, q: search }),
+    [action, tool, workdir, binary, session, time, search],
+  );
 
   return {
     values: { action, tool, workdir, binary, session, time },

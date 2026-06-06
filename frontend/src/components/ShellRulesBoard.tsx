@@ -1,32 +1,28 @@
 import clsx from "clsx";
 import { highlight } from "../highlight";
-import {
-  ACTIONS,
-  chipMatches,
-  type ActionName,
-  type ClusterChip,
-} from "../utils/policyView";
+import type { Action } from "../types";
+import { ACTIONS, chipMatches, type ClusterChip } from "../utils/policyView";
 
-const CLUSTER_SUB: Record<ActionName, string> = {
+const CLUSTER_SUB: Record<Action, string> = {
   allow: "runs silently, logged",
   confirm: "pauses until you approve",
   block: "refused and logged",
 };
 
-const CLUSTER_NAME_CLS: Record<ActionName, string> = {
+const CLUSTER_NAME_CLS: Record<Action, string> = {
   allow: "text-allow",
   confirm: "text-confirm",
   block: "text-block",
 };
 
-const CHIP_CLS: Record<ActionName, string> = {
+const CHIP_CLS: Record<Action, string> = {
   allow: "border-allow/18 bg-allow/12 text-allow",
   confirm: "border-confirm/20 bg-confirm/14 text-confirm",
   block: "border-block/20 bg-block/12 text-block",
 };
 
 interface Props {
-  clusters: Record<ActionName, ClusterChip[]>;
+  clusters: Record<Action, ClusterChip[]>;
   query: string;
   onOpenBinary: (binary: string) => void;
 }
@@ -38,7 +34,7 @@ function Chip({
   onClick,
 }: {
   chip: ClusterChip;
-  action: ActionName;
+  action: Action;
   query: string;
   onClick: () => void;
 }) {

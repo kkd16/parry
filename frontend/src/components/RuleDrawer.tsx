@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import clsx from "clsx";
-import type { Rule } from "../types";
+import type { Action, Rule } from "../types";
 import { getEvents } from "../api";
 import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
@@ -16,11 +16,10 @@ import { formatRelative, useNowTick } from "../utils/relativeTime";
 import {
   explainBinary,
   STRICTNESS,
-  type ActionName,
   type BinaryExplanation,
 } from "../utils/policyView";
 
-const PHRASE: Record<ActionName, string> = {
+const PHRASE: Record<Action, string> = {
   allow: "runs without interruption",
   confirm: "pauses for your approval",
   block: "is refused",

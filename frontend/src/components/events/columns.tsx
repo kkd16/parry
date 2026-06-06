@@ -3,6 +3,7 @@ import type { Event } from "../../types";
 import { actionBadge } from "../../policyBadges";
 import { formatAbsolute, formatRelative } from "../../utils/relativeTime";
 import { shortJson } from "../../utils/eventsExport";
+import { Muted } from "../ui";
 
 export type ColumnSizing = Record<string, number>;
 export type ColumnVisibility = Record<string, boolean>;
@@ -26,7 +27,7 @@ export const MIN_COL_WIDTH = 60;
 const cellLinkCls =
   "cursor-pointer border-b border-dashed border-transparent text-left font-mono text-body hover:border-brass-dim hover:text-brass";
 
-const dash = <span className="text-ink-mute italic">—</span>;
+const dash = <Muted />;
 
 export const EVENT_COLUMNS: ColumnSpec[] = [
   {

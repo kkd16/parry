@@ -6,7 +6,7 @@ import Dialog, {
   dialogPanelCls,
   dialogTitleCls,
 } from "./Dialog";
-import { Eyebrow, FieldLabel } from "./ui";
+import { Eyebrow, FieldLabel, Muted } from "./ui";
 import { useToast } from "./Toasts";
 import clsx from "clsx";
 import type { ReactNode } from "react";
@@ -52,17 +52,15 @@ function AboutContent() {
       <div className="px-7 pt-4.5 pb-3.5">
         <AboutRow label="go">{info?.go_version || "—"}</AboutRow>
         <AboutRow label="commit">
-          {info?.commit || (
-            <span className="text-ink-mute italic">unknown</span>
-          )}
+          {info?.commit || <Muted>unknown</Muted>}
           {info?.commit && <CopyBtn value={info.commit} />}
         </AboutRow>
         <AboutRow label="built">
-          {info?.built || <span className="text-ink-mute italic">unknown</span>}
+          {info?.built || <Muted>unknown</Muted>}
         </AboutRow>
         <AboutRow label="platform">{info?.platform || "—"}</AboutRow>
         <AboutRow label="data dir">
-          {info?.data_dir || <span className="text-ink-mute italic">—</span>}
+          {info?.data_dir || <Muted />}
           {info?.data_dir && <CopyBtn value={info.data_dir} />}
         </AboutRow>
       </div>

@@ -17,11 +17,10 @@ import { ToastsProvider } from "./components/Toasts";
 import { usePolicyOverview } from "./hooks/usePolicyOverview";
 import { useApi } from "./hooks/useApi";
 import { getHeatmap, getOverview, postNotifyTest } from "./api";
-import type { DashboardCounts } from "./types";
 import { useKeyboardNav } from "./hooks/useKeyboardNav";
 import { openUrl, setUrlParams, usePath } from "./hooks/useUrlState";
 import { TIME_OPTIONS } from "./hooks/useEventsFilters";
-import { useBookmarks, type BookmarksApi } from "./hooks/useBookmarks";
+import { useBookmarks } from "./hooks/useBookmarks";
 import { TABS, type Tab } from "./tabs";
 import {
   CommandsProvider,
@@ -53,13 +52,41 @@ const TOOL_FILTERS = [
   { value: "file_read", label: "File reads only" },
 ];
 
-interface ShellState {
-  setTab: (t: Tab) => void;
-  openShortcuts: () => void;
-  openAbout: () => void;
-}
+function AppShell() {
+  const [path, setPath] = usePath();
+  const tab = path.slice(1) as Tab;
+  const setTab = useCallback((t: Tab) => setPath("/" + t), [setPath]);
+  const bookmarks = useBookmarks();
+  const overviewApi = useApi(getOverview);
+  const heatmapApi = useApi(getHeatmap);
+  const openBookmark = useCallback((qs: string) => {
+    openUrl("/logbook" + (qs ? "?" + qs : ""));
+  }, []);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [eventCount, setEventCount] = useState(0);
+  const [live, setLive] = useState(false);
+  const policyOverview = usePolicyOverview();
 
-function GlobalCommands({ setTab, openShortcuts, openAbout }: ShellState) {
+  const refetchOverview = overviewApi.refetch;
+  const refetchHeatmap = heatmapApi.refetch;
+  const firstTabRef = useRef(true);
+  useEffect(() => {
+    if (firstTabRef.current) {
+      firstTabRef.current = false;
+      return;
+    }
+    if (tab === "bridge") refetchOverview();
+    else if (tab === "orrery") refetchHeatmap();
+  }, [tab, refetchOverview, refetchHeatmap]);
+
+  const closePalette = useCallback(() => setPaletteOpen(false), []);
+  const closeShortcuts = useCallback(() => setShortcutsOpen(false), []);
+  const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const closeAbout = useCallback(() => setAboutOpen(false), []);
+  const openAbout = useCallback(() => setAboutOpen(true), []);
+
   const filterTo = useCallback(
     (key: string, value: string) => {
       setUrlParams({ [key]: value, offset: "" });
@@ -68,7 +95,7 @@ function GlobalCommands({ setTab, openShortcuts, openAbout }: ShellState) {
     [setTab],
   );
 
-  const cmds = useMemo<Command[]>(
+  const globalCmds = useMemo<Command[]>(
     () => [
       ...TABS.map((t) => ({
         id: `nav.${t.id}`,
@@ -128,18 +155,9 @@ function GlobalCommands({ setTab, openShortcuts, openAbout }: ShellState) {
     ],
     [setTab, filterTo, openShortcuts, openAbout],
   );
-  useRegisterCommands(cmds, [cmds]);
-  return null;
-}
+  useRegisterCommands(globalCmds, [globalCmds]);
 
-function BookmarkCommands({
-  bookmarks,
-  onOpen,
-}: {
-  bookmarks: BookmarksApi;
-  onOpen: (qs: string) => void;
-}) {
-  const cmds = useMemo<Command[]>(
+  const bookmarkCmds = useMemo<Command[]>(
     () =>
       bookmarks.bookmarks.map((b) => ({
         id: `bookmark.${b.id}`,
@@ -147,56 +165,11 @@ function BookmarkCommands({
         label: b.name,
         icon: <Bookmark />,
         keywords: ["bookmark", "saved", b.qs],
-        perform: () => onOpen(b.qs),
+        perform: () => openBookmark(b.qs),
       })),
-    [bookmarks.bookmarks, onOpen],
+    [bookmarks.bookmarks, openBookmark],
   );
-  useRegisterCommands(cmds, [cmds]);
-  return null;
-}
-
-function AppShell() {
-  const [path, setPath] = usePath();
-  const tab = path.slice(1) as Tab;
-  const setTab = useCallback((t: Tab) => setPath("/" + t), [setPath]);
-  const bookmarks = useBookmarks();
-  const overviewApi = useApi(getOverview);
-  const heatmapApi = useApi(getHeatmap);
-  const counts = useMemo<DashboardCounts>(
-    () => ({
-      today: overviewApi.data?.today ?? null,
-      blockedToday: overviewApi.data?.blocked_today ?? null,
-      projects: heatmapApi.data?.projects.length ?? null,
-    }),
-    [overviewApi.data, heatmapApi.data],
-  );
-  const openBookmark = useCallback((qs: string) => {
-    openUrl("/logbook" + (qs ? "?" + qs : ""));
-  }, []);
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [eventCount, setEventCount] = useState(0);
-  const [live, setLive] = useState(false);
-  const policyOverview = usePolicyOverview();
-
-  const refetchOverview = overviewApi.refetch;
-  const refetchHeatmap = heatmapApi.refetch;
-  const firstTabRef = useRef(true);
-  useEffect(() => {
-    if (firstTabRef.current) {
-      firstTabRef.current = false;
-      return;
-    }
-    if (tab === "bridge") refetchOverview();
-    else if (tab === "orrery") refetchHeatmap();
-  }, [tab, refetchOverview, refetchHeatmap]);
-
-  const closePalette = useCallback(() => setPaletteOpen(false), []);
-  const closeShortcuts = useCallback(() => setShortcutsOpen(false), []);
-  const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
-  const closeAbout = useCallback(() => setAboutOpen(false), []);
-  const openAbout = useCallback(() => setAboutOpen(true), []);
+  useRegisterCommands(bookmarkCmds, [bookmarkCmds]);
 
   useKeyboardNav({
     onGo: setTab,
@@ -212,12 +185,6 @@ function AppShell() {
 
   return (
     <>
-      <GlobalCommands
-        setTab={setTab}
-        openShortcuts={openShortcuts}
-        openAbout={openAbout}
-      />
-      <BookmarkCommands bookmarks={bookmarks} onOpen={openBookmark} />
       <div className="grid h-screen grid-cols-[var(--sidebar-w)_1fr] grid-rows-1 overflow-hidden">
         <Sidebar
           tab={tab}
@@ -228,7 +195,11 @@ function AppShell() {
           onShowHelp={openShortcuts}
           onShowAbout={openAbout}
           bookmarks={bookmarks}
-          counts={counts}
+          counts={{
+            today: overviewApi.data?.today ?? null,
+            blockedToday: overviewApi.data?.blocked_today ?? null,
+            projects: heatmapApi.data?.projects.length ?? null,
+          }}
           onOpenBookmark={openBookmark}
         />
         <main className="shell-main relative overflow-x-hidden overflow-y-auto">

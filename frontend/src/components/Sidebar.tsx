@@ -30,6 +30,9 @@ function formatCount(n: number | null): string {
   return String(n);
 }
 
+const navHeadingCls =
+  "px-3.5 pt-4.5 pb-2 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase";
+
 const navBadgeCls =
   "rounded-lg border border-brass-dim bg-brass/10 px-1.5 py-px font-mono text-eyebrow tracking-wider text-brass";
 
@@ -157,9 +160,7 @@ export default function Sidebar({
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-3.5">
-        <div className="px-3.5 pt-4.5 pb-2 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase">
-          Instruments
-        </div>
+        <div className={navHeadingCls}>Instruments</div>
         {TABS.filter((t) => t.id !== "devdocs").map((t) => (
           <button
             key={t.id}
@@ -186,9 +187,7 @@ export default function Sidebar({
 
         {bookmarks.bookmarks.length > 0 && (
           <>
-            <div className="px-3.5 pt-4.5 pb-2 font-mono text-eyebrow tracking-[0.2em] text-ink-mute uppercase">
-              Bookmarks
-            </div>
+            <div className={navHeadingCls}>Bookmarks</div>
             <div className="-mx-3.5 flex max-h-50 flex-col gap-px overflow-y-auto px-3.5">
               {bookmarks.bookmarks.map((b) => (
                 <div key={b.id} className="flex items-center gap-1">

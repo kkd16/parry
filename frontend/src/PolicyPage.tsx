@@ -11,7 +11,9 @@ import {
   ErrorBox,
   FieldLabel,
   FieldValue,
+  EmptyState,
   inputCls,
+  Muted,
 } from "./components/ui";
 import { highlight } from "./highlight";
 import { actionClusters, chipMatches } from "./utils/policyView";
@@ -81,6 +83,28 @@ function PathList({ paths, query }: { paths: string[]; query: string }) {
   );
 }
 
+function Clause({
+  action,
+  label,
+  pre,
+  post,
+}: {
+  action: string;
+  label: string;
+  pre: string;
+  post: string;
+}) {
+  return (
+    <p className="max-w-[64ch] font-display text-base leading-relaxed text-ink-dim italic">
+      {pre}{" "}
+      <Badge action={action} className="mx-0.5 align-[1px]">
+        {label}
+      </Badge>
+      {post}
+    </p>
+  );
+}
+
 export default function PolicyPage({
   policy,
   loading,
@@ -131,9 +155,7 @@ export default function PolicyPage({
     return (
       <>
         <PageHeader eyebrow="instrument · 03" title="Charter" />
-        <div className="p-10 text-center text-ink-mute italic">
-          loading policy…
-        </div>
+        <EmptyState>loading policy…</EmptyState>
       </>
     );
   }
@@ -169,38 +191,28 @@ export default function PolicyPage({
 
       <div className="flex flex-col gap-4.5">
         <div className="flex flex-col gap-2.25 rounded-md border border-l-3 border-rule border-l-brass bg-bg-raised px-5.5 py-4.5">
-          <p className="max-w-[64ch] font-display text-base leading-relaxed text-ink-dim italic">
-            Running in{" "}
-            <Badge
-              action={policy.mode === "enforce" ? "block" : "allow"}
-              className="mx-0.5 align-[1px]"
-            >
-              {policy.mode}
-            </Badge>
-            {policy.mode === "observe"
-              ? ": every verdict is logged, none are enforced."
-              : ": verdicts are enforced."}
-          </p>
-          <p className="max-w-[64ch] font-display text-base leading-relaxed text-ink-dim italic">
-            Anything no rule claims falls to{" "}
-            <Badge
-              action={policy.default_action}
-              className="mx-0.5 align-[1px]"
-            >
-              {policy.default_action}
-            </Badge>
-            .
-          </p>
-          <p className="max-w-[64ch] font-display text-base leading-relaxed text-ink-dim italic">
-            When no notifier can reach you, confirm hardens to{" "}
-            <Badge
-              action={policy.check_mode_confirm}
-              className="mx-0.5 align-[1px]"
-            >
-              {policy.check_mode_confirm}
-            </Badge>
-            .
-          </p>
+          <Clause
+            action={policy.mode === "enforce" ? "block" : "allow"}
+            label={policy.mode}
+            pre="Running in"
+            post={
+              policy.mode === "observe"
+                ? ": every verdict is logged, none are enforced."
+                : ": verdicts are enforced."
+            }
+          />
+          <Clause
+            action={policy.default_action}
+            label={policy.default_action}
+            pre="Anything no rule claims falls to"
+            post="."
+          />
+          <Clause
+            action={policy.check_mode_confirm}
+            label={policy.check_mode_confirm}
+            pre="When no notifier can reach you, confirm hardens to"
+            post="."
+          />
         </div>
 
         <Section
@@ -211,7 +223,7 @@ export default function PolicyPage({
           {protectedPaths.length ? (
             <PathList paths={protectedPaths} query={query} />
           ) : (
-            <span className="text-ink-mute italic">none</span>
+            <Muted>none</Muted>
           )}
         </Section>
 
@@ -240,24 +252,16 @@ export default function PolicyPage({
           title="File Rules"
           lead="file edits and reads outside the protected paths above"
         >
-          <div className="flex items-center gap-3 py-2">
-            <FieldLabel className="min-w-45">file_edit default</FieldLabel>
-            <FieldValue>
-              {actionBadge(
-                policy.rules["file_edit"]?.default_action ??
-                  policy.default_action,
-              )}
-            </FieldValue>
-          </div>
-          <div className="flex items-center gap-3 py-2">
-            <FieldLabel className="min-w-45">file_read default</FieldLabel>
-            <FieldValue>
-              {actionBadge(
-                policy.rules["file_read"]?.default_action ??
-                  policy.default_action,
-              )}
-            </FieldValue>
-          </div>
+          {(["file_edit", "file_read"] as const).map((tool) => (
+            <div key={tool} className="flex items-center gap-3 py-2">
+              <FieldLabel className="min-w-45">{tool} default</FieldLabel>
+              <FieldValue>
+                {actionBadge(
+                  policy.rules[tool]?.default_action ?? policy.default_action,
+                )}
+              </FieldValue>
+            </div>
+          ))}
         </Section>
 
         <Section
@@ -297,7 +301,7 @@ export default function PolicyPage({
           {parryPaths.length ? (
             <PathList paths={parryPaths} query={query} />
           ) : (
-            <span className="text-ink-mute italic">none</span>
+            <Muted>none</Muted>
           )}
         </Section>
       </div>

@@ -68,10 +68,7 @@ export function useEventsQuery(opts: {
 
   const tailNewEvents = useCallback(
     async (signal: AbortSignal) => {
-      const lastSeenId = eventsRef.current.reduce(
-        (m, e) => (e.id > m ? e.id : m),
-        0,
-      );
+      const lastSeenId = Math.max(0, ...eventsRef.current.map((e) => e.id));
       try {
         const data = await getEvents(tailQuery(lastSeenId), signal);
         if (signal.aborted) return;

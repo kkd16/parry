@@ -1,5 +1,6 @@
 import type {
   AboutInfo,
+  Action,
   EventsResponse,
   Explanation,
   HeatmapResponse,
@@ -39,26 +40,12 @@ export function getEvents(
   return request(`/api/events?${params}`, { signal });
 }
 
-export async function getOverview(
-  signal?: AbortSignal,
-): Promise<OverviewResponse> {
-  const data = await request<OverviewResponse & { error?: string }>(
-    "/api/overview",
-    { signal },
-  );
-  if (data.error) throw new Error(data.error);
-  return data;
+export function getOverview(signal?: AbortSignal): Promise<OverviewResponse> {
+  return request("/api/overview", { signal });
 }
 
-export async function getHeatmap(
-  signal?: AbortSignal,
-): Promise<HeatmapResponse> {
-  const data = await request<HeatmapResponse & { error?: string }>(
-    "/api/heatmap",
-    { signal },
-  );
-  if (data.error) throw new Error(data.error);
-  return data;
+export function getHeatmap(signal?: AbortSignal): Promise<HeatmapResponse> {
+  return request("/api/heatmap", { signal });
 }
 
 export function getPolicy(signal?: AbortSignal): Promise<Policy> {
@@ -75,7 +62,7 @@ export function getAbout(signal?: AbortSignal): Promise<AboutInfo> {
 
 export function getRuleSuggestion(
   eventId: number,
-  action: string,
+  action: Action,
   signal?: AbortSignal,
 ): Promise<RuleSuggestion> {
   const params = new URLSearchParams({ event_id: String(eventId), action });

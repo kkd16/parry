@@ -11,9 +11,11 @@ import {
   Eyebrow,
   FieldLabel,
   FieldValue,
+  Muted,
 } from "./components/ui";
 import { healthClass } from "./components/variants";
 import { getEvents, postNotifyTest } from "./api";
+import { shortJson } from "./utils/eventsExport";
 import { useApi } from "./hooks/useApi";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
 import {
@@ -135,7 +137,7 @@ function CopyBlock({ text }: { text: string }) {
 }
 
 function CopyValue({ value }: { value: string }) {
-  if (!value) return <span className="text-ink-mute italic">—</span>;
+  if (!value) return <Muted />;
   return (
     <span className="inline-flex items-center gap-2 break-all text-ink">
       <span>{value}</span>
@@ -172,16 +174,9 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
         : "unconfigured";
 
   const providerId = policy?.notifications?.provider ?? "";
-  const cfg = (policy?.notifications?.extra ?? {}) as Record<string, unknown>;
-  const ntfy = (cfg["ntfy"] ?? {}) as Record<string, unknown>;
-  const topic =
-    (typeof ntfy["topic"] === "string" ? (ntfy["topic"] as string) : "") ||
-    health?.topic ||
-    "";
-  const server =
-    (typeof ntfy["server"] === "string" ? (ntfy["server"] as string) : "") ||
-    health?.server ||
-    "";
+  const ntfy = policy?.notifications?.extra?.ntfy;
+  const topic = ntfy?.topic || health?.topic || "";
+  const server = ntfy?.server || health?.server || "";
   const timeout = policy?.notifications?.confirmation_timeout ?? "5m";
 
   const runTest = async () => {
@@ -302,7 +297,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
                     </td>
                     <td className="w-full max-w-0 truncate font-mono text-body text-ink-mute italic">
                       {(e.tool_input?.["command"] as string | undefined) ??
-                        JSON.stringify(e.tool_input).slice(0, 60)}
+                        shortJson(e.tool_input, 60)}
                     </td>
                   </tr>
                 ))}
@@ -341,7 +336,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
             </div>
 
             {p.fields.length > 0 && (
-              <table className="mt-1 w-full border-collapse font-mono text-meta [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2 [&_td]:align-top [&_td]:text-ink [&_th]:border-b [&_th]:border-rule [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-mono [&_th]:text-eyebrow [&_th]:font-semibold [&_th]:tracking-[0.14em] [&_th]:text-ink-mute [&_th]:uppercase">
+              <table className="mt-1 w-full border-collapse font-mono text-meta [&_td]:border-b [&_td]:border-rule-soft [&_td]:p-2 [&_td]:align-top [&_td]:text-ink [&_th]:border-b [&_th]:border-rule [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-left [&_th]:text-eyebrow [&_th]:font-semibold [&_th]:tracking-[0.14em] [&_th]:text-ink-mute [&_th]:uppercase">
                 <thead>
                   <tr>
                     <th>field</th>
@@ -353,9 +348,9 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
                 <tbody>
                   {p.fields.map((f) => (
                     <tr key={f.key}>
-                      <td className="font-mono text-brass">{f.key}</td>
+                      <td className="text-brass">{f.key}</td>
                       <td>{f.required ? "yes" : "no"}</td>
-                      <td className="font-mono italic">{f.default ?? "—"}</td>
+                      <td className="italic">{f.default ?? "—"}</td>
                       <td>{f.desc}</td>
                     </tr>
                   ))}

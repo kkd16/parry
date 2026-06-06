@@ -1,10 +1,12 @@
+export type Action = "allow" | "block" | "confirm";
+
 export interface Event {
   id: number;
   timestamp: string;
   tool_name: string;
   tool_input: Record<string, unknown>;
-  action: "allow" | "block" | "confirm" | "observe";
-  would_action: "allow" | "block" | "confirm" | "";
+  action: Action | "observe";
+  would_action: Action | "";
   session: string;
   mode: "observe" | "enforce";
   raw_name: string;
@@ -16,8 +18,6 @@ export interface Event {
 export interface EventsResponse {
   events: Event[];
   total: number;
-  limit: number;
-  offset: number;
 }
 
 export interface RuleEntry {
@@ -28,7 +28,7 @@ export interface RuleEntry {
 
 export interface RuleSuggestion {
   tool: string;
-  action: "allow" | "block" | "confirm";
+  action: Action;
   yaml: string;
   duplicate: boolean;
   warning?: string;
@@ -51,7 +51,7 @@ export interface RateLimit {
 export interface Notifications {
   provider: string;
   confirmation_timeout?: string;
-  extra?: Record<string, unknown>;
+  extra?: { ntfy?: { topic?: string; server?: string } };
 }
 
 export interface NotifyHealth {
@@ -63,7 +63,7 @@ export interface NotifyHealth {
 }
 
 export interface MatchedRule {
-  action: "allow" | "block" | "confirm";
+  action: Action;
   entry?: RuleEntry;
   specificity: number;
   is_default: boolean;
@@ -71,7 +71,7 @@ export interface MatchedRule {
 
 export interface CommandExplanation {
   binary: string;
-  action: "allow" | "block" | "confirm";
+  action: Action;
   matched: MatchedRule;
 }
 
@@ -81,7 +81,7 @@ export interface ProtectedHit {
 }
 
 export interface Explanation {
-  action: "allow" | "block" | "confirm";
+  action: Action;
   tool: string;
   default: string;
   unresolved: boolean;
@@ -133,14 +133,9 @@ export interface OverviewResponse {
   recent_blocks: Event[];
 }
 
-export interface HeatmapFile {
-  path: string;
-  count: number;
-}
-
 export interface HeatmapProject {
   workdir: string;
-  files: HeatmapFile[];
+  files: { path: string; count: number }[];
   total: number;
   fileCount: number;
 }
@@ -161,7 +156,6 @@ export interface AboutInfo {
 export interface NotifyTestResult {
   ok: boolean;
   error?: string;
-  sent_at?: string;
 }
 
 export interface DashboardCounts {

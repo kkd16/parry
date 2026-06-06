@@ -12,7 +12,7 @@ export type DetailBlock =
   | { kind: "para"; text: string }
   | { kind: "packages"; label?: string; paths: string[] }
   | { kind: "components"; label?: string; items: SubComponent[] }
-  | { kind: "note"; tone: "planned" | "info"; text: string };
+  | { kind: "note"; text: string };
 
 export interface DocNode {
   id: string;
@@ -127,7 +127,7 @@ export const DOC_NODES: DocNode[] = [
     order: 1,
     pkgHint: "internal/proxy",
     detail: [
-      { kind: "note", tone: "planned", text: "Phase 2 — not yet implemented." },
+      { kind: "note", text: "Phase 2 — not yet implemented." },
       {
         kind: "para",
         text: "parry wrap will sit between the agent and real MCP servers (stdio or HTTP), forwarding JSON-RPC and intercepting every tools/call with the same policy engine check mode uses today.",
@@ -165,7 +165,7 @@ export const DOC_NODES: DocNode[] = [
     order: 1,
     pkgHint: "internal/scanner",
     detail: [
-      { kind: "note", tone: "planned", text: "Phase 4 — not yet implemented." },
+      { kind: "note", text: "Phase 4 — not yet implemented." },
       {
         kind: "para",
         text: "A local DeBERTa-v3 model (~5ms per inference) will score tool inputs and MCP results for prompt injection. ML provides signals only — deterministic rules still make every enforcement decision.",

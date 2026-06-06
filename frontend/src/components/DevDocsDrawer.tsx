@@ -82,14 +82,7 @@ function Block({ block }: { block: DetailBlock }) {
       );
     case "note":
       return (
-        <div
-          className={clsx(
-            "mt-3.5 rounded border px-3 py-2.25 text-body leading-normal",
-            block.tone === "planned"
-              ? "border-dashed border-brass-dim bg-observe/14 text-observe"
-              : "border-rule bg-bg text-ink-dim",
-          )}
-        >
+        <div className="mt-3.5 rounded border border-dashed border-brass-dim bg-observe/14 px-3 py-2.25 text-body leading-normal text-observe">
           {block.text}
         </div>
       );

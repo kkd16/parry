@@ -1,10 +1,8 @@
-import type { Rule, RuleEntry } from "../types";
+import type { Action, Rule, RuleEntry } from "../types";
 
-export type ActionName = "allow" | "confirm" | "block";
+export const ACTIONS: Action[] = ["allow", "confirm", "block"];
 
-export const ACTIONS: ActionName[] = ["allow", "confirm", "block"];
-
-export const STRICTNESS: Record<ActionName, number> = {
+export const STRICTNESS: Record<Action, number> = {
   block: 3,
   confirm: 2,
   allow: 1,
@@ -17,8 +15,8 @@ export function entryLabel(entry: RuleEntry): string {
   return parts.join(" ");
 }
 
-export interface BinaryEntry {
-  action: ActionName;
+interface BinaryEntry {
+  action: Action;
   positional: string[];
   flags: string[];
   specificity: number;
@@ -38,8 +36,8 @@ function chipOrder(a: ClusterChip, b: ClusterChip): number {
   return a.binary.localeCompare(b.binary);
 }
 
-export function actionClusters(rule: Rule): Record<ActionName, ClusterChip[]> {
-  const out: Record<ActionName, ClusterChip[]> = {
+export function actionClusters(rule: Rule): Record<Action, ClusterChip[]> {
+  const out: Record<Action, ClusterChip[]> = {
     allow: [],
     confirm: [],
     block: [],
@@ -77,7 +75,7 @@ export function chipMatches(chip: ClusterChip, query: string): boolean {
 
 export interface PrecedenceRow {
   label: string;
-  action: ActionName;
+  action: Action;
   specificity: number;
   reason: string;
 }
@@ -91,8 +89,7 @@ export interface RuleExample {
 export interface BinaryExplanation {
   binary: string;
   rows: PrecedenceRow[];
-  actions: ActionName[];
-  strictest: ActionName;
+  actions: Action[];
   shellDefault: string;
   flagForms: { name: string; forms: string[] }[];
   examples: RuleExample[];
@@ -136,7 +133,7 @@ function winnerFor(e: BinaryEntry, all: BinaryEntry[]): BinaryEntry {
   return candidates[0] ?? e;
 }
 
-export function formatFlagForm(f: string): string {
+function formatFlagForm(f: string): string {
   if (f.startsWith("-")) return f;
   return f.length === 1 ? `-${f}` : `--${f}`;
 }
@@ -240,10 +237,6 @@ export function explainBinary(
   }));
 
   const actions = ACTIONS.filter((a) => entries.some((e) => e.action === a));
-  const strictest = actions.reduce(
-    (best, a) => (STRICTNESS[a] > STRICTNESS[best] ? a : best),
-    actions[0] ?? "allow",
-  );
   const shellDefault = rule.default_action ?? globalDefault;
   const equivalents = rule.flag_equivalents?.[binary];
 
@@ -271,7 +264,6 @@ export function explainBinary(
     binary,
     rows,
     actions,
-    strictest,
     shellDefault,
     flagForms,
     examples,

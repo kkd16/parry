@@ -5,7 +5,7 @@ export function shortJson(v: unknown, n = 60): string {
   return s.length > n ? s.slice(0, n - 1) + "…" : s;
 }
 
-export function csvEscape(v: string): string {
+function csvEscape(v: string): string {
   if (/[",\n]/.test(v)) return `"${v.replace(/"/g, '""')}"`;
   return v;
 }

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import clsx from "clsx";
-import type { Event } from "../types";
+import type { Action, Event } from "../types";
 import { getRuleSuggestion } from "../api";
 import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
@@ -11,7 +11,7 @@ import Drawer, {
   drawerLabelCls,
   yamlBlockCls,
 } from "./Drawer";
-import { Btn, btnCls, inputCls } from "./ui";
+import { Btn, btnCls, inputCls, Muted } from "./ui";
 import { useRegisterCommands, type Command } from "../commands";
 import { formatAbsolute } from "../utils/relativeTime";
 
@@ -57,24 +57,16 @@ function highlightJson(value: unknown): string {
 function CopyField({ label, value }: { label: string; value: string }) {
   return (
     <DrawerField label={label}>
-      {value || <span className="text-ink-mute italic">—</span>}
+      {value || <Muted />}
       {value && <CopyButton text={value} />}
     </DrawerField>
   );
 }
 
-const SUGGEST_ACTIONS = ["allow", "confirm", "block"] as const;
-type SuggestAction = (typeof SUGGEST_ACTIONS)[number];
+const SUGGEST_ACTIONS: Action[] = ["allow", "confirm", "block"];
 
-function initialSuggestAction(event: Event | null): SuggestAction {
-  if (
-    event?.action === "allow" ||
-    event?.action === "confirm" ||
-    event?.action === "block"
-  ) {
-    return event.action;
-  }
-  return "confirm";
+function initialAction(event: Event | null): Action {
+  return event && event.action !== "observe" ? event.action : "confirm";
 }
 
 function RuleSuggestionPanel({
@@ -83,8 +75,8 @@ function RuleSuggestionPanel({
   setTargetAction,
 }: {
   event: Event;
-  targetAction: SuggestAction;
-  setTargetAction: (action: SuggestAction) => void;
+  targetAction: Action;
+  setTargetAction: (action: Action) => void;
 }) {
   const api = useApi(
     useCallback(
@@ -109,7 +101,7 @@ function RuleSuggestionPanel({
         <select
           className={clsx(inputCls, "min-w-30")}
           value={targetAction}
-          onChange={(e) => setTargetAction(e.target.value as SuggestAction)}
+          onChange={(e) => setTargetAction(e.target.value as Action)}
         >
           {SUGGEST_ACTIONS.map((a) => (
             <option key={a} value={a}>
@@ -155,8 +147,8 @@ function RuleSuggestionPanel({
 }
 
 export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
-  const [targetAction, setTargetAction] = useState<SuggestAction>(() =>
-    initialSuggestAction(event),
+  const [targetAction, setTargetAction] = useState<Action>(() =>
+    initialAction(event),
   );
 
   const commands = useMemo<Command[]>(

@@ -6,7 +6,7 @@ export const inputCls =
   "rounded border border-rule bg-bg px-2.5 py-1.5 font-mono text-body text-ink outline-none transition-[border-color,box-shadow] duration-150 placeholder:italic placeholder:text-ink-mute focus:border-brass focus:ring-2 focus:ring-brass/15";
 
 export const btnCls =
-  "inline-flex items-center gap-1.5 rounded border border-rule bg-bg px-3 py-1.5 font-mono text-meta tracking-widest text-ink uppercase transition-all duration-150 hover:border-brass hover:text-brass-bright [&_svg]:h-3.25 [&_svg]:w-3.25";
+  "inline-flex items-center gap-1.5 rounded border border-rule bg-bg px-3 py-1.5 font-mono text-meta tracking-widest text-ink uppercase transition-colors duration-150 hover:border-brass hover:text-brass-bright [&_svg]:h-3.25 [&_svg]:w-3.25";
 
 export const chipBtnCls =
   "inline-flex items-center gap-1 rounded border border-rule px-2 py-0.5 font-mono text-micro tracking-widest text-ink-mute uppercase hover:border-brass hover:text-brass";
@@ -96,6 +96,27 @@ export function HealthDot({
         healthDotVariants[key],
         className,
       )}
+    />
+  );
+}
+
+export function Muted({
+  className,
+  children = "—",
+  ...rest
+}: ComponentProps<"span">) {
+  return (
+    <span className={clsx("text-ink-mute italic", className)} {...rest}>
+      {children}
+    </span>
+  );
+}
+
+export function EmptyState({ className, ...rest }: ComponentProps<"div">) {
+  return (
+    <div
+      className={clsx("p-10 text-center text-ink-mute italic", className)}
+      {...rest}
     />
   );
 }

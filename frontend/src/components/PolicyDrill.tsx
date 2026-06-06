@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import type { CommandExplanation, RuleEntry } from "../types";
+import type { CommandExplanation } from "../types";
 import { postPolicyEvaluate } from "../api";
 import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
+import { entryLabel } from "../utils/policyView";
 import { inputCls } from "./ui";
 
 type DrillTool = "shell" | "file_read" | "file_edit";
@@ -18,12 +19,6 @@ const PLACEHOLDER: Record<DrillTool, string> = {
 
 const calloutBlockCls =
   "rounded-r border-l-2 border-block bg-block/12 px-3 py-2 text-body leading-normal text-ink [&_code]:font-mono [&_code]:text-body [&_code]:text-brass-bright";
-
-function entryLabel(e: RuleEntry): string {
-  const parts = [e.binary, ...(e.positional ?? [])];
-  if (e.flags?.length) parts.push(`[${e.flags.join(" ")}]`);
-  return parts.join(" ");
-}
 
 function Stage({
   stage,
@@ -53,7 +48,7 @@ function Stage({
         </span>
       ) : (
         <button
-          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-0.75 font-mono text-tiny text-ink-dim transition-all duration-150 hover:border-brass-dim hover:text-brass"
+          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-0.75 font-mono text-tiny text-ink-dim transition-colors duration-150 hover:border-brass-dim hover:text-brass"
           title="open this rule"
           onClick={() => onOpenBinary(stage.binary)}
         >
@@ -93,7 +88,7 @@ export default function PolicyDrill({
             <button
               key={id}
               className={clsx(
-                "cursor-pointer bg-bg px-3 py-1.75 font-mono text-meta tracking-wider text-ink-dim transition-all duration-150 not-first:border-l not-first:border-rule hover:text-ink",
+                "cursor-pointer bg-bg px-3 py-1.75 font-mono text-meta tracking-wider text-ink-dim transition-colors duration-150 not-first:border-l not-first:border-rule hover:text-ink",
                 tool === id && "bg-bg-active text-brass",
               )}
               onClick={() => setTool(id)}

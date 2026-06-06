@@ -2,8 +2,6 @@
 
 @theme static {
   --color-*: initial;
-  --color-white: #ffffff;
-  --color-black: #000000;
   --color-bg: #0a0b10;
   --color-bg-raised: #11131c;
   --color-bg-hover: #181b27;

@@ -8,9 +8,9 @@ import {
   type ReactNode,
 } from "react";
 import clsx from "clsx";
-import { CheckCircle2, AlertTriangle, Info, X } from "lucide-react";
+import { CheckCircle2, AlertTriangle, X } from "lucide-react";
 
-type ToastKind = "success" | "error" | "info";
+type ToastKind = "success" | "error";
 
 interface Toast {
   id: number;
@@ -20,23 +20,9 @@ interface Toast {
 }
 
 interface Ctx {
-  show: (kind: ToastKind, title: string, detail?: string) => void;
   success: (title: string, detail?: string) => void;
   error: (title: string, detail?: string) => void;
-  info: (title: string, detail?: string) => void;
 }
-
-const barByKind: Record<ToastKind, string> = {
-  success: "border-l-allow",
-  error: "border-l-block",
-  info: "border-l-confirm",
-};
-
-const iconByKind: Record<ToastKind, string> = {
-  success: "text-allow",
-  error: "text-block",
-  info: "text-confirm",
-};
 
 const ToastsContext = createContext<Ctx | null>(null);
 
@@ -58,10 +44,8 @@ export function ToastsProvider({ children }: { children: ReactNode }) {
 
   const ctx = useMemo<Ctx>(
     () => ({
-      show,
       success: (t, d) => show("success", t, d),
       error: (t, d) => show("error", t, d),
-      info: (t, d) => show("info", t, d),
     }),
     [show],
   );
@@ -76,7 +60,7 @@ export function ToastsProvider({ children }: { children: ReactNode }) {
               key={t.id}
               className={clsx(
                 "pointer-events-auto flex max-w-100 min-w-70 items-start gap-3 rounded border border-l-3 border-rule bg-bg-raised px-3.5 py-3 font-mono text-meta shadow-float",
-                barByKind[t.kind],
+                t.kind === "success" ? "border-l-allow" : "border-l-block",
               )}
               initial={{ opacity: 0, x: 40, scale: 0.96 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -84,10 +68,17 @@ export function ToastsProvider({ children }: { children: ReactNode }) {
               transition={{ type: "spring", damping: 26, stiffness: 360 }}
               layout
             >
-              <span className={clsx("mt-px shrink-0", iconByKind[t.kind])}>
-                {t.kind === "success" && <CheckCircle2 size={16} />}
-                {t.kind === "error" && <AlertTriangle size={16} />}
-                {t.kind === "info" && <Info size={16} />}
+              <span
+                className={clsx(
+                  "mt-px shrink-0",
+                  t.kind === "success" ? "text-allow" : "text-block",
+                )}
+              >
+                {t.kind === "success" ? (
+                  <CheckCircle2 size={16} />
+                ) : (
+                  <AlertTriangle size={16} />
+                )}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="font-medium text-ink">{t.title}</div>

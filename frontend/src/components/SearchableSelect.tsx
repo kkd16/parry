@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
-import { inputCls } from "./ui";
+import { inputCls, Muted } from "./ui";
+import { useClickOutside } from "../hooks/useClickOutside";
 
 interface Props {
   label: string;
@@ -25,15 +26,9 @@ export default function SearchableSelect({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    setTimeout(() => inputRef.current?.focus(), 0);
-    const click = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node))
-        setOpen(false);
-    };
-    document.addEventListener("mousedown", click);
-    return () => document.removeEventListener("mousedown", click);
+    if (open) setTimeout(() => inputRef.current?.focus(), 0);
   }, [open]);
+  useClickOutside(wrapRef, open, () => setOpen(false));
 
   const openMenu = () => {
     setQuery("");
@@ -85,7 +80,7 @@ export default function SearchableSelect({
                 setOpen(false);
               }}
             >
-              <span className="text-ink-mute italic">all</span>
+              <Muted>all</Muted>
             </button>
             {filtered.length === 0 ? (
               <div className="p-3.5 text-center font-display text-sm text-ink-mute italic">

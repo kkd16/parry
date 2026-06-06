@@ -75,10 +75,10 @@ function buildSystems(projects: HeatmapProject[]): System[] {
         count: f.count,
       };
     });
-    const orbitRadii: number[] = [];
-    for (let k = 0; k <= 4; k++) {
-      orbitRadii.push(INNER_ORBIT + (k / 4) * ORBIT_SPAN);
-    }
+    const orbitRadii = Array.from(
+      { length: 5 },
+      (_, k) => INNER_ORBIT + (k / 4) * ORBIT_SPAN,
+    );
     return {
       cx,
       cy,
@@ -202,16 +202,23 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     [animateView],
   );
 
+  const fitView = useCallback(
+    (vw: number, vh: number): View => {
+      const scale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
+      return {
+        tx: (vw - worldBounds.w * scale) / 2,
+        ty: (vh - worldBounds.h * scale) / 2,
+        scale,
+      };
+    },
+    [worldBounds.w, worldBounds.h],
+  );
+
   const resetView = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
-    const vw = el.clientWidth;
-    const vh = el.clientHeight;
-    const scale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
-    const tx = (vw - worldBounds.w * scale) / 2;
-    const ty = (vh - worldBounds.h * scale) / 2;
-    flyTo({ tx, ty, scale });
-  }, [worldBounds.w, worldBounds.h, flyTo]);
+    flyTo(fitView(el.clientWidth, el.clientHeight));
+  }, [fitView, flyTo]);
 
   const flyToSystem = useCallback(
     (sys: System) => {
@@ -307,15 +314,9 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
       ty: vh / 2 - first.cy * startScale,
       scale: startScale,
     };
-    const endScale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
-    const end = {
-      tx: (vw - worldBounds.w * endScale) / 2,
-      ty: (vh - worldBounds.h * endScale) / 2,
-      scale: endScale,
-    };
     setView(start);
-    animateView(start, end, 1100);
-  }, [systems, worldBounds.w, worldBounds.h, animateView]);
+    animateView(start, fitView(vw, vh), 1100);
+  }, [systems, fitView, animateView]);
 
   const onMouseDown = (e: React.MouseEvent) => {
     dragState.current = {

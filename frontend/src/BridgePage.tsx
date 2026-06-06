@@ -5,23 +5,25 @@ import {
   useNowTick,
 } from "./utils/relativeTime";
 import { basename } from "./utils/format";
+import { shortJson } from "./utils/eventsExport";
 import { ACTION_COLORS, actionBadge } from "./policyBadges";
 import {
   Card,
+  EmptyState,
   ErrorBox,
   Eyebrow,
   FieldLabel,
   FieldValue,
   HealthDot,
 } from "./components/ui";
-import type { ActionCount, DayBucket, Event, OverviewResponse } from "./types";
+import type { ActionCount, DayBucket, OverviewResponse } from "./types";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
 
 interface Props {
   policyOverview: PolicyOverviewState;
   overview: OverviewResponse | null;
   error: string | null;
-  onEventClick: (e: Event) => void;
+  onEventClick: () => void;
   onFilterBinary: (b: string) => void;
 }
 
@@ -60,14 +62,13 @@ function Donut({ data }: { data: ActionCount[] }) {
   const total = data.reduce((s, d) => s + d.count, 0) || 1;
   const r = 44;
   const c = 2 * Math.PI * r;
-  const segments = data.reduce<
-    { action: string; dash: number; offset: number }[]
-  >((acc, d) => {
+  const segments: { action: string; dash: number; offset: number }[] = [];
+  let offset = 0;
+  for (const d of data) {
     const dash = (d.count / total) * c;
-    const offset = acc.reduce((s, x) => s + x.dash, 0);
-    acc.push({ action: d.action, dash, offset });
-    return acc;
-  }, []);
+    segments.push({ action: d.action, dash, offset });
+    offset += dash;
+  }
   return (
     <div className="flex items-center gap-4">
       <svg width={120} height={120} viewBox="0 0 120 120">
@@ -160,9 +161,7 @@ export default function BridgePage({
 
       {error && <ErrorBox>{error}</ErrorBox>}
       {!data ? (
-        <div className="p-10 text-center text-ink-mute italic">
-          assembling the watch report…
-        </div>
+        <EmptyState>assembling the watch report…</EmptyState>
       ) : (
         <div className="grid grid-cols-3 gap-4">
           <Card className="col-span-2 flex flex-col">
@@ -278,7 +277,7 @@ export default function BridgePage({
                     <tr
                       key={e.id}
                       className="cursor-pointer border-b border-rule-soft hover:bg-bg-hover"
-                      onClick={() => onEventClick(e)}
+                      onClick={onEventClick}
                     >
                       <td
                         className="font-mono text-body whitespace-nowrap"
@@ -291,7 +290,7 @@ export default function BridgePage({
                         {e.binary || e.tool_name}
                       </td>
                       <td className="w-full max-w-0 truncate font-mono text-body text-ink-mute italic">
-                        {JSON.stringify(e.tool_input).slice(0, 80)}
+                        {shortJson(e.tool_input, 80)}
                       </td>
                     </tr>
                   ))}
