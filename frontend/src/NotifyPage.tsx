@@ -3,6 +3,7 @@ import { Bell, Copy, Send } from "lucide-react";
 import CopyButton from "./components/CopyButton";
 import PageHeader from "./components/PageHeader";
 import { useToast } from "./components/Toasts";
+import { healthClass } from "./policyBadges";
 import { getEvents, postNotifyTest } from "./api";
 import { useApi } from "./hooks/useApi";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
@@ -118,8 +119,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
   const recent = recentApi.data?.events ?? [];
 
   const status = health?.status ?? "unconfigured";
-  const orbClass =
-    status === "ok" ? "ok" : status === "error" ? "err" : "none";
+  const orbClass = healthClass(status);
   const statusText =
     status === "ok" ? "connected" : status === "error" ? "unreachable" : "unconfigured";
 
@@ -183,25 +183,25 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
       </div>
 
       <div className="notify-grid">
-        <div className="notify-card">
-          <div className="notify-card-eyebrow">active configuration</div>
+        <div className="card">
+          <div className="card-eyebrow">active configuration</div>
           <div className="notify-config-rows">
-            <div className="notify-config-row">
-              <span className="notify-config-label">provider</span>
-              <span className="notify-config-value">{providerId || "—"}</span>
+            <div className="field-row notify-config-row">
+              <span className="field-label notify-config-label">provider</span>
+              <span className="field-value notify-config-value">{providerId || "—"}</span>
             </div>
-            <div className="notify-config-row">
-              <span className="notify-config-label">timeout</span>
-              <span className="notify-config-value">{timeout}</span>
+            <div className="field-row notify-config-row">
+              <span className="field-label notify-config-label">timeout</span>
+              <span className="field-value notify-config-value">{timeout}</span>
             </div>
             {providerId === "ntfy" && (
               <>
-                <div className="notify-config-row">
-                  <span className="notify-config-label">topic</span>
+                <div className="field-row notify-config-row">
+                  <span className="field-label notify-config-label">topic</span>
                   <CopyValue value={topic} />
                 </div>
-                <div className="notify-config-row">
-                  <span className="notify-config-label">server</span>
+                <div className="field-row notify-config-row">
+                  <span className="field-label notify-config-label">server</span>
                   <CopyValue value={server || "https://ntfy.sh"} />
                 </div>
               </>
@@ -212,8 +212,8 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
           </div>
         </div>
 
-        <div className="notify-card">
-          <div className="notify-card-eyebrow">recent confirmations</div>
+        <div className="card">
+          <div className="card-eyebrow">recent confirmations</div>
           {recent.length === 0 ? (
             <div className="muted notify-empty">no confirmation events yet.</div>
           ) : (
@@ -237,12 +237,12 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
         </div>
       </div>
 
-      <div className="notify-catalog-eyebrow">provider catalog</div>
+      <div className="card-eyebrow notify-catalog-eyebrow">provider catalog</div>
       <div className="notify-catalog">
         {PROVIDERS.map((p) => (
           <div
             key={p.id}
-            className={`notify-provider${providerId === p.id ? " active" : ""}`}
+            className={`card notify-provider${providerId === p.id ? " active" : ""}`}
           >
             <div className="notify-provider-head">
               <h3 className="notify-provider-name">{p.name}</h3>

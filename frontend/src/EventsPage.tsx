@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Event } from "./types";
-import type { QuickFilter } from "./commands";
 import EventDrawer from "./components/EventDrawer";
 import EventsTimeline from "./components/EventsTimeline";
 import FilterChips from "./components/FilterChips";
@@ -11,7 +10,13 @@ import type { ColumnSizing, ColumnVisibility } from "./components/events/columns
 import { useToast } from "./components/Toasts";
 import { useBookmarks } from "./hooks/useBookmarks";
 import { useEventsCommands } from "./hooks/useEventsCommands";
-import { PAGE_SIZE, timeFilterCutoff, useEventsFilters } from "./hooks/useEventsFilters";
+import {
+  FILTER_KEYS,
+  PAGE_SIZE,
+  timeFilterCutoff,
+  useEventsFilters,
+  type FilterKey,
+} from "./hooks/useEventsFilters";
 import { useEventsQuery } from "./hooks/useEventsQuery";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { downloadCsv, downloadJson } from "./utils/eventsExport";
@@ -21,18 +26,22 @@ import "./EventsPage.css";
 interface Props {
   onCountChange: (n: number) => void;
   onLiveChange: (live: boolean) => void;
-  pendingFilter: QuickFilter | null;
-  consumePendingFilter: () => void;
-  registerSearchFocus: (fn: () => void) => void;
 }
 
-export default function EventsPage({
-  onCountChange,
-  onLiveChange,
-  pendingFilter,
-  consumePendingFilter,
-  registerSearchFocus,
-}: Props) {
+const CHIP_LABELS: Record<FilterKey, string> = {
+  action: "action",
+  tool: "tool",
+  workdir: "dir",
+  binary: "bin",
+  session: "session",
+  time: "time",
+};
+
+function focusSearchInput() {
+  document.querySelector<HTMLInputElement>(".search-input")?.focus();
+}
+
+export default function EventsPage({ onCountChange, onLiveChange }: Props) {
   const toast = useToast();
   const bookmarks = useBookmarks();
   const nowTick = useNowTick(30_000);
@@ -51,9 +60,8 @@ export default function EventsPage({
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [colMenuOpen, setColMenuOpen] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const filters = useEventsFilters(pendingFilter, consumePendingFilter);
+  const filters = useEventsFilters();
   const { events, total, loading, error, refresh, freshIds } = useEventsQuery({
     eventsQuery: filters.eventsQuery,
     tailQuery: filters.tailQuery,
@@ -62,17 +70,14 @@ export default function EventsPage({
     onLiveChange,
   });
 
-  useEffect(() => {
-    registerSearchFocus(() => searchInputRef.current?.focus());
-  }, [registerSearchFocus]);
-
+  const { workdir, time } = filters.values;
   const filteredEvents = useMemo(() => {
     let out = events;
-    if (filters.workdir) out = out.filter((e) => e.workdir === filters.workdir);
-    const cutoff = timeFilterCutoff(filters.time);
+    if (workdir) out = out.filter((e) => e.workdir === workdir);
+    const cutoff = timeFilterCutoff(time);
     if (cutoff != null) out = out.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
     return out;
-  }, [events, filters.workdir, filters.time]);
+  }, [events, workdir, time]);
 
   const workdirs = useMemo(
     () => Array.from(new Set(events.map((e) => e.workdir).filter(Boolean))).sort(),
@@ -99,7 +104,6 @@ export default function EventsPage({
 
   const toggleLive = useCallback(() => setAutoRefresh((v) => !v), []);
   const toggleColumns = useCallback(() => setColMenuOpen((v) => !v), []);
-  const focusSearch = useCallback(() => searchInputRef.current?.focus(), []);
 
   useEventsCommands({
     autoRefresh,
@@ -108,7 +112,7 @@ export default function EventsPage({
     onExportCsv: exportCsv,
     onExportJson: exportJson,
     onToggleColumns: toggleColumns,
-    onFocusSearch: focusSearch,
+    onFocusSearch: focusSearchInput,
     onClearFilters: filters.clearAll,
     setDensity,
   });
@@ -118,12 +122,11 @@ export default function EventsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const chips = [
-    { label: "action", value: filters.action, onClear: () => filters.setAction("") },
-    { label: "tool", value: filters.tool, onClear: () => filters.setTool("") },
-    { label: "dir", value: filters.workdir, onClear: () => filters.setWorkdir("") },
-    { label: "bin", value: filters.binary, onClear: () => filters.setBinary("") },
-    { label: "session", value: filters.session.slice(0, 8), onClear: () => filters.setSession("") },
-    { label: "time", value: filters.time, onClear: () => filters.setTime("") },
+    ...FILTER_KEYS.map((k) => ({
+      label: CHIP_LABELS[k],
+      value: k === "session" ? filters.values[k].slice(0, 8) : filters.values[k],
+      onClear: () => filters.set(k, ""),
+    })),
     { label: "search", value: filters.search, onClear: filters.clearSearch },
   ].filter((c) => c.value);
 
@@ -145,7 +148,6 @@ export default function EventsPage({
         binaries={binaries}
         autoRefresh={autoRefresh}
         onToggleLive={toggleLive}
-        searchInputRef={searchInputRef}
         onExportCsv={exportCsv}
         onExportJson={exportJson}
         onSaveBookmark={saveBookmark}
@@ -171,8 +173,8 @@ export default function EventsPage({
         setColumnSizing={setColumnSizing}
         columnVisibility={columnVisibility}
         onRowClick={setSelected}
-        onFilterBinary={filters.setBinary}
-        onFilterWorkdir={filters.setWorkdir}
+        onFilterBinary={(b) => filters.set("binary", b)}
+        onFilterWorkdir={(w) => filters.set("workdir", w)}
       />
 
       <div className="pagination">
@@ -207,11 +209,7 @@ export default function EventsPage({
         key={selected?.id ?? "empty"}
         event={selected}
         onClose={() => setSelected(null)}
-        onApplyFilter={(key, value) => {
-          if (key === "binary") filters.setBinary(value);
-          else if (key === "workdir") filters.setWorkdir(value);
-          else if (key === "session") filters.setSession(value);
-        }}
+        onApplyFilter={filters.set}
       />
     </>
   );

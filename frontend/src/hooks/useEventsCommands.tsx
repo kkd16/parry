@@ -80,24 +80,12 @@ export function useEventsCommands({
         icon: <Eraser />,
         perform: onClearFilters,
       },
-      {
-        id: "events.density.compact",
+      ...(["compact", "normal", "comfortable"] as const).map((d) => ({
+        id: `events.density.${d}`,
         group: "Logbook",
-        label: "Density: compact",
-        perform: () => setDensity("compact"),
-      },
-      {
-        id: "events.density.normal",
-        group: "Logbook",
-        label: "Density: normal",
-        perform: () => setDensity("normal"),
-      },
-      {
-        id: "events.density.comfortable",
-        group: "Logbook",
-        label: "Density: comfortable",
-        perform: () => setDensity("comfortable"),
-      },
+        label: `Density: ${d}`,
+        perform: () => setDensity(d),
+      })),
     ],
     [
       autoRefresh,

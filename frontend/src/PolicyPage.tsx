@@ -8,7 +8,7 @@ import { actionBadge, modeBadge } from "./policyBadges";
 import { highlight } from "./highlight";
 import { actionClusters, chipMatches } from "./utils/policyView";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
-import { useUrlParam, usePath } from "./hooks/useUrlState";
+import { openUrl, useUrlParam } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
 import "./PolicyPage.css";
 
@@ -42,14 +42,8 @@ function Section({ title, count, lead, defaultOpen = true, children }: SectionPr
 export default function PolicyPage({ policy, loading, error }: PolicyOverviewState) {
   const [query, setQuery] = useUrlParam("q", "");
   const [openBinary, setOpenBinary] = useState<string | null>(null);
-  const [, setPath] = usePath();
 
-  const goBinary = (b: string) => {
-    const params = new URLSearchParams();
-    params.set("binary", b);
-    window.history.replaceState(null, "", "?" + params.toString());
-    setPath("/logbook");
-  };
+  const goBinary = (b: string) => openUrl("/logbook?binary=" + encodeURIComponent(b));
 
   const charterCommands = useMemo<Command[]>(
     () => [
@@ -165,15 +159,15 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
         </Section>
 
         <Section title="File Rules" lead="file edits and reads outside the protected paths above">
-          <div className="policy-field">
-            <span className="policy-label">file_edit default</span>
-            <span className="policy-value">
+          <div className="field-row policy-field">
+            <span className="field-label policy-label">file_edit default</span>
+            <span className="field-value">
               {actionBadge(policy.rules["file_edit"]?.default_action ?? policy.default_action)}
             </span>
           </div>
-          <div className="policy-field">
-            <span className="policy-label">file_read default</span>
-            <span className="policy-value">
+          <div className="field-row policy-field">
+            <span className="field-label policy-label">file_read default</span>
+            <span className="field-value">
               {actionBadge(policy.rules["file_read"]?.default_action ?? policy.default_action)}
             </span>
           </div>
@@ -185,18 +179,18 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
         >
           {policy.rate_limit ? (
             <>
-              <div className="policy-field">
-                <span className="policy-label">Window</span>
-                <span className="policy-value">{policy.rate_limit.window}</span>
+              <div className="field-row policy-field">
+                <span className="field-label policy-label">Window</span>
+                <span className="field-value">{policy.rate_limit.window}</span>
               </div>
-              <div className="policy-field">
-                <span className="policy-label">Max</span>
-                <span className="policy-value">{policy.rate_limit.max}</span>
+              <div className="field-row policy-field">
+                <span className="field-label policy-label">Max</span>
+                <span className="field-value">{policy.rate_limit.max}</span>
               </div>
               {policy.rate_limit.on_exceed && (
-                <div className="policy-field">
-                  <span className="policy-label">On Exceed</span>
-                  <span className="policy-value">{actionBadge(policy.rate_limit.on_exceed)}</span>
+                <div className="field-row policy-field">
+                  <span className="field-label policy-label">On Exceed</span>
+                  <span className="field-value">{actionBadge(policy.rate_limit.on_exceed)}</span>
                 </div>
               )}
             </>

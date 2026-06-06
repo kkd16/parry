@@ -1,15 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Bell,
-  BookOpen,
-  Bookmark,
-  Filter,
-  Gauge,
-  Orbit,
-  ScrollText,
-  Search,
-  Workflow,
-} from "lucide-react";
+import { Bell, Bookmark, Filter, Search } from "lucide-react";
 import Sidebar from "./components/Sidebar";
 import CommandPalette from "./components/CommandPalette";
 import ShortcutsHelp from "./components/ShortcutsHelp";
@@ -20,14 +10,11 @@ import { useApi } from "./hooks/useApi";
 import { getHeatmap, getOverview, postNotifyTest } from "./api";
 import type { DashboardCounts } from "./types";
 import { useKeyboardNav } from "./hooks/useKeyboardNav";
-import { usePath, useUrlParam } from "./hooks/useUrlState";
+import { openUrl, setUrlParams, usePath } from "./hooks/useUrlState";
+import { TIME_OPTIONS } from "./hooks/useEventsFilters";
 import { useBookmarks, type BookmarksApi } from "./hooks/useBookmarks";
-import {
-  CommandsProvider,
-  useRegisterCommands,
-  type Command,
-  type QuickFilter,
-} from "./commands";
+import { TABS, type Tab } from "./tabs";
+import { CommandsProvider, useRegisterCommands, type Command } from "./commands";
 import "./Shell.css";
 
 const BridgePage = lazy(() => import("./BridgePage"));
@@ -37,72 +24,49 @@ const SolarSystemPage = lazy(() => import("./SolarSystemPage"));
 const PolicyPage = lazy(() => import("./PolicyPage"));
 const NotifyPage = lazy(() => import("./NotifyPage"));
 
-export type Tab = "bridge" | "logbook" | "orrery" | "charter" | "beacon" | "devdocs";
+const ACTION_FILTERS = [
+  { value: "block", label: "Show blocked events", keywords: ["block", "denied"] },
+  { value: "confirm", label: "Show confirm events", keywords: ["confirm"] },
+  { value: "allow", label: "Show allowed events", keywords: ["allow"] },
+  { value: "observe", label: "Show observed events", keywords: ["observe"] },
+];
+
+const TOOL_FILTERS = [
+  { value: "shell", label: "Shell calls only" },
+  { value: "file_edit", label: "File edits only" },
+  { value: "file_read", label: "File reads only" },
+];
+
+function focusSearchInput() {
+  document.querySelector<HTMLInputElement>(".search-input")?.focus();
+}
 
 interface ShellState {
   setTab: (t: Tab) => void;
-  setPendingFilter: (f: QuickFilter) => void;
   openShortcuts: () => void;
   openAbout: () => void;
 }
 
-function GlobalCommands({ setTab, setPendingFilter, openShortcuts, openAbout }: ShellState) {
+function GlobalCommands({ setTab, openShortcuts, openAbout }: ShellState) {
+  const filterTo = useCallback(
+    (key: string, value: string) => {
+      setUrlParams({ [key]: value, offset: "" });
+      setTab("logbook");
+    },
+    [setTab],
+  );
+
   const cmds = useMemo<Command[]>(
     () => [
-      {
-        id: "nav.bridge",
+      ...TABS.map((t) => ({
+        id: `nav.${t.id}`,
         group: "Navigate",
-        label: "Go to Bridge",
-        hint: "g h",
-        icon: <Gauge />,
-        keywords: ["overview", "home", "dashboard"],
-        perform: () => setTab("bridge"),
-      },
-      {
-        id: "nav.logbook",
-        group: "Navigate",
-        label: "Go to Logbook",
-        hint: "g l",
-        icon: <ScrollText />,
-        keywords: ["logbook", "log"],
-        perform: () => setTab("logbook"),
-      },
-      {
-        id: "nav.orrery",
-        group: "Navigate",
-        label: "Go to Orrery",
-        hint: "g o",
-        icon: <Orbit />,
-        keywords: ["orrery", "system", "files", "heatmap"],
-        perform: () => setTab("orrery"),
-      },
-      {
-        id: "nav.charter",
-        group: "Navigate",
-        label: "Go to Charter",
-        hint: "g c",
-        icon: <BookOpen />,
-        keywords: ["charter", "rules"],
-        perform: () => setTab("charter"),
-      },
-      {
-        id: "nav.beacon",
-        group: "Navigate",
-        label: "Go to Beacon",
-        hint: "g b",
-        icon: <Bell />,
-        keywords: ["beacon", "notification", "alert", "ntfy", "provider", "beacon"],
-        perform: () => setTab("beacon"),
-      },
-      {
-        id: "nav.devdocs",
-        group: "Navigate",
-        label: "Go to Dev Docs",
-        hint: "g d",
-        icon: <Workflow />,
-        keywords: ["docs", "architecture", "diagram", "dev", "flow"],
-        perform: () => setTab("devdocs"),
-      },
+        label: `Go to ${t.label}`,
+        hint: `g ${t.key}`,
+        icon: <t.icon />,
+        keywords: t.keywords,
+        perform: () => setTab(t.id),
+      })),
       {
         id: "notify.test",
         group: "Beacon",
@@ -127,149 +91,30 @@ function GlobalCommands({ setTab, setPendingFilter, openShortcuts, openAbout }: 
         label: "About Parry",
         perform: openAbout,
       },
-      {
-        id: "filter.blocked",
+      ...ACTION_FILTERS.map((f) => ({
+        id: `filter.${f.value}`,
         group: "Filter events",
-        label: "Show blocked events",
+        label: f.label,
         icon: <Filter />,
-        keywords: ["block", "denied"],
-        perform: () => {
-          setPendingFilter({ kind: "action", value: "block" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "filter.confirm",
+        keywords: f.keywords,
+        perform: () => filterTo("action", f.value),
+      })),
+      ...TOOL_FILTERS.map((f) => ({
+        id: `filter.${f.value}`,
         group: "Filter events",
-        label: "Show confirm events",
+        label: f.label,
         icon: <Filter />,
-        perform: () => {
-          setPendingFilter({ kind: "action", value: "confirm" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "filter.allow",
-        group: "Filter events",
-        label: "Show allowed events",
-        icon: <Filter />,
-        perform: () => {
-          setPendingFilter({ kind: "action", value: "allow" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "filter.observe",
-        group: "Filter events",
-        label: "Show observed events",
-        icon: <Filter />,
-        perform: () => {
-          setPendingFilter({ kind: "action", value: "observe" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "filter.shell",
-        group: "Filter events",
-        label: "Shell calls only",
-        icon: <Filter />,
-        perform: () => {
-          setPendingFilter({ kind: "tool", value: "shell" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "filter.file_edit",
-        group: "Filter events",
-        label: "File edits only",
-        icon: <Filter />,
-        perform: () => {
-          setPendingFilter({ kind: "tool", value: "file_edit" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "filter.file_read",
-        group: "Filter events",
-        label: "File reads only",
-        icon: <Filter />,
-        perform: () => {
-          setPendingFilter({ kind: "tool", value: "file_read" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "time.5m",
+        perform: () => filterTo("tool", f.value),
+      })),
+      ...TIME_OPTIONS.map((o) => ({
+        id: `time.${o.value}`,
         group: "Time range",
-        label: "Last 5 minutes",
+        label: o.label,
         icon: <Search />,
-        perform: () => {
-          setPendingFilter({ kind: "time", value: "5m" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "time.15m",
-        group: "Time range",
-        label: "Last 15 minutes",
-        icon: <Search />,
-        perform: () => {
-          setPendingFilter({ kind: "time", value: "15m" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "time.1h",
-        group: "Time range",
-        label: "Last hour",
-        icon: <Search />,
-        perform: () => {
-          setPendingFilter({ kind: "time", value: "1h" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "time.6h",
-        group: "Time range",
-        label: "Last 6 hours",
-        icon: <Search />,
-        perform: () => {
-          setPendingFilter({ kind: "time", value: "6h" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "time.24h",
-        group: "Time range",
-        label: "Last 24 hours",
-        icon: <Search />,
-        perform: () => {
-          setPendingFilter({ kind: "time", value: "24h" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "time.7d",
-        group: "Time range",
-        label: "Last 7 days",
-        icon: <Search />,
-        perform: () => {
-          setPendingFilter({ kind: "time", value: "7d" });
-          setTab("logbook");
-        },
-      },
-      {
-        id: "time.30d",
-        group: "Time range",
-        label: "Last 30 days",
-        icon: <Search />,
-        perform: () => {
-          setPendingFilter({ kind: "time", value: "30d" });
-          setTab("logbook");
-        },
-      },
+        perform: () => filterTo("time", o.value),
+      })),
     ],
-    [setTab, setPendingFilter, openShortcuts, openAbout],
+    [setTab, filterTo, openShortcuts, openAbout],
   );
   useRegisterCommands(cmds, [cmds]);
   return null;
@@ -313,22 +158,15 @@ function AppShell() {
     }),
     [overviewApi.data, heatmapApi.data],
   );
-  const openBookmark = useCallback(
-    (qs: string) => {
-      window.history.pushState(null, "", "/logbook" + (qs ? "?" + qs : ""));
-      window.dispatchEvent(new Event("parry:urlchange"));
-    },
-    [],
-  );
+  const openBookmark = useCallback((qs: string) => {
+    openUrl("/logbook" + (qs ? "?" + qs : ""));
+  }, []);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
-  const [pendingFilter, setPendingFilter] = useState<QuickFilter | null>(null);
   const [eventCount, setEventCount] = useState(0);
   const [live, setLive] = useState(false);
   const policyOverview = usePolicyOverview();
-  const searchFocusRef = useRef<() => void>(() => {});
-  const [, setBinaryParam] = useUrlParam("binary", "");
 
   const refetchOverview = overviewApi.refetch;
   const refetchHeatmap = heatmapApi.refetch;
@@ -342,23 +180,16 @@ function AppShell() {
     else if (tab === "orrery") refetchHeatmap();
   }, [tab, refetchOverview, refetchHeatmap]);
 
-  const focusSearch = useCallback(() => searchFocusRef.current?.(), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
   const closeShortcuts = useCallback(() => setShortcutsOpen(false), []);
   const openShortcuts = useCallback(() => setShortcutsOpen(true), []);
   const closeAbout = useCallback(() => setAboutOpen(false), []);
   const openAbout = useCallback(() => setAboutOpen(true), []);
-  const queueFilter = useCallback((f: QuickFilter) => setPendingFilter(f), []);
 
   useKeyboardNav({
-    onGoHelm: () => setTab("bridge"),
-    onGoLogbook: () => setTab("logbook"),
-    onGoOrrery: () => setTab("orrery"),
-    onGoCharter: () => setTab("charter"),
-    onGoBeacon: () => setTab("beacon"),
-    onGoDevDocs: () => setTab("devdocs"),
+    onGo: setTab,
     onOpenPalette: () => setPaletteOpen((v) => !v),
-    onFocusSearch: focusSearch,
+    onFocusSearch: focusSearchInput,
     onShowHelp: openShortcuts,
     onEscape: () => {
       closePalette();
@@ -369,12 +200,7 @@ function AppShell() {
 
   return (
     <>
-      <GlobalCommands
-        setTab={setTab}
-        setPendingFilter={queueFilter}
-        openShortcuts={openShortcuts}
-        openAbout={openAbout}
-      />
+      <GlobalCommands setTab={setTab} openShortcuts={openShortcuts} openAbout={openAbout} />
       <BookmarkCommands bookmarks={bookmarks} onOpen={openBookmark} />
       <div className="shell">
         <Sidebar
@@ -399,21 +225,13 @@ function AppShell() {
                   error={overviewApi.error}
                   onEventClick={() => setTab("logbook")}
                   onFilterBinary={(b) => {
-                    setBinaryParam(b);
+                    setUrlParams({ binary: b, offset: "" });
                     setTab("logbook");
                   }}
                 />
               )}
               {tab === "logbook" && (
-                <EventsPage
-                  onCountChange={setEventCount}
-                  onLiveChange={setLive}
-                  pendingFilter={pendingFilter}
-                  consumePendingFilter={() => setPendingFilter(null)}
-                  registerSearchFocus={(fn) => {
-                    searchFocusRef.current = fn;
-                  }}
-                />
+                <EventsPage onCountChange={setEventCount} onLiveChange={setLive} />
               )}
               {tab === "orrery" && (
                 <SolarSystemPage heatmap={heatmapApi.data} error={heatmapApi.error} />

@@ -9,11 +9,6 @@ import {
   type ReactNode,
 } from "react";
 
-export type QuickFilter =
-  | { kind: "action"; value: "allow" | "block" | "observe" | "confirm" }
-  | { kind: "tool"; value: "shell" | "file_edit" | "file_read" }
-  | { kind: "time"; value: "5m" | "15m" | "1h" | "6h" | "24h" | "7d" | "30d" };
-
 export interface Command {
   id: string;
   group: string;

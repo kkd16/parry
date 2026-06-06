@@ -1,6 +1,7 @@
 import PageHeader from "./components/PageHeader";
 import { formatAbsolute, formatRelative, useNowTick } from "./utils/relativeTime";
-import { actionBadge } from "./policyBadges";
+import { basename } from "./utils/format";
+import { ACTION_COLORS, actionBadge, healthClass } from "./policyBadges";
 import type { ActionCount, DayBucket, Event, OverviewResponse } from "./types";
 import type { PolicyOverviewState } from "./hooks/usePolicyOverview";
 import "./BridgePage.css";
@@ -11,18 +12,6 @@ interface Props {
   error: string | null;
   onEventClick: (e: Event) => void;
   onFilterBinary: (b: string) => void;
-}
-
-const ACTION_COLORS: Record<string, string> = {
-  allow: "var(--allow)",
-  block: "var(--block)",
-  observe: "var(--observe)",
-  confirm: "var(--confirm)",
-};
-
-function basename(p: string): string {
-  const idx = p.lastIndexOf("/");
-  return idx >= 0 ? p.slice(idx + 1) : p;
 }
 
 function Sparkline({ data }: { data: DayBucket[] }) {
@@ -157,8 +146,8 @@ export default function BridgePage({
         </div>
       ) : (
         <div className="bridge-grid">
-          <div className="bridge-card bridge-card-wide">
-            <div className="bridge-card-eyebrow">activity</div>
+          <div className="card bridge-card bridge-card-wide">
+            <div className="card-eyebrow">activity</div>
             <div className="bridge-card-row">
               <div>
                 <div className="bridge-big-num">{data.today.toLocaleString()}</div>
@@ -172,46 +161,38 @@ export default function BridgePage({
             </div>
           </div>
 
-          <div className="bridge-card">
-            <div className="bridge-card-eyebrow">action distribution</div>
+          <div className="card bridge-card">
+            <div className="card-eyebrow">action distribution</div>
             <Donut data={data.by_action} />
           </div>
 
-          <div className="bridge-card">
-            <div className="bridge-card-eyebrow">policy heartbeat</div>
+          <div className="card bridge-card">
+            <div className="card-eyebrow">policy heartbeat</div>
             <div className="bridge-heart">
-              <div className="bridge-heart-row">
-                <span className="bridge-heart-label">mode</span>
-                <span className="bridge-heart-value">{policy?.mode ?? "—"}</span>
+              <div className="field-row bridge-heart-row">
+                <span className="field-label">mode</span>
+                <span className="field-value">{policy?.mode ?? "—"}</span>
               </div>
-              <div className="bridge-heart-row">
-                <span className="bridge-heart-label">version</span>
-                <span className="bridge-heart-value">{policy?.version ?? "—"}</span>
+              <div className="field-row bridge-heart-row">
+                <span className="field-label">version</span>
+                <span className="field-value">{policy?.version ?? "—"}</span>
               </div>
-              <div className="bridge-heart-row">
-                <span className="bridge-heart-label">default</span>
-                <span className="bridge-heart-value">{policy?.default_action ?? "—"}</span>
+              <div className="field-row bridge-heart-row">
+                <span className="field-label">default</span>
+                <span className="field-value">{policy?.default_action ?? "—"}</span>
               </div>
-              <div className="bridge-heart-row">
-                <span className="bridge-heart-label">notify</span>
-                <span className="bridge-heart-value">
-                  <span
-                    className={`health-dot ${
-                      health?.status === "ok"
-                        ? "ok"
-                        : health?.status === "error"
-                          ? "err"
-                          : "none"
-                    }`}
-                  />
+              <div className="field-row bridge-heart-row">
+                <span className="field-label">notify</span>
+                <span className="field-value">
+                  <span className={`health-dot ${healthClass(health?.status)}`} />
                   {policy?.notifications?.provider ?? "none"}
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="bridge-card">
-            <div className="bridge-card-eyebrow">top binaries</div>
+          <div className="card bridge-card">
+            <div className="card-eyebrow">top binaries</div>
             {data.top_binaries.length === 0 ? (
               <div className="muted">no binary calls recorded yet</div>
             ) : (
@@ -235,8 +216,8 @@ export default function BridgePage({
             )}
           </div>
 
-          <div className="bridge-card">
-            <div className="bridge-card-eyebrow">most active project</div>
+          <div className="card bridge-card">
+            <div className="card-eyebrow">most active project</div>
             {data.top_project ? (
               <>
                 <div className="bridge-project-name">{basename(data.top_project.workdir)}</div>
@@ -250,8 +231,8 @@ export default function BridgePage({
             )}
           </div>
 
-          <div className="bridge-card bridge-card-full">
-            <div className="bridge-card-eyebrow">recent blocks</div>
+          <div className="card bridge-card bridge-card-full">
+            <div className="card-eyebrow">recent blocks</div>
             {data.recent_blocks.length === 0 ? (
               <div className="muted" style={{ padding: 12 }}>
                 no blocks recorded — clean watch

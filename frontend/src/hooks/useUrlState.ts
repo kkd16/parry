@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { TABS } from "../tabs";
 
 const URL_EVENT = "parry:urlchange";
 const subscribers = new Set<() => void>();
@@ -27,18 +28,27 @@ function dispatch() {
   window.dispatchEvent(new Event(URL_EVENT));
 }
 
-const VALID_PATHS = new Set([
-  "/bridge",
-  "/logbook",
-  "/orrery",
-  "/charter",
-  "/beacon",
-  "/devdocs",
-]);
+const VALID_PATHS = new Set(TABS.map((t) => "/" + t.id));
 
 function normalizePath(p: string): string {
   if (VALID_PATHS.has(p)) return p;
   return "/bridge";
+}
+
+export function openUrl(url: string) {
+  window.history.pushState(null, "", url);
+  dispatch();
+}
+
+export function setUrlParams(updates: Record<string, string>) {
+  const params = new URLSearchParams(window.location.search);
+  for (const [key, value] of Object.entries(updates)) {
+    if (value) params.set(key, value);
+    else params.delete(key);
+  }
+  const qs = params.toString();
+  window.history.replaceState(null, "", window.location.pathname + (qs ? "?" + qs : ""));
+  dispatch();
 }
 
 export function usePath(): [string, (next: string) => void] {
@@ -66,33 +76,24 @@ export function useUrlParam(
       : (new URLSearchParams(window.location.search).get(key) ?? defaultValue);
   const setValue = useCallback(
     (next: string) => {
-      const params = new URLSearchParams(window.location.search);
-      if (!next || next === defaultValue) {
-        params.delete(key);
-      } else {
-        params.set(key, next);
-      }
-      const qs = params.toString();
-      const url = window.location.pathname + (qs ? "?" + qs : "");
-      window.history.replaceState(null, "", url);
-      dispatch();
+      setUrlParams({ [key]: next === defaultValue ? "" : next });
     },
     [key, defaultValue],
   );
   return [value, setValue];
 }
 
-export function useUrlNumber(
-  key: string,
-  defaultValue = 0,
-): [number, (next: number) => void] {
-  const [raw, setRaw] = useUrlParam(key, "");
-  const value = raw === "" ? defaultValue : Number(raw);
-  const setValue = useCallback(
-    (next: number) => {
-      setRaw(next === defaultValue ? "" : String(next));
-    },
-    [setRaw, defaultValue],
+export function useUrlParams<K extends string>(
+  keys: readonly K[],
+): [Record<K, string>, (updates: Partial<Record<K, string>>) => void] {
+  useUrlSubscription();
+  const params = new URLSearchParams(
+    typeof window === "undefined" ? "" : window.location.search,
   );
-  return [Number.isFinite(value) ? value : defaultValue, setValue];
+  const values = {} as Record<K, string>;
+  for (const k of keys) values[k] = params.get(k) ?? "";
+  const setValues = useCallback((updates: Partial<Record<K, string>>) => {
+    setUrlParams(updates as Record<string, string>);
+  }, []);
+  return [values, setValues];
 }

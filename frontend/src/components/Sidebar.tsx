@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef } from "react";
-import { Bell, BookOpen, Bookmark, Gauge, Orbit, ScrollText, Workflow, X } from "lucide-react";
-import type { Tab } from "../App";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { Bookmark, Workflow, X } from "lucide-react";
+import { TABS, type Tab } from "../tabs";
 import type { PolicyOverviewState } from "../hooks/usePolicyOverview";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import type { BookmarksApi } from "../hooks/useBookmarks";
 import type { DashboardCounts } from "../types";
+import { healthClass } from "../policyBadges";
 import "./Sidebar.css";
 
 interface Props {
@@ -75,8 +76,7 @@ export default function Sidebar({
 
   const { policy, health } = policyOverview;
   const notify = policy?.notifications;
-  const healthClass =
-    health?.status === "ok" ? "ok" : health?.status === "error" ? "err" : "none";
+  const healthCls = healthClass(health?.status);
 
   const ruleCount = policy
     ? Object.values(policy.rules ?? {}).reduce((sum, rule) => {
@@ -99,6 +99,17 @@ export default function Sidebar({
       </span>
     ) : null;
 
+  const tabBadge: Record<Tab, ReactNode> = {
+    bridge: renderBadge(counts.today),
+    logbook:
+      renderDangerBadge(counts.blockedToday) ??
+      renderBadge(eventCount > 0 ? eventCount : null),
+    orrery: renderBadge(counts.projects),
+    charter: renderBadge(ruleCount),
+    beacon: <span className={`sidebar-nav-dot ${healthCls}`} />,
+    devdocs: null,
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -114,52 +125,18 @@ export default function Sidebar({
 
       <nav className="sidebar-nav">
         <div className="sidebar-nav-label">Instruments</div>
-        <button
-          className={`sidebar-nav-item${tab === "bridge" ? " active" : ""}`}
-          onClick={() => setTab("bridge")}
-        >
-          <Gauge />
-          <span>Bridge</span>
-          {renderBadge(counts.today)}
-          <span className="sidebar-nav-hint">g h</span>
-        </button>
-        <button
-          className={`sidebar-nav-item${tab === "logbook" ? " active" : ""}`}
-          onClick={() => setTab("logbook")}
-        >
-          <ScrollText />
-          <span>Logbook</span>
-          {renderDangerBadge(counts.blockedToday) ??
-            renderBadge(eventCount > 0 ? eventCount : null)}
-          <span className="sidebar-nav-hint">g l</span>
-        </button>
-        <button
-          className={`sidebar-nav-item${tab === "orrery" ? " active" : ""}`}
-          onClick={() => setTab("orrery")}
-        >
-          <Orbit />
-          <span>Orrery</span>
-          {renderBadge(counts.projects)}
-          <span className="sidebar-nav-hint">g o</span>
-        </button>
-        <button
-          className={`sidebar-nav-item${tab === "charter" ? " active" : ""}`}
-          onClick={() => setTab("charter")}
-        >
-          <BookOpen />
-          <span>Charter</span>
-          {renderBadge(ruleCount)}
-          <span className="sidebar-nav-hint">g c</span>
-        </button>
-        <button
-          className={`sidebar-nav-item${tab === "beacon" ? " active" : ""}`}
-          onClick={() => setTab("beacon")}
-        >
-          <Bell />
-          <span>Beacon</span>
-          <span className={`sidebar-nav-dot ${healthClass}`} />
-          <span className="sidebar-nav-hint">g b</span>
-        </button>
+        {TABS.filter((t) => t.id !== "devdocs").map((t) => (
+          <button
+            key={t.id}
+            className={`sidebar-nav-item${tab === t.id ? " active" : ""}`}
+            onClick={() => setTab(t.id)}
+          >
+            <t.icon />
+            <span>{t.label}</span>
+            {tabBadge[t.id]}
+            <span className="sidebar-nav-hint">g {t.key}</span>
+          </button>
+        ))}
 
         {bookmarks.bookmarks.length > 0 && (
           <>
@@ -195,26 +172,26 @@ export default function Sidebar({
 
       <div className="sidebar-footer">
         <div className="sidebar-footer-row">
-          <span className="sidebar-footer-label">mode</span>
+          <span className="field-label">mode</span>
           <span className="sidebar-footer-value">{policy?.mode ?? "—"}</span>
         </div>
         <div className="sidebar-footer-row">
-          <span className="sidebar-footer-label">ver</span>
+          <span className="field-label">ver</span>
           <span className="sidebar-footer-value">{policy?.version ?? "—"}</span>
         </div>
         <div className="sidebar-footer-row">
-          <span className="sidebar-footer-label">default</span>
+          <span className="field-label">default</span>
           <span className="sidebar-footer-value">{policy?.default_action ?? "—"}</span>
         </div>
         <div className="sidebar-footer-row">
-          <span className="sidebar-footer-label">notify</span>
+          <span className="field-label">notify</span>
           <span className="sidebar-footer-value" title={health?.error ?? ""}>
-            <span className={`health-dot ${healthClass}`} />
+            <span className={`health-dot ${healthCls}`} />
             {notify?.provider ?? "none"}
           </span>
         </div>
         <div className="sidebar-footer-row">
-          <span className="sidebar-footer-label">live</span>
+          <span className="field-label">live</span>
           <span className="sidebar-footer-value">
             <span className={`health-dot ${live ? "ok" : "none"}`} />
             {live ? "on" : "off"}

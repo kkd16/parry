@@ -42,16 +42,6 @@
   letter-spacing: -0.01em;
 }
 
-.sidebar-brand-sub {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: var(--brass);
-  margin-top: 8px;
-  display: block;
-}
-
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -231,14 +221,6 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 0.72rem;
-}
-
-.sidebar-footer-label {
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.6rem;
-  color: var(--ink-mute);
 }
 
 .sidebar-footer-value {

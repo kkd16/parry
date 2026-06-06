@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  type Dispatch,
-  type RefObject,
-  type SetStateAction,
-} from "react";
+import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { Columns3, Download, FileJson, RefreshCw, Star } from "lucide-react";
 import SearchableSelect from "../SearchableSelect";
 import { TIME_OPTIONS, type EventsFiltersApi } from "../../hooks/useEventsFilters";
@@ -17,7 +11,6 @@ interface Props {
   binaries: string[];
   autoRefresh: boolean;
   onToggleLive: () => void;
-  searchInputRef: RefObject<HTMLInputElement | null>;
   onExportCsv: () => void;
   onExportJson: () => void;
   onSaveBookmark: () => void;
@@ -35,7 +28,6 @@ export default function EventsToolbar({
   binaries,
   autoRefresh,
   onToggleLive,
-  searchInputRef,
   onExportCsv,
   onExportJson,
   onSaveBookmark,
@@ -61,7 +53,6 @@ export default function EventsToolbar({
     <>
       <div className="toolbar">
         <input
-          ref={searchInputRef}
           className="input search-input"
           type="text"
           placeholder="search entries… (press / to focus)"
@@ -70,8 +61,8 @@ export default function EventsToolbar({
         />
         <select
           className="input"
-          value={filters.action}
-          onChange={(e) => filters.setAction(e.target.value)}
+          value={filters.values.action}
+          onChange={(e) => filters.set("action", e.target.value)}
         >
           <option value="">action: all</option>
           <option value="allow">allow</option>
@@ -81,8 +72,8 @@ export default function EventsToolbar({
         </select>
         <select
           className="input"
-          value={filters.tool}
-          onChange={(e) => filters.setTool(e.target.value)}
+          value={filters.values.tool}
+          onChange={(e) => filters.set("tool", e.target.value)}
         >
           <option value="">tool: all</option>
           <option value="shell">shell</option>
@@ -92,20 +83,20 @@ export default function EventsToolbar({
         </select>
         <SearchableSelect
           label="dir"
-          value={filters.workdir}
+          value={filters.values.workdir}
           options={workdirs}
-          onChange={filters.setWorkdir}
+          onChange={(v) => filters.set("workdir", v)}
         />
         <SearchableSelect
           label="bin"
-          value={filters.binary}
+          value={filters.values.binary}
           options={binaries}
-          onChange={filters.setBinary}
+          onChange={(v) => filters.set("binary", v)}
         />
         <select
           className="input"
-          value={filters.time}
-          onChange={(e) => filters.setTime(e.target.value)}
+          value={filters.values.time}
+          onChange={(e) => filters.set("time", e.target.value)}
         >
           <option value="">time: all</option>
           {TIME_OPTIONS.map((o) => (
@@ -120,7 +111,7 @@ export default function EventsToolbar({
         <button
           className={`btn${autoRefresh ? " active" : ""}`}
           onClick={onToggleLive}
-          title="auto-refresh every 5s"
+          title="auto-refresh every 3s"
         >
           <RefreshCw style={{ animation: autoRefresh ? "spin 2s linear infinite" : "" }} />
           live

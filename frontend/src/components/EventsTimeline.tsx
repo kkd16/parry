@@ -1,17 +1,11 @@
 import { useMemo, useState } from "react";
 import type { Event } from "../types";
+import { ACTION_COLORS } from "../policyBadges";
 import "./EventsTimeline.css";
 
 interface Props {
   events: Event[];
 }
-
-const ACTION_COLORS: Record<string, string> = {
-  allow: "var(--allow)",
-  block: "var(--block)",
-  observe: "var(--observe)",
-  confirm: "var(--confirm)",
-};
 
 const BUCKETS = 60;
 
@@ -25,7 +19,6 @@ interface Bucket {
 interface Hover {
   idx: number;
   x: number;
-  y: number;
 }
 
 function formatTimeRange(a: number, b: number): string {
@@ -96,13 +89,11 @@ export default function EventsTimeline({ events }: Props) {
                 key={i}
                 onMouseEnter={(e) => {
                   const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
-                  const cx = e.clientX - rect.left;
-                  setHover({ idx: i, x: cx, y: 0 });
+                  setHover({ idx: i, x: e.clientX - rect.left });
                 }}
                 onMouseMove={(e) => {
                   const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
-                  const cx = e.clientX - rect.left;
-                  setHover({ idx: i, x: cx, y: 0 });
+                  setHover({ idx: i, x: e.clientX - rect.left });
                 }}
               >
                 {/* invisible hit-target spans full height */}

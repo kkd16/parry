@@ -122,23 +122,6 @@
   margin-bottom: 32px;
 }
 
-.notify-card {
-  background: var(--bg-raised);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: 20px 22px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
-}
-
-.notify-card-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: var(--brass);
-  margin-bottom: 14px;
-}
-
 .notify-config-rows {
   display: flex;
   flex-direction: column;
@@ -148,9 +131,6 @@
 }
 
 .notify-config-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
   padding-bottom: 8px;
   border-bottom: 1px dashed var(--rule-soft);
 }
@@ -160,15 +140,10 @@
 }
 
 .notify-config-label {
-  text-transform: uppercase;
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  color: var(--ink-mute);
   min-width: 90px;
 }
 
 .notify-config-value {
-  color: var(--ink);
   word-break: break-all;
 }
 
@@ -233,12 +208,6 @@
 }
 
 .notify-catalog-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  color: var(--brass);
-  margin-bottom: 14px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -259,10 +228,7 @@
 }
 
 .notify-provider {
-  background: var(--bg-raised);
-  border: 1px solid var(--rule);
   border-left: 3px solid var(--rule);
-  border-radius: 6px;
   padding: 22px 24px;
   display: flex;
   flex-direction: column;

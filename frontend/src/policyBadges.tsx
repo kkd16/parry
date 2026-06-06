@@ -1,5 +1,16 @@
 import type { ReactNode } from "react";
 
+export const ACTION_COLORS: Record<string, string> = {
+  allow: "var(--allow)",
+  block: "var(--block)",
+  observe: "var(--observe)",
+  confirm: "var(--confirm)",
+};
+
+export function healthClass(status: string | undefined): string {
+  return status === "ok" ? "ok" : status === "error" ? "err" : "none";
+}
+
 export function actionBadge(action: string): ReactNode {
   let cls = "badge";
   switch (action) {

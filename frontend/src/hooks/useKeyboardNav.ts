@@ -1,14 +1,10 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
+import { TABS, type Tab } from "../tabs";
 
 type Handler = () => void;
 
 interface Handlers {
-  onGoHelm?: Handler;
-  onGoLogbook?: Handler;
-  onGoOrrery?: Handler;
-  onGoCharter?: Handler;
-  onGoBeacon?: Handler;
-  onGoDevDocs?: Handler;
+  onGo?: (tab: Tab) => void;
   onOpenPalette?: Handler;
   onFocusSearch?: Handler;
   onShowHelp?: Handler;
@@ -68,12 +64,8 @@ export function useKeyboardNav(handlers: Handlers) {
       }
 
       if (leader) {
-        if (e.key === "h") ref.current.onGoHelm?.();
-        else if (e.key === "l") ref.current.onGoLogbook?.();
-        else if (e.key === "o") ref.current.onGoOrrery?.();
-        else if (e.key === "c") ref.current.onGoCharter?.();
-        else if (e.key === "b") ref.current.onGoBeacon?.();
-        else if (e.key === "d") ref.current.onGoDevDocs?.();
+        const tab = TABS.find((t) => t.key === e.key);
+        if (tab) ref.current.onGo?.(tab.id);
         resetLeader();
         return;
       }

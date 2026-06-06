@@ -1,4 +1,5 @@
 import Dialog from "./Dialog";
+import { TABS } from "../tabs";
 import "./ShortcutsHelp.css";
 
 interface Props {
@@ -14,14 +15,7 @@ interface ShortcutGroup {
 const GROUPS: ShortcutGroup[] = [
   {
     title: "Navigation",
-    items: [
-      { keys: ["g", "h"], label: "Go to Bridge" },
-      { keys: ["g", "l"], label: "Go to Logbook" },
-      { keys: ["g", "o"], label: "Go to Orrery" },
-      { keys: ["g", "c"], label: "Go to Charter" },
-      { keys: ["g", "b"], label: "Go to Beacon" },
-      { keys: ["g", "d"], label: "Go to Dev Docs" },
-    ],
+    items: TABS.map((t) => ({ keys: ["g", t.key], label: `Go to ${t.label}` })),
   },
   {
     title: "Search & Command",

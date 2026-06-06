@@ -29,29 +29,29 @@ function AboutContent() {
         </h2>
       </div>
       <div className="shortcuts-body about-body">
-        <div className="about-row">
-          <span className="about-row-label">go</span>
+        <div className="field-row about-row">
+          <span className="field-label">go</span>
           <span className="about-row-value mono">{info?.go_version || "—"}</span>
         </div>
-        <div className="about-row">
-          <span className="about-row-label">commit</span>
+        <div className="field-row about-row">
+          <span className="field-label">commit</span>
           <span className="about-row-value mono">
             {info?.commit || <span className="muted">unknown</span>}
             {info?.commit && <CopyBtn value={info.commit} />}
           </span>
         </div>
-        <div className="about-row">
-          <span className="about-row-label">built</span>
+        <div className="field-row about-row">
+          <span className="field-label">built</span>
           <span className="about-row-value mono">
             {info?.built || <span className="muted">unknown</span>}
           </span>
         </div>
-        <div className="about-row">
-          <span className="about-row-label">platform</span>
+        <div className="field-row about-row">
+          <span className="field-label">platform</span>
           <span className="about-row-value mono">{info?.platform || "—"}</span>
         </div>
-        <div className="about-row">
-          <span className="about-row-label">data dir</span>
+        <div className="field-row about-row">
+          <span className="field-label">data dir</span>
           <span className="about-row-value mono">
             {info?.data_dir || <span className="muted">—</span>}
             {info?.data_dir && <CopyBtn value={info.data_dir} />}

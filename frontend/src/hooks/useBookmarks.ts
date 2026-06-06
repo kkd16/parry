@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { useLocalStorage } from "./useLocalStorage";
+import { basename } from "../utils/format";
 
 export interface Bookmark {
   id: string;
@@ -29,10 +30,7 @@ function autoName(qs: string): string {
   if (action) parts.push(action);
   if (tool) parts.push(tool);
   if (binary) parts.push(`bin:${binary}`);
-  if (workdir) {
-    const tail = workdir.split("/").filter(Boolean).pop() ?? workdir;
-    parts.push(`dir:${tail}`);
-  }
+  if (workdir) parts.push(`dir:${basename(workdir) || workdir}`);
   if (time) parts.push(time);
   if (q) parts.push(`"${q}"`);
   if (parts.length === 0) return "filtered";

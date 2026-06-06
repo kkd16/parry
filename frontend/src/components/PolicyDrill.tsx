@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import type { CommandExplanation, Explanation, RuleEntry } from "../types";
-import { isAbortError, postPolicyEvaluate } from "../api";
+import { useMemo, useState } from "react";
+import type { CommandExplanation, RuleEntry } from "../types";
+import { postPolicyEvaluate } from "../api";
+import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
 
 type DrillTool = "shell" | "file_read" | "file_edit";
@@ -53,39 +54,18 @@ function Stage({
 export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string) => void }) {
   const [tool, setTool] = useState<DrillTool>("shell");
   const [text, setText] = useState("");
-  const [result, setResult] = useState<Explanation | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const trimmed = text.trim();
 
-  const onText = (v: string) => {
-    setText(v);
-    if (!v.trim()) {
-      setResult(null);
-      setError(null);
-    }
-  };
-
-  useEffect(() => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => {
+  const api = useApi(
+    useMemo(() => {
+      if (!trimmed) return null;
       const input = tool === "shell" ? { command: trimmed } : { path: trimmed };
-      postPolicyEvaluate({ tool, tool_input: input }, ctrl.signal)
-        .then((data) => {
-          setResult(data);
-          setError(null);
-        })
-        .catch((e: unknown) => {
-          if (isAbortError(e)) return;
-          setError(e instanceof Error ? e.message : String(e));
-          setResult(null);
-        });
-    }, 280);
-    return () => {
-      clearTimeout(timer);
-      ctrl.abort();
-    };
-  }, [text, tool]);
+      return (signal: AbortSignal) => postPolicyEvaluate({ tool, tool_input: input }, signal);
+    }, [trimmed, tool]),
+    280,
+  );
+  const error = trimmed ? api.error : null;
+  const result = trimmed && !api.loading && !api.error ? api.data : null;
 
   return (
     <div className="policy-drill">
@@ -105,7 +85,7 @@ export default function PolicyDrill({ onOpenBinary }: { onOpenBinary: (b: string
           className="input mono policy-drill-input"
           placeholder={PLACEHOLDER[tool]}
           value={text}
-          onChange={(e) => onText(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
           spellCheck={false}
         />
       </div>

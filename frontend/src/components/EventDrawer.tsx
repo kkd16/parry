@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Event, RuleSuggestion } from "../types";
-import { getRuleSuggestion, isAbortError } from "../api";
+import { useCallback, useMemo, useState } from "react";
+import type { Event } from "../types";
+import { getRuleSuggestion } from "../api";
+import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
 import CopyButton from "./CopyButton";
 import Drawer from "./Drawer";
@@ -47,7 +48,8 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-type SuggestAction = "allow" | "confirm" | "block";
+const SUGGEST_ACTIONS = ["allow", "confirm", "block"] as const;
+type SuggestAction = (typeof SUGGEST_ACTIONS)[number];
 
 function initialSuggestAction(event: Event | null): SuggestAction {
   if (event?.action === "allow" || event?.action === "confirm" || event?.action === "block") {
@@ -65,22 +67,13 @@ function RuleSuggestionPanel({
   targetAction: SuggestAction;
   setTargetAction: (action: SuggestAction) => void;
 }) {
-  const [suggestion, setSuggestion] = useState<RuleSuggestion | null>(null);
-  const [error, setError] = useState<{ action: SuggestAction; message: string } | null>(null);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    getRuleSuggestion(event.id, targetAction, ctrl.signal)
-      .then((data) => {
-        setSuggestion(data);
-        setError(null);
-      })
-      .catch((e: unknown) => {
-        if (isAbortError(e)) return;
-        setError({ action: targetAction, message: e instanceof Error ? e.message : "unknown error" });
-      });
-    return () => ctrl.abort();
-  }, [event.id, targetAction]);
+  const api = useApi(
+    useCallback(
+      (signal: AbortSignal) => getRuleSuggestion(event.id, targetAction, signal),
+      [event.id, targetAction],
+    ),
+  );
+  const suggestion = api.loading ? null : api.data;
 
   return (
     <section className="rule-suggestion">
@@ -94,17 +87,17 @@ function RuleSuggestionPanel({
           value={targetAction}
           onChange={(e) => setTargetAction(e.target.value as SuggestAction)}
         >
-          <option value="allow">allow</option>
-          <option value="confirm">confirm</option>
-          <option value="block">block</option>
+          {SUGGEST_ACTIONS.map((a) => (
+            <option key={a} value={a}>
+              {a}
+            </option>
+          ))}
         </select>
       </div>
 
-      {(!suggestion || suggestion.action !== targetAction) && error?.action !== targetAction && (
-        <div className="rule-suggestion-status">building suggestion…</div>
-      )}
-      {error?.action === targetAction && <div className="rule-suggestion-error">{error.message}</div>}
-      {suggestion && suggestion.action === targetAction && (
+      {api.loading && <div className="rule-suggestion-status">building suggestion…</div>}
+      {api.error && <div className="rule-suggestion-error">{api.error}</div>}
+      {suggestion && (
         <>
           <div className="rule-suggestion-meta">
             <span>{suggestion.tool}</span>
@@ -131,36 +124,22 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
   const commands = useMemo<Command[]>(
     () =>
       event
-        ? [
-            {
-              id: "event.suggest.allow",
-              group: "Event",
-              label: "Suggest allow rule",
-              perform: () => {
-                setTargetAction("allow");
-              },
-            },
-            {
-              id: "event.suggest.confirm",
-              group: "Event",
-              label: "Suggest confirm rule",
-              perform: () => {
-                setTargetAction("confirm");
-              },
-            },
-            {
-              id: "event.suggest.block",
-              group: "Event",
-              label: "Suggest block rule",
-              perform: () => {
-                setTargetAction("block");
-              },
-            },
-          ]
+        ? SUGGEST_ACTIONS.map((a) => ({
+            id: `event.suggest.${a}`,
+            group: "Event",
+            label: `Suggest ${a} rule`,
+            perform: () => setTargetAction(a),
+          }))
         : [],
     [event],
   );
   useRegisterCommands(commands, [commands]);
+
+  const filterButtons = [
+    { key: "binary", label: `events for ${event?.binary}` },
+    { key: "workdir", label: "events in this directory" },
+    { key: "session", label: "this session's events" },
+  ] as const;
 
   return (
     <Drawer
@@ -198,39 +177,22 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
           <CopyField label="workdir" value={event.workdir} />
           <CopyField label="session" value={event.session} />
           <div className="drawer-actions">
-            {onApplyFilter && event.binary && (
-              <button
-                className="btn"
-                onClick={() => {
-                  onApplyFilter("binary", event.binary);
-                  onClose();
-                }}
-              >
-                events for {event.binary}
-              </button>
-            )}
-            {onApplyFilter && event.workdir && (
-              <button
-                className="btn"
-                onClick={() => {
-                  onApplyFilter("workdir", event.workdir);
-                  onClose();
-                }}
-              >
-                events in this directory
-              </button>
-            )}
-            {onApplyFilter && event.session && (
-              <button
-                className="btn"
-                onClick={() => {
-                  onApplyFilter("session", event.session);
-                  onClose();
-                }}
-              >
-                this session's events
-              </button>
-            )}
+            {onApplyFilter &&
+              filterButtons.map(
+                (b) =>
+                  event[b.key] && (
+                    <button
+                      key={b.key}
+                      className="btn"
+                      onClick={() => {
+                        onApplyFilter(b.key, event[b.key]);
+                        onClose();
+                      }}
+                    >
+                      {b.label}
+                    </button>
+                  ),
+              )}
           </div>
           <RuleSuggestionPanel
             event={event}

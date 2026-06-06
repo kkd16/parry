@@ -3,6 +3,7 @@ import { Maximize2, Minus, Orbit, Plus, RotateCcw } from "lucide-react";
 import PageHeader from "./components/PageHeader";
 import { useUrlParam } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
+import { basename } from "./utils/format";
 import type { HeatmapProject, HeatmapResponse } from "./types";
 import "./SolarSystemPage.css";
 
@@ -30,17 +31,18 @@ interface System {
   topFile: string;
 }
 
+interface View {
+  tx: number;
+  ty: number;
+  scale: number;
+}
+
 const COLS = 2;
 const SYSTEM_W = 900;
 const SYSTEM_H = 780;
 const INNER_ORBIT = 90;
 const ORBIT_SPAN = 220;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
-
-function basename(p: string): string {
-  const idx = p.lastIndexOf("/");
-  return idx >= 0 ? p.slice(idx + 1) : p;
-}
 
 function buildSystems(projects: HeatmapProject[]): System[] {
   return projects.map((p, idx) => {
@@ -108,12 +110,17 @@ interface Props {
 }
 
 export default function SolarSystemPage({ heatmap, error }: Props) {
-  const [view, setView] = useState({ tx: 0, ty: 0, scale: 1 });
+  const [view, setView] = useState<View>({ tx: 0, ty: 0, scale: 1 });
   const [hover, setHover] = useState<Hover | null>(null);
   const [filterProject, setFilterProject] = useUrlParam("project", "");
   const containerRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
-  const flyRaf = useRef<number | null>(null);
+  const viewRef = useRef(view);
+  const animRaf = useRef<number | null>(null);
+
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
 
   useEffect(() => {
     const main = document.querySelector(".shell-main") as HTMLElement | null;
@@ -123,6 +130,12 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     return () => {
       if (main) main.style.overflow = prev;
       document.body.classList.remove("solar-mode");
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (animRaf.current != null) cancelAnimationFrame(animRaf.current);
     };
   }, []);
 
@@ -144,24 +157,26 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     [worldBounds.w, worldBounds.h],
   );
 
-  const flyTo = useCallback((targetTx: number, targetTy: number, targetScale: number) => {
-    if (flyRaf.current != null) cancelAnimationFrame(flyRaf.current);
-    const startView = { ...view };
+  const animateView = useCallback((from: View, to: View, duration: number) => {
+    if (animRaf.current != null) cancelAnimationFrame(animRaf.current);
     const start = performance.now();
-    const duration = 700;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
       const ease = 1 - Math.pow(1 - t, 3);
       setView({
-        tx: startView.tx + (targetTx - startView.tx) * ease,
-        ty: startView.ty + (targetTy - startView.ty) * ease,
-        scale: startView.scale + (targetScale - startView.scale) * ease,
+        tx: from.tx + (to.tx - from.tx) * ease,
+        ty: from.ty + (to.ty - from.ty) * ease,
+        scale: from.scale + (to.scale - from.scale) * ease,
       });
-      if (t < 1) flyRaf.current = requestAnimationFrame(tick);
+      if (t < 1) animRaf.current = requestAnimationFrame(tick);
     };
-    flyRaf.current = requestAnimationFrame(tick);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    animRaf.current = requestAnimationFrame(tick);
   }, []);
+
+  const flyTo = useCallback(
+    (to: View) => animateView(viewRef.current, to, 700),
+    [animateView],
+  );
 
   const resetView = useCallback(() => {
     const el = containerRef.current;
@@ -171,19 +186,42 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     const scale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
     const tx = (vw - worldBounds.w * scale) / 2;
     const ty = (vh - worldBounds.h * scale) / 2;
-    flyTo(tx, ty, scale);
+    flyTo({ tx, ty, scale });
   }, [worldBounds.w, worldBounds.h, flyTo]);
 
   const flyToSystem = useCallback(
     (sys: System) => {
       const el = containerRef.current;
       if (!el) return;
-      const vw = el.clientWidth;
-      const vh = el.clientHeight;
       const scale = 1.4;
-      flyTo(vw / 2 - sys.cx * scale, vh / 2 - sys.cy * scale, scale);
+      flyTo({
+        tx: el.clientWidth / 2 - sys.cx * scale,
+        ty: el.clientHeight / 2 - sys.cy * scale,
+        scale,
+      });
     },
     [flyTo],
+  );
+
+  const zoomAt = useCallback((mx: number, my: number, factor: number) => {
+    setView((v) => {
+      const next = Math.min(8, Math.max(0.1, v.scale * factor));
+      const ratio = next / v.scale;
+      return {
+        scale: next,
+        tx: mx - (mx - v.tx) * ratio,
+        ty: my - (my - v.ty) * ratio,
+      };
+    });
+  }, []);
+
+  const zoomCentered = useCallback(
+    (factor: number) => {
+      const el = containerRef.current;
+      if (!el) return;
+      zoomAt(el.clientWidth / 2, el.clientHeight / 2, factor);
+    },
+    [zoomAt],
   );
 
   const orreryCommands = useMemo<Command[]>(
@@ -193,36 +231,14 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
         group: "Orrery",
         label: "Zoom in",
         icon: <Plus />,
-        perform: () => {
-          const el = containerRef.current;
-          if (el) {
-            setView((v) => {
-              const next = Math.min(8, v.scale * 1.4);
-              const ratio = next / v.scale;
-              const cx = el.clientWidth / 2;
-              const cy = el.clientHeight / 2;
-              return { scale: next, tx: cx - (cx - v.tx) * ratio, ty: cy - (cy - v.ty) * ratio };
-            });
-          }
-        },
+        perform: () => zoomCentered(1.4),
       },
       {
         id: "orrery.zoom-out",
         group: "Orrery",
         label: "Zoom out",
         icon: <Minus />,
-        perform: () => {
-          const el = containerRef.current;
-          if (el) {
-            setView((v) => {
-              const next = Math.max(0.1, v.scale / 1.4);
-              const ratio = next / v.scale;
-              const cx = el.clientWidth / 2;
-              const cy = el.clientHeight / 2;
-              return { scale: next, tx: cx - (cx - v.tx) * ratio, ty: cy - (cy - v.ty) * ratio };
-            });
-          }
-        },
+        perform: () => zoomCentered(1 / 1.4),
       },
       {
         id: "orrery.reset",
@@ -250,7 +266,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
         },
       })),
     ],
-    [allSystems, flyToSystem, resetView, setFilterProject],
+    [allSystems, flyToSystem, resetView, setFilterProject, zoomCentered],
   );
   useRegisterCommands(orreryCommands, [orreryCommands]);
 
@@ -262,28 +278,20 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     const vh = el.clientHeight;
     const first = systems[0];
     const startScale = Math.min(vw / 500, vh / 500);
-    const startTx = vw / 2 - first.cx * startScale;
-    const startTy = vh / 2 - first.cy * startScale;
-    setView({ tx: startTx, ty: startTy, scale: startScale });
-    const endScale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
-    const endTx = (vw - worldBounds.w * endScale) / 2;
-    const endTy = (vh - worldBounds.h * endScale) / 2;
-    const start = performance.now();
-    const duration = 1100;
-    let raf = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      const ease = 1 - Math.pow(1 - t, 3);
-      setView({
-        tx: startTx + (endTx - startTx) * ease,
-        ty: startTy + (endTy - startTy) * ease,
-        scale: startScale + (endScale - startScale) * ease,
-      });
-      if (t < 1) raf = requestAnimationFrame(tick);
+    const start = {
+      tx: vw / 2 - first.cx * startScale,
+      ty: vh / 2 - first.cy * startScale,
+      scale: startScale,
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [systems, worldBounds.w, worldBounds.h]);
+    const endScale = Math.min(vw / worldBounds.w, vh / worldBounds.h) * 0.9;
+    const end = {
+      tx: (vw - worldBounds.w * endScale) / 2,
+      ty: (vh - worldBounds.h * endScale) / 2,
+      scale: endScale,
+    };
+    setView(start);
+    animateView(start, end, 1100);
+  }, [systems, worldBounds.w, worldBounds.h, animateView]);
 
   const onMouseDown = (e: React.MouseEvent) => {
     dragState.current = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty };
@@ -297,33 +305,12 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
     dragState.current = null;
   };
 
-  const zoomAt = useCallback((mx: number, my: number, factor: number) => {
-    setView((v) => {
-      const next = Math.min(8, Math.max(0.1, v.scale * factor));
-      const ratio = next / v.scale;
-      return {
-        scale: next,
-        tx: mx - (mx - v.tx) * ratio,
-        ty: my - (my - v.ty) * ratio,
-      };
-    });
-  }, []);
-
   const onDoubleClick = (e: React.MouseEvent) => {
     const el = containerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.shiftKey ? 1 / 1.8 : 1.8);
   };
-
-  const zoomCentered = useCallback(
-    (factor: number) => {
-      const el = containerRef.current;
-      if (!el) return;
-      zoomAt(el.clientWidth / 2, el.clientHeight / 2, factor);
-    },
-    [zoomAt],
-  );
 
   useEffect(() => {
     const el = containerRef.current;
@@ -334,16 +321,10 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
       const rect = el.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
-      // normalize deltaY across deltaMode: 0=pixel, 1=line, 2=page
       let delta = e.deltaY;
       if (e.deltaMode === 1) delta *= 16;
       else if (e.deltaMode === 2) delta *= 100;
-      // device detection:
-      //  - pinch zoom: ctrlKey true (browsers synthesize this for two-finger pinch)
-      //  - trackpad scroll: small fractional deltas, no ctrlKey
-      //  - mouse wheel: large integer deltas (often multiples of 100)
       const isPinch = e.ctrlKey;
-      // trackpad two-finger scroll: small deltas (<50). mouse wheel: ~100+ per click.
       const isTrackpadScroll = !isPinch && Math.abs(delta) < 50;
       let intensity: number;
       if (isPinch) intensity = 0.012;
