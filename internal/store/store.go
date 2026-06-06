@@ -9,17 +9,18 @@ import (
 
 const schema = `
 CREATE TABLE IF NOT EXISTS events (
-	id         INTEGER PRIMARY KEY AUTOINCREMENT,
-	timestamp  TEXT    NOT NULL,
-	tool_name  TEXT    NOT NULL,
-	tool_input TEXT    NOT NULL,
-	action     TEXT    NOT NULL,
-	session    TEXT    NOT NULL,
-	mode       TEXT    NOT NULL,
-	raw_name   TEXT    NOT NULL DEFAULT '',
-	binary     TEXT    NOT NULL DEFAULT '',
-	file       TEXT    NOT NULL DEFAULT '',
-	workdir    TEXT    NOT NULL DEFAULT ''
+	id           INTEGER PRIMARY KEY AUTOINCREMENT,
+	timestamp    TEXT    NOT NULL,
+	tool_name    TEXT    NOT NULL,
+	tool_input   TEXT    NOT NULL,
+	action       TEXT    NOT NULL,
+	session      TEXT    NOT NULL,
+	mode         TEXT    NOT NULL,
+	raw_name     TEXT    NOT NULL DEFAULT '',
+	binary       TEXT    NOT NULL DEFAULT '',
+	file         TEXT    NOT NULL DEFAULT '',
+	workdir      TEXT    NOT NULL DEFAULT '',
+	would_action TEXT    NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_events_session ON events(session);
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);

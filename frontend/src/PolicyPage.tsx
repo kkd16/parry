@@ -3,6 +3,7 @@ import { ChevronRight, Eraser, Search } from "lucide-react";
 import PageHeader from "./components/PageHeader";
 import ShellRulesBoard from "./components/ShellRulesBoard";
 import RuleDrawer from "./components/RuleDrawer";
+import PolicyDrill from "./components/PolicyDrill";
 import { actionBadge, modeBadge } from "./policyBadges";
 import { highlight } from "./highlight";
 import { actionClusters, chipMatches } from "./utils/policyView";
@@ -154,6 +155,13 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
             <ShellRulesBoard clusters={clusters} query={query} onOpenBinary={setOpenBinary} />
           </Section>
         )}
+
+        <Section
+          title="Drill"
+          lead="a practice run: type a tool call to see the verdict and which rule decides it — nothing is logged or enforced"
+        >
+          <PolicyDrill onOpenBinary={setOpenBinary} />
+        </Section>
 
         <Section title="File Rules" lead="file edits and reads outside the protected paths above">
           <div className="policy-field">

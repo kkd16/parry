@@ -14,6 +14,7 @@ func TestHandleOverview(t *testing.T) {
 		require.Equal(t, 200, rec.Code)
 		require.Equal(t, float64(0), body["total"])
 		require.Equal(t, float64(0), body["today"])
+		require.Equal(t, float64(0), body["blocked_today"])
 
 		last7d := requireJSONArray(t, body, "last_7d")
 		require.Len(t, last7d, 7)
@@ -36,6 +37,7 @@ func TestHandleOverview(t *testing.T) {
 		)
 		_, body := doJSON(t, srv.routes(), "GET", "/api/overview")
 		require.Equal(t, float64(4), body["total"])
+		require.Equal(t, float64(2), body["blocked_today"])
 
 		byAction := requireJSONArray(t, body, "by_action")
 		require.NotEmpty(t, byAction)

@@ -223,6 +223,12 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
                 <div className="drawer-field-label">action</div>
                 <div className="drawer-field-value">{actionBadge(event.action)}</div>
               </div>
+              {event.would_action && (
+                <div className="drawer-field">
+                  <div className="drawer-field-label">would be</div>
+                  <div className="drawer-field-value">{actionBadge(event.would_action)}</div>
+                </div>
+              )}
               <div className="drawer-field">
                 <div className="drawer-field-label">mode</div>
                 <div className="drawer-field-value">{event.mode}</div>
@@ -256,6 +262,17 @@ export default function EventDrawer({ event, onClose, onApplyFilter }: Props) {
                     }}
                   >
                     events in this directory
+                  </button>
+                )}
+                {onApplyFilter && event.session && (
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      onApplyFilter("session", event.session);
+                      onClose();
+                    }}
+                  >
+                    this session's events
                   </button>
                 )}
               </div>

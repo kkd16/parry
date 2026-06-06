@@ -31,6 +31,7 @@ type DayBucket struct {
 type Overview struct {
 	Total        int           `json:"total"`
 	Today        int           `json:"today"`
+	BlockedToday int           `json:"blocked_today"`
 	Last7d       []DayBucket   `json:"last_7d"`
 	ByAction     []ActionCount `json:"by_action"`
 	TopBinaries  []BinaryStat  `json:"top_binaries"`
@@ -48,9 +49,11 @@ func (s *Store) Overview() (*Overview, error) {
 	now := time.Now().UTC()
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	if err := s.db.QueryRow(
-		"SELECT COUNT(*) FROM events WHERE timestamp >= ?",
+		`SELECT COUNT(*),
+		        COALESCE(SUM(action IN ('block', 'confirm') OR would_action IN ('block', 'confirm')), 0)
+		 FROM events WHERE timestamp >= ?`,
 		startOfToday.Format(time.RFC3339Nano),
-	).Scan(&o.Today); err != nil {
+	).Scan(&o.Today, &o.BlockedToday); err != nil {
 		return nil, fmt.Errorf("counting today: %w", err)
 	}
 

@@ -43,7 +43,11 @@ func (e *Engine) Decide(ctx context.Context, tc *check.ToolCall) Verdict {
 	if v.Respond != "deny" && p.RateLimit != nil && p.Mode == "enforce" {
 		v = applyRateLimit(s, p, v)
 	}
-	if err := s.RecordEvent(store.NewEvent(tc, v.Action, p.Mode)); err != nil {
+	ev := store.NewEvent(tc, v.Action, p.Mode)
+	if p.Mode == "observe" {
+		ev.WouldAction = string(action)
+	}
+	if err := s.RecordEvent(ev); err != nil {
 		fmt.Fprintf(os.Stderr, "parry: db: %v\n", err)
 	}
 	return v

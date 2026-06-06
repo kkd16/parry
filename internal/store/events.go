@@ -13,29 +13,31 @@ import (
 )
 
 type Event struct {
-	ToolName  string
-	ToolInput map[string]any
-	Action    string
-	Session   string
-	Mode      string
-	RawName   string
-	Binary    string
-	File      string
-	Workdir   string
+	ToolName    string
+	ToolInput   map[string]any
+	Action      string
+	WouldAction string
+	Session     string
+	Mode        string
+	RawName     string
+	Binary      string
+	File        string
+	Workdir     string
 }
 
 type EventRow struct {
-	ID        int            `json:"id"`
-	Timestamp string         `json:"timestamp"`
-	ToolName  string         `json:"tool_name"`
-	ToolInput map[string]any `json:"tool_input"`
-	Action    string         `json:"action"`
-	Session   string         `json:"session"`
-	Mode      string         `json:"mode"`
-	RawName   string         `json:"raw_name"`
-	Binary    string         `json:"binary"`
-	File      string         `json:"file"`
-	Workdir   string         `json:"workdir"`
+	ID          int            `json:"id"`
+	Timestamp   string         `json:"timestamp"`
+	ToolName    string         `json:"tool_name"`
+	ToolInput   map[string]any `json:"tool_input"`
+	Action      string         `json:"action"`
+	WouldAction string         `json:"would_action"`
+	Session     string         `json:"session"`
+	Mode        string         `json:"mode"`
+	RawName     string         `json:"raw_name"`
+	Binary      string         `json:"binary"`
+	File        string         `json:"file"`
+	Workdir     string         `json:"workdir"`
 }
 
 func (ev EventRow) CanonicalTool() string {
@@ -78,14 +80,15 @@ func NewEvent(tc *check.ToolCall, action, mode string) Event {
 }
 
 var allowedSortCols = map[string]string{
-	"timestamp": "timestamp",
-	"tool_name": "tool_name",
-	"action":    "action",
-	"mode":      "mode",
-	"raw_name":  "raw_name",
-	"binary":    "binary",
-	"file":      "file",
-	"workdir":   "workdir",
+	"timestamp":    "timestamp",
+	"tool_name":    "tool_name",
+	"action":       "action",
+	"would_action": "would_action",
+	"mode":         "mode",
+	"raw_name":     "raw_name",
+	"binary":       "binary",
+	"file":         "file",
+	"workdir":      "workdir",
 }
 
 func (s *Store) RecordEvent(e Event) error {
@@ -95,12 +98,13 @@ func (s *Store) RecordEvent(e Event) error {
 	}
 
 	_, err = s.db.Exec(
-		`INSERT INTO events (timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO events (timestamp, tool_name, tool_input, action, would_action, session, mode, raw_name, binary, file, workdir)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		time.Now().UTC().Format(time.RFC3339),
 		e.ToolName,
 		string(inputJSON),
 		e.Action,
+		e.WouldAction,
 		e.Session,
 		e.Mode,
 		e.RawName,
@@ -128,7 +132,7 @@ func (s *Store) CountSince(session string, since time.Time) (int, error) {
 
 func (s *Store) GetEvent(id int) (*EventRow, error) {
 	row := s.db.QueryRow(
-		`SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir
+		`SELECT id, timestamp, tool_name, tool_input, action, would_action, session, mode, raw_name, binary, file, workdir
 		 FROM events WHERE id = ?`,
 		id,
 	)
@@ -142,6 +146,7 @@ func (s *Store) GetEvent(id int) (*EventRow, error) {
 type EventQuery struct {
 	Limit, Offset, SinceID int
 	Action, Tool, Binary   string
+	Session                string
 	SortCol, SortOrder     string
 	Search                 string
 }
@@ -155,8 +160,8 @@ func (s *Store) ListEvents(q EventQuery) ([]EventRow, int, error) {
 		args = append(args, q.SinceID)
 	}
 	if q.Action != "" {
-		where += " AND action = ?"
-		args = append(args, q.Action)
+		where += " AND (action = ? OR would_action = ?)"
+		args = append(args, q.Action, q.Action)
 	}
 	if q.Tool != "" {
 		where += " AND tool_name = ?"
@@ -165,6 +170,10 @@ func (s *Store) ListEvents(q EventQuery) ([]EventRow, int, error) {
 	if q.Binary != "" {
 		where += " AND binary = ?"
 		args = append(args, q.Binary)
+	}
+	if q.Session != "" {
+		where += " AND session = ?"
+		args = append(args, q.Session)
 	}
 	if q.Search != "" {
 		where += " AND (tool_input LIKE ? OR tool_name LIKE ? OR session LIKE ?)"
@@ -190,10 +199,10 @@ func (s *Store) ListEvents(q EventQuery) ([]EventRow, int, error) {
 	var query string
 	var rowArgs []any
 	if q.SinceID > 0 {
-		query = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
+		query = "SELECT id, timestamp, tool_name, tool_input, action, would_action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
 		rowArgs = append(args, q.Limit)
 	} else {
-		query = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
+		query = "SELECT id, timestamp, tool_name, tool_input, action, would_action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
 		rowArgs = append(args, q.Limit, q.Offset)
 	}
 	rows, err := s.db.Query(query, rowArgs...)
@@ -224,7 +233,7 @@ type eventScanner interface {
 func scanEvent(scanner eventScanner) (EventRow, error) {
 	var ev EventRow
 	var inputJSON string
-	if err := scanner.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Action, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.File, &ev.Workdir); err != nil {
+	if err := scanner.Scan(&ev.ID, &ev.Timestamp, &ev.ToolName, &inputJSON, &ev.Action, &ev.WouldAction, &ev.Session, &ev.Mode, &ev.RawName, &ev.Binary, &ev.File, &ev.Workdir); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return EventRow{}, err
 		}

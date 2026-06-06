@@ -15,6 +15,7 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		Action:    q.Get("action"),
 		Tool:      q.Get("tool"),
 		Binary:    q.Get("binary"),
+		Session:   q.Get("session"),
 		SortCol:   q.Get("sort"),
 		SortOrder: q.Get("order"),
 		Search:    q.Get("search"),

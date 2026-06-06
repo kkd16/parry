@@ -286,7 +286,8 @@ func TestMatchBinary(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, matchBinary(tc.cmd, tc.rule.byBinary, tc.fallback))
+			got, _ := matchBinaryDetail(tc.cmd, tc.rule.byBinary, tc.fallback)
+			require.Equal(t, tc.want, got)
 		})
 	}
 }
@@ -294,4 +295,40 @@ func TestMatchBinary(t *testing.T) {
 type entryWithAction struct {
 	action Action
 	entry  RuleEntry
+}
+
+func TestMatchBinaryDetail_Winner(t *testing.T) {
+	rule := &Rule{
+		FlagEquivalents: FlagEquivalents{"rm": {"recursive": {"r"}, "force": {"f"}}},
+		Confirm:         []RuleEntry{{Binary: "rm"}, {Binary: "rm", Flags: []string{"recursive"}}},
+		Block:           []RuleEntry{{Binary: "rm", Flags: []string{"force"}}},
+	}
+	require.NoError(t, rule.compile())
+
+	t.Run("unknown binary falls to fallback with nil winner", func(t *testing.T) {
+		got, m := matchBinaryDetail(shellparse.Command{Binary: "xyz"}, rule.byBinary, Confirm)
+		require.Equal(t, Confirm, got)
+		require.Nil(t, m)
+	})
+
+	t.Run("bare rm wins least-specific entry", func(t *testing.T) {
+		got, m := matchBinaryDetail(shellparse.Command{Binary: "rm", Positional: []string{"x"}}, rule.byBinary, Allow)
+		require.Equal(t, Confirm, got)
+		require.NotNil(t, m)
+		require.Empty(t, m.Requirements)
+	})
+
+	t.Run("tie winner follows strictest action", func(t *testing.T) {
+		cmd := shellparse.Command{
+			Binary:     "rm",
+			Positional: []string{"/"},
+			ShortFlags: map[string]bool{"r": true, "f": true},
+		}
+		got, m := matchBinaryDetail(cmd, rule.byBinary, Allow)
+		require.Equal(t, Block, got)
+		require.NotNil(t, m)
+		require.Equal(t, Block, m.Action)
+		require.Len(t, m.Requirements, 1)
+		require.Equal(t, "force", m.Requirements[0].Name)
+	})
 }

@@ -4,6 +4,7 @@ export interface Event {
   tool_name: string;
   tool_input: Record<string, unknown>;
   action: "allow" | "block" | "confirm" | "observe";
+  would_action: "allow" | "block" | "confirm" | "";
   session: string;
   mode: "observe" | "enforce";
   raw_name: string;
@@ -59,6 +60,33 @@ export interface NotifyHealth {
   topic?: string;
   server?: string;
   error?: string;
+}
+
+export interface MatchedRule {
+  action: "allow" | "block" | "confirm";
+  entry?: RuleEntry;
+  specificity: number;
+  is_default: boolean;
+}
+
+export interface CommandExplanation {
+  binary: string;
+  action: "allow" | "block" | "confirm";
+  matched: MatchedRule;
+}
+
+export interface ProtectedHit {
+  pattern: string;
+  arg: string;
+}
+
+export interface Explanation {
+  action: "allow" | "block" | "confirm";
+  tool: string;
+  default: string;
+  unresolved: boolean;
+  protected?: ProtectedHit;
+  commands?: CommandExplanation[];
 }
 
 export interface Policy {

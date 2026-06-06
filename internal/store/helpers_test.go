@@ -53,8 +53,9 @@ func listAll(tb testing.TB, s *store.Store) []store.EventRow {
 	return rows
 }
 
-func withBinary(b string) eventOpt   { return func(e *store.Event) { e.Binary = b } }
-func withAction(a string) eventOpt   { return func(e *store.Event) { e.Action = a } }
+func withBinary(b string) eventOpt      { return func(e *store.Event) { e.Binary = b } }
+func withAction(a string) eventOpt      { return func(e *store.Event) { e.Action = a } }
+func withWouldAction(a string) eventOpt { return func(e *store.Event) { e.WouldAction = a } }
 func withSession(s string) eventOpt  { return func(e *store.Event) { e.Session = s } }
 func withWorkdir(w string) eventOpt  { return func(e *store.Event) { e.Workdir = w } }
 func withFile(f string) eventOpt     { return func(e *store.Event) { e.File = f } }

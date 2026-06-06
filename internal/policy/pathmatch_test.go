@@ -191,7 +191,61 @@ func TestAnyPathProtected(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			e := engineWithPaths(t, tc.parry, tc.protected)
-			require.Equal(t, tc.want, e.anyPathProtected(tc.inputs))
+			require.Equal(t, tc.want, e.Policy().AnyPathProtected(tc.inputs))
+		})
+	}
+}
+
+func TestFirstProtected(t *testing.T) {
+	home, err := os.UserHomeDir()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name        string
+		protected   []string
+		inputs      []string
+		wantPattern string
+		wantArg     string
+		wantOK      bool
+	}{
+		{
+			name:        "literal pattern hit returns pattern and arg",
+			protected:   []string{"/etc/shadow"},
+			inputs:      []string{"/tmp/ok", "/etc/shadow"},
+			wantPattern: "/etc/shadow",
+			wantArg:     "/etc/shadow",
+			wantOK:      true,
+		},
+		{
+			name:        "tilde arg returned as passed, pattern as expanded",
+			protected:   []string{"~/.ssh/*"},
+			inputs:      []string{"~/.ssh/id_rsa"},
+			wantPattern: filepath.Join(home, ".ssh") + "/*",
+			wantArg:     "~/.ssh/id_rsa",
+			wantOK:      true,
+		},
+		{
+			name:        "basename pattern matches path base",
+			protected:   []string{".env"},
+			inputs:      []string{"/tmp/project/.env"},
+			wantPattern: ".env",
+			wantArg:     "/tmp/project/.env",
+			wantOK:      true,
+		},
+		{
+			name:      "no hit",
+			protected: []string{"/etc/shadow"},
+			inputs:    []string{"/tmp/ok"},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			e := engineWithPaths(t, nil, tc.protected)
+			pattern, arg, ok := e.Policy().FirstProtected(tc.inputs)
+			require.Equal(t, tc.wantOK, ok)
+			require.Equal(t, tc.wantPattern, pattern)
+			require.Equal(t, tc.wantArg, arg)
 		})
 	}
 }

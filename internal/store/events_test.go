@@ -16,7 +16,8 @@ func TestRecordEvent_RoundTrip(t *testing.T) {
 		withBinary("rm"),
 		withWorkdir("/proj/a"),
 		withSession("sess-1"),
-		withAction("block"),
+		withAction("observe"),
+		withWouldAction("block"),
 		withToolInput(map[string]any{"command": "rm -rf /"}),
 	)
 
@@ -33,6 +34,7 @@ func TestRecordEvent_RoundTrip(t *testing.T) {
 	require.Equal(t, in.Workdir, got.Workdir)
 	require.Equal(t, in.Session, got.Session)
 	require.Equal(t, in.Action, got.Action)
+	require.Equal(t, in.WouldAction, got.WouldAction)
 	require.Equal(t, in.Mode, got.Mode)
 	if diff := cmp.Diff(in.ToolInput, got.ToolInput); diff != "" {
 		t.Fatalf("ToolInput mismatch (-want +got):\n%s", diff)
@@ -174,6 +176,38 @@ func TestListEvents_Filters(t *testing.T) {
 			assert: func(t *testing.T, rows []store.EventRow) {
 				for _, r := range rows {
 					require.Equal(t, "rm", r.Binary)
+				}
+			},
+		},
+		{
+			name: "action filter matches observe rows via would_action",
+			seedMore: [][]eventOpt{
+				{withAction("observe"), withWouldAction("block")},
+				{withAction("observe"), withWouldAction("allow")},
+				{withAction("block")},
+			},
+			query:   store.EventQuery{Limit: 100, Action: "block"},
+			wantLen: 2,
+			wantTot: 2,
+			assert: func(t *testing.T, rows []store.EventRow) {
+				for _, r := range rows {
+					require.True(t, r.Action == "block" || r.WouldAction == "block")
+				}
+			},
+		},
+		{
+			name: "filter by session",
+			seedMore: [][]eventOpt{
+				{withSession("aaa")},
+				{withSession("bbb")},
+				{withSession("aaa")},
+			},
+			query:   store.EventQuery{Limit: 100, Session: "aaa"},
+			wantLen: 2,
+			wantTot: 2,
+			assert: func(t *testing.T, rows []store.EventRow) {
+				for _, r := range rows {
+					require.Equal(t, "aaa", r.Session)
 				}
 			},
 		},

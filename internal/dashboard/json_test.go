@@ -88,7 +88,7 @@ func TestNormalizeForJSON(t *testing.T) {
 		{
 			name: "zero overview renders all slices as empty arrays",
 			in:   store.Overview{},
-			want: `{"total":0,"today":0,"last_7d":[],"by_action":[],"top_binaries":[],"recent_blocks":[]}`,
+			want: `{"total":0,"today":0,"blocked_today":0,"last_7d":[],"by_action":[],"top_binaries":[],"recent_blocks":[]}`,
 		},
 	}
 

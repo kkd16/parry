@@ -33,6 +33,20 @@ func TestOverview_TotalAndToday(t *testing.T) {
 	require.Equal(t, 5, o.Today)
 }
 
+func TestOverview_BlockedToday(t *testing.T) {
+	s := openTempStore(t)
+	seedN(t, s, 3, withAction("allow"))
+	seedN(t, s, 2, withAction("block"))
+	seedEvent(t, s, makeEvent(withAction("confirm")))
+	seedEvent(t, s, makeEvent(withAction("observe"), withWouldAction("allow")))
+	seedEvent(t, s, makeEvent(withAction("observe"), withWouldAction("block")))
+	seedEvent(t, s, makeEvent(withAction("observe"), withWouldAction("confirm")))
+
+	o, err := s.Overview()
+	require.NoError(t, err)
+	require.Equal(t, 5, o.BlockedToday)
+}
+
 func TestOverview_ByActionDistribution(t *testing.T) {
 	s := openTempStore(t)
 	seedN(t, s, 3, withAction("allow"))

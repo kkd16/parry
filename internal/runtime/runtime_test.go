@@ -59,6 +59,33 @@ func TestDecide_ObserveMode(t *testing.T) {
 	rows := listAllEvents(t, dbPath)
 	require.Len(t, rows, 1)
 	require.Equal(t, "observe", rows[0].Action)
+	require.Equal(t, "block", rows[0].WouldAction)
+}
+
+func TestDecide_ObserveMode_RecordsWouldAllow(t *testing.T) {
+	pinCwd(t)
+	dbPath := tempDB(t)
+	eng := New(loadEngine(t, shellRuleYAML("observe", "allow", "ls")), dbPath)
+
+	got := decideShell(t, eng, "ls")
+	require.Equal(t, Verdict{Action: "observe", Respond: "allow"}, got)
+
+	rows := listAllEvents(t, dbPath)
+	require.Len(t, rows, 1)
+	require.Equal(t, "observe", rows[0].Action)
+	require.Equal(t, "allow", rows[0].WouldAction)
+}
+
+func TestDecide_EnforceMode_NoWouldAction(t *testing.T) {
+	pinCwd(t)
+	dbPath := tempDB(t)
+	eng := New(loadEngine(t, shellRuleYAML("enforce", "block", "rm")), dbPath)
+
+	decideShell(t, eng, "rm /tmp/x")
+	rows := listAllEvents(t, dbPath)
+	require.Len(t, rows, 1)
+	require.Equal(t, "block", rows[0].Action)
+	require.Equal(t, "", rows[0].WouldAction)
 }
 
 func TestDecide_ConfirmFallback_NoNotifications(t *testing.T) {

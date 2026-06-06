@@ -99,6 +99,42 @@ func TestHandleEvents(t *testing.T) {
 			wantLimit:  100,
 			wantOffset: 0,
 		},
+		{
+			name:       "filter by binary",
+			seed:       fixture,
+			target:     "/api/events?binary=rm",
+			wantLen:    1,
+			wantTotal:  1,
+			wantLimit:  100,
+			wantOffset: 0,
+			checkEvents: func(t *testing.T, events []any) {
+				require.Equal(t, "rm", events[0].(map[string]any)["binary"])
+			},
+		},
+		{
+			name: "filter by session",
+			seed: append(fixture, store.Event{
+				ToolName: "Bash", Action: "allow", Binary: "go",
+				Session: "other-session", ToolInput: map[string]any{"command": "go build"},
+			}),
+			target:     "/api/events?session=other-session",
+			wantLen:    1,
+			wantTotal:  1,
+			wantLimit:  100,
+			wantOffset: 0,
+			checkEvents: func(t *testing.T, events []any) {
+				require.Equal(t, "other-session", events[0].(map[string]any)["session"])
+			},
+		},
+		{
+			name:       "binary filter paginates against filtered total",
+			seed:       append(fixture, store.Event{ToolName: "Bash", Action: "confirm", Binary: "rm", ToolInput: map[string]any{"command": "rm /tmp/y"}}),
+			target:     "/api/events?binary=rm&limit=1&offset=1",
+			wantLen:    1,
+			wantTotal:  2,
+			wantLimit:  1,
+			wantOffset: 1,
+		},
 	}
 
 	for _, tc := range tests {

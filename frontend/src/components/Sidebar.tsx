@@ -91,6 +91,13 @@ export default function Sidebar({
   const renderBadge = (n: number | null) =>
     n != null ? <span className="sidebar-nav-badge">{formatCount(n)}</span> : null;
 
+  const renderDangerBadge = (n: number | null) =>
+    n ? (
+      <span className="sidebar-nav-badge danger" title="blocked or confirmed today">
+        {formatCount(n)}
+      </span>
+    ) : null;
+
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -121,7 +128,8 @@ export default function Sidebar({
         >
           <ScrollText />
           <span>Logbook</span>
-          {renderBadge(eventCount > 0 ? eventCount : null)}
+          {renderDangerBadge(counts.blockedToday) ??
+            renderBadge(eventCount > 0 ? eventCount : null)}
           <span className="sidebar-nav-hint">g l</span>
         </button>
         <button

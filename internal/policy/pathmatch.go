@@ -13,42 +13,47 @@ func (p *Policy) AllProtectedPaths() []string {
 }
 
 func (p *Policy) AnyPathProtected(paths []string) bool {
+	_, _, ok := p.FirstProtected(paths)
+	return ok
+}
+
+func (p *Policy) FirstProtected(paths []string) (pattern, arg string, ok bool) {
 	patterns := p.allPaths
 	if patterns == nil {
 		patterns = p.AllProtectedPaths()
 	}
-	for _, path := range paths {
-		path = p.expandTilde(path)
+	for _, raw := range paths {
+		path := p.expandTilde(raw)
 		base := filepath.Base(path)
 		isGlob := containsGlobMeta(path)
-		for _, pattern := range patterns {
-			if matched, _ := filepath.Match(pattern, path); matched {
-				return true
+		for _, pat := range patterns {
+			if matched, _ := filepath.Match(pat, path); matched {
+				return pat, raw, true
 			}
-			if dir, ok := strings.CutSuffix(pattern, "/*"); ok {
+			if dir, cut := strings.CutSuffix(pat, "/*"); cut {
 				if strings.HasPrefix(path, dir+"/") {
-					return true
+					return pat, raw, true
 				}
 			}
-			if !strings.Contains(pattern, "/") {
-				if matched, _ := filepath.Match(pattern, base); matched {
-					return true
+			if !strings.Contains(pat, "/") {
+				if matched, _ := filepath.Match(pat, base); matched {
+					return pat, raw, true
 				}
 			}
 			if isGlob {
-				patternBase := filepath.Base(pattern)
-				if matched, _ := filepath.Match(path, pattern); matched {
-					return true
+				patternBase := filepath.Base(pat)
+				if matched, _ := filepath.Match(path, pat); matched {
+					return pat, raw, true
 				}
-				if !strings.Contains(pattern, "/") {
+				if !strings.Contains(pat, "/") {
 					if matched, _ := filepath.Match(base, patternBase); matched {
-						return true
+						return pat, raw, true
 					}
 				}
 			}
 		}
 	}
-	return false
+	return "", "", false
 }
 
 func (p *Policy) expandTilde(path string) string {
@@ -62,10 +67,6 @@ func (p *Policy) expandTilde(path string) string {
 		return p.home + path[1:]
 	}
 	return path
-}
-
-func (e *Engine) anyPathProtected(paths []string) bool {
-	return e.policy.AnyPathProtected(paths)
 }
 
 func containsGlobMeta(path string) bool {

@@ -48,6 +48,7 @@ type compiledMatcher struct {
 	Requirements []flagRequirement
 	Action       Action
 	Specificity  int
+	Entry        RuleEntry
 }
 
 type flagRequirement struct {
@@ -92,6 +93,7 @@ func (r *Rule) compileEntry(e RuleEntry, action Action) (compiledMatcher, error)
 		Binary:     e.Binary,
 		Positional: e.Positional,
 		Action:     action,
+		Entry:      e,
 	}
 	for _, name := range e.Flags {
 		req, err := r.resolveFlag(e.Binary, name)

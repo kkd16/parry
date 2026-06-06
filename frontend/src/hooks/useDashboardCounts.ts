@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 
 export interface DashboardCounts {
   today: number | null;
+  blockedToday: number | null;
   projects: number | null;
 }
 
 export function useDashboardCounts(): DashboardCounts {
-  const [counts, setCounts] = useState<DashboardCounts>({ today: null, projects: null });
+  const [counts, setCounts] = useState<DashboardCounts>({
+    today: null,
+    blockedToday: null,
+    projects: null,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -14,8 +19,13 @@ export function useDashboardCounts(): DashboardCounts {
       try {
         const r = await fetch("/api/overview");
         if (!r.ok) return;
-        const data = (await r.json()) as { today?: number };
-        if (!cancelled) setCounts((c) => ({ ...c, today: data.today ?? 0 }));
+        const data = (await r.json()) as { today?: number; blocked_today?: number };
+        if (!cancelled)
+          setCounts((c) => ({
+            ...c,
+            today: data.today ?? 0,
+            blockedToday: data.blocked_today ?? 0,
+          }));
       } catch {
         // best-effort
       }

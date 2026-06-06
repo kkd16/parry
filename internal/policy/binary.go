@@ -30,22 +30,16 @@ func (p *Policy) ToolDefaultAction(tool string) Action {
 }
 
 func (p *Policy) ShellCommandAction(cmd shellparse.Command) Action {
-	action := p.ToolDefaultAction("shell")
-	rule := p.Rules["shell"]
-	if rule == nil {
-		return action
-	}
-	return matchBinary(cmd, rule.byBinary, action)
+	return p.explainShellCommand(cmd).Action
 }
 
-func matchBinary(cmd shellparse.Command, byBinary map[string][]compiledMatcher, fallback Action) Action {
+func matchBinaryDetail(cmd shellparse.Command, byBinary map[string][]compiledMatcher, fallback Action) (Action, *compiledMatcher) {
 	bucket := byBinary[cmd.Binary]
-	if len(bucket) == 0 {
-		return fallback
-	}
 	result := fallback
+	var winner *compiledMatcher
 	bestSpec := -1
-	for _, m := range bucket {
+	for i := range bucket {
+		m := &bucket[i]
 		if !positionalPrefix(m.Positional, cmd.Positional) {
 			continue
 		}
@@ -56,11 +50,15 @@ func matchBinary(cmd shellparse.Command, byBinary map[string][]compiledMatcher, 
 		case m.Specificity > bestSpec:
 			bestSpec = m.Specificity
 			result = m.Action
+			winner = m
 		case m.Specificity == bestSpec:
-			result = strictest(result, m.Action)
+			if strictest(result, m.Action) != result {
+				result = m.Action
+				winner = m
+			}
 		}
 	}
-	return result
+	return result, winner
 }
 
 func positionalPrefix(rule, cmd []string) bool {

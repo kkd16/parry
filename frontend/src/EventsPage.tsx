@@ -81,6 +81,7 @@ function downloadCsv(events: Event[]) {
     "raw_name",
     "binary",
     "action",
+    "would_action",
     "mode",
     "workdir",
     "file",
@@ -126,6 +127,7 @@ export default function EventsPage({
   const [toolFilter, setToolFilter] = useUrlParam("tool", "");
   const [workdirFilter, setWorkdirFilter] = useUrlParam("workdir", "");
   const [binaryFilter, setBinaryFilter] = useUrlParam("binary", "");
+  const [sessionFilter, setSessionFilter] = useUrlParam("session", "");
   const [timeFilter, setTimeFilter] = useUrlParam("time", "");
   const [search, setSearch] = useUrlParam("q", "");
   const [searchInput, setSearchInput] = useState(search);
@@ -188,11 +190,13 @@ export default function EventsPage({
     });
     if (actionFilter) params.set("action", actionFilter);
     if (toolFilter) params.set("tool", toolFilter);
+    if (binaryFilter) params.set("binary", binaryFilter);
+    if (sessionFilter) params.set("session", sessionFilter);
     if (search) params.set("search", search);
     params.set("sort", sortId);
     params.set("order", sortOrder);
     return params.toString();
-  }, [offset, actionFilter, toolFilter, search, sortId, sortOrder]);
+  }, [offset, actionFilter, toolFilter, binaryFilter, sessionFilter, search, sortId, sortOrder]);
 
   const queryKey = `${eventsQuery}#${refreshNonce}`;
   const [fetched, setFetched] = useState<{ key: string; error: string | null }>({
@@ -232,6 +236,8 @@ export default function EventsPage({
     });
     if (actionFilter) params.set("action", actionFilter);
     if (toolFilter) params.set("tool", toolFilter);
+    if (binaryFilter) params.set("binary", binaryFilter);
+    if (sessionFilter) params.set("session", sessionFilter);
     if (search) params.set("search", search);
     params.set("sort", sortId);
     params.set("order", sortOrder);
@@ -272,7 +278,7 @@ export default function EventsPage({
     } catch {
       // swallow tail errors; full fetch will surface them
     }
-  }, [events, actionFilter, toolFilter, search, sortId, sortOrder, onCountChange]);
+  }, [events, actionFilter, toolFilter, binaryFilter, sessionFilter, search, sortId, sortOrder, onCountChange]);
 
   useEffect(() => {
     onLiveChange(autoRefresh);
@@ -313,11 +319,10 @@ export default function EventsPage({
   const filteredEvents = useMemo(() => {
     let out = events;
     if (workdirFilter) out = out.filter((e) => e.workdir === workdirFilter);
-    if (binaryFilter) out = out.filter((e) => e.binary === binaryFilter);
     const cutoff = timeFilterCutoff(timeFilter);
     if (cutoff != null) out = out.filter((e) => new Date(e.timestamp).getTime() >= cutoff);
     return out;
-  }, [events, workdirFilter, binaryFilter, timeFilter]);
+  }, [events, workdirFilter, timeFilter]);
 
   const workdirs = useMemo(
     () => Array.from(new Set(events.map((e) => e.workdir).filter(Boolean))).sort(),
@@ -383,6 +388,14 @@ export default function EventsPage({
         defaultSize: 100,
         sortable: true,
         render: (e) => actionBadge(e.action),
+      },
+      {
+        id: "would_action",
+        label: "Would",
+        defaultSize: 100,
+        sortable: true,
+        render: (e) =>
+          e.would_action ? actionBadge(e.would_action) : <span className="muted">—</span>,
       },
       {
         id: "mode",
@@ -468,7 +481,7 @@ export default function EventsPage({
     [columnSizing, setColumnSizing],
   );
 
-  const clientFiltered = !!(workdirFilter || binaryFilter || timeFilter);
+  const clientFiltered = !!(workdirFilter || timeFilter);
   const page = Math.floor(offset / PAGE_SIZE) + 1;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -477,6 +490,7 @@ export default function EventsPage({
     setToolFilter("");
     setWorkdirFilter("");
     setBinaryFilter("");
+    setSessionFilter("");
     setTimeFilter("");
     setSearch("");
     setSearchInput("");
@@ -486,6 +500,7 @@ export default function EventsPage({
     setToolFilter,
     setWorkdirFilter,
     setBinaryFilter,
+    setSessionFilter,
     setTimeFilter,
     setSearch,
     setOffset,
@@ -619,7 +634,22 @@ export default function EventsPage({
                 {
                   label: "bin",
                   value: binaryFilter,
-                  onClear: () => setBinaryFilter(""),
+                  onClear: () => {
+                    setBinaryFilter("");
+                    setOffset(0);
+                  },
+                },
+              ]
+            : []),
+          ...(sessionFilter
+            ? [
+                {
+                  label: "session",
+                  value: sessionFilter.slice(0, 8),
+                  onClear: () => {
+                    setSessionFilter("");
+                    setOffset(0);
+                  },
                 },
               ]
             : []),
@@ -696,7 +726,10 @@ export default function EventsPage({
           label="bin"
           value={binaryFilter}
           options={binaries}
-          onChange={setBinaryFilter}
+          onChange={(v) => {
+            setBinaryFilter(v);
+            setOffset(0);
+          }}
         />
         <select
           className="input"
@@ -751,6 +784,7 @@ export default function EventsPage({
             if (toolFilter) params.set("tool", toolFilter);
             if (workdirFilter) params.set("workdir", workdirFilter);
             if (binaryFilter) params.set("binary", binaryFilter);
+            if (sessionFilter) params.set("session", sessionFilter);
             if (timeFilter) params.set("time", timeFilter);
             if (search) params.set("q", search);
             const bm = bookmarks.add(params.toString());
@@ -911,6 +945,7 @@ export default function EventsPage({
         onApplyFilter={(key, value) => {
           if (key === "binary") setBinaryFilter(value);
           else if (key === "workdir") setWorkdirFilter(value);
+          else if (key === "session") setSessionFilter(value);
           setOffset(0);
         }}
       />
