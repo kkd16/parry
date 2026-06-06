@@ -1,6 +1,3 @@
-// Static content for the Dev Docs architecture page. Rendering lives in
-// DevDocsPage / DevDocsDrawer; growing the docs means editing this file only.
-
 export type NodeStatus = "shipped" | "planned";
 export type EdgeKind = "main" | "tap";
 export type Accent = "neutral" | "allow" | "confirm" | "block" | "brass";

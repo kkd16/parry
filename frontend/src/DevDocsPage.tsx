@@ -27,7 +27,6 @@ interface EdgeGeometry {
 
 function edgeGeometry(e: DocEdge, f: PlacedNode, t: PlacedNode): EdgeGeometry {
   if (t.lane < f.lane) {
-    // return loop, routed above the diagram
     const d = [
       `M ${f.cx} ${f.y}`,
       `L ${f.cx} ${TOP_Y + CORNER}`,
@@ -40,7 +39,6 @@ function edgeGeometry(e: DocEdge, f: PlacedNode, t: PlacedNode): EdgeGeometry {
     return { d, label };
   }
   if (f.lane === t.lane) {
-    // vertical drop to the row below
     const d = `M ${f.cx} ${f.y + f.h} L ${f.cx} ${t.y}`;
     const label = e.label
       ? { x: f.cx + 10, y: (f.y + f.h + t.y) / 2 + 3, text: e.label }
@@ -48,8 +46,6 @@ function edgeGeometry(e: DocEdge, f: PlacedNode, t: PlacedNode): EdgeGeometry {
     return { d, label };
   }
   if (t.order > f.order) {
-    // fork down-right out of the node's bottom-right corner, hugging the lane
-    // gap so it clears the node in the row below
     const x1 = f.x + f.w - FORK_X;
     const y1 = f.y + f.h;
     const x2 = t.x;
@@ -58,7 +54,6 @@ function edgeGeometry(e: DocEdge, f: PlacedNode, t: PlacedNode): EdgeGeometry {
     const label = e.label ? { x: x1 + 18, y: (y1 + y2) / 2 + 3, text: e.label } : undefined;
     return { d, label };
   }
-  // forward along the pipeline
   const x1 = f.x + f.w;
   const x2 = t.x;
   const dx = Math.max(24, (x2 - x1) * 0.5);
