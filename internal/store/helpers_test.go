@@ -48,7 +48,7 @@ func makeEvent(opts ...eventOpt) store.Event {
 
 func listAll(tb testing.TB, s *store.Store) []store.EventRow {
 	tb.Helper()
-	rows, _, err := s.ListEvents(100, 0, 0, "", "", "", "", "")
+	rows, _, err := s.ListEvents(store.EventQuery{Limit: 100})
 	require.NoError(tb, err)
 	return rows
 }

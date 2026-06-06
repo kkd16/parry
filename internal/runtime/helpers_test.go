@@ -49,7 +49,7 @@ func openStoreAt(tb testing.TB, path string) *store.Store {
 func listAllEvents(tb testing.TB, path string) []store.EventRow {
 	tb.Helper()
 	s := openStoreAt(tb, path)
-	rows, _, err := s.ListEvents(100, 0, 0, "", "", "", "", "")
+	rows, _, err := s.ListEvents(store.EventQuery{Limit: 100})
 	require.NoError(tb, err)
 	return rows
 }

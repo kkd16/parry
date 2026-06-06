@@ -1,52 +1,24 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronRight, Eraser, Search } from "lucide-react";
 import PageHeader from "./components/PageHeader";
-import { actionBadge } from "./policyBadges";
-import type { Rule, RuleEntry } from "./types";
+import ShellRulesBoard from "./components/ShellRulesBoard";
+import RuleDrawer from "./components/RuleDrawer";
+import { actionBadge, modeBadge } from "./policyBadges";
+import { highlight } from "./highlight";
+import { actionClusters, chipMatches } from "./utils/policyView";
 import type { PolicyOverviewState } from "./usePolicyOverview";
 import { useUrlParam, usePath } from "./hooks/useUrlState";
 import { useRegisterCommands, type Command } from "./commands";
 
-function formatEntry(entry: RuleEntry): string {
-  const parts = [entry.binary];
-  if (entry.positional?.length) {
-    parts.push(...entry.positional);
-  }
-  if (entry.flags?.length) {
-    parts.push(`[${entry.flags.join(", ")}]`);
-  }
-  return parts.join(" ");
-}
-
-function ruleBindings(rule: Rule): { action: string; entries: RuleEntry[] }[] {
-  const rows: { action: string; entries: RuleEntry[] }[] = [];
-  if (rule.allow?.length) rows.push({ action: "allow", entries: rule.allow });
-  if (rule.confirm?.length) rows.push({ action: "confirm", entries: rule.confirm });
-  if (rule.block?.length) rows.push({ action: "block", entries: rule.block });
-  return rows;
-}
-
-function highlight(text: string, query: string) {
-  if (!query) return text;
-  const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return text;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <span className="mark">{text.slice(idx, idx + query.length)}</span>
-      {text.slice(idx + query.length)}
-    </>
-  );
-}
-
 interface SectionProps {
   title: string;
   count?: number;
+  lead?: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }
 
-function Section({ title, count, defaultOpen = true, children }: SectionProps) {
+function Section({ title, count, lead, defaultOpen = true, children }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className={`policy-section${open ? " open" : ""}`}>
@@ -55,13 +27,19 @@ function Section({ title, count, defaultOpen = true, children }: SectionProps) {
         <span className="policy-section-title">{title}</span>
         {count != null && <span className="policy-section-count">{count}</span>}
       </button>
-      {open && <div className="policy-section-body">{children}</div>}
+      {open && (
+        <div className="policy-section-body">
+          {lead && <p className="charter-lead">{lead}</p>}
+          {children}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function PolicyPage({ policy, loading, error }: PolicyOverviewState) {
   const [query, setQuery] = useUrlParam("q", "");
+  const [openBinary, setOpenBinary] = useState<string | null>(null);
   const [, setPath] = usePath();
 
   const goBinary = (b: string) => {
@@ -98,26 +76,8 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
   const matchesQuery = (s: string | undefined | null) =>
     !query || (s ?? "").toLowerCase().includes(query.toLowerCase());
 
-  const filteredBindings = useMemo(() => {
-    if (!policy) return null;
-    const filterRule = (rule: Rule | undefined) => {
-      if (!rule) return [];
-      return ruleBindings(rule)
-        .map(({ action, entries }) => ({
-          action,
-          entries: query
-            ? entries.filter((e) => formatEntry(e).toLowerCase().includes(query.toLowerCase()))
-            : entries,
-        }))
-        .filter((r) => r.entries.length > 0 || matchesQuery(r.action));
-    };
-    return {
-      shell: filterRule(policy.rules["shell"]),
-      file_edit: filterRule(policy.rules["file_edit"]),
-      file_read: filterRule(policy.rules["file_read"]),
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [policy, query]);
+  const shellRule = policy?.rules["shell"];
+  const clusters = useMemo(() => (shellRule ? actionClusters(shellRule) : null), [shellRule]);
 
   if (loading) {
     return (
@@ -130,18 +90,21 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
     );
   }
   if (error) return <div className="error">{error}</div>;
-  if (!policy || !filteredBindings) return null;
+  if (!policy) return null;
 
+  const shellCount = clusters
+    ? Object.values(clusters)
+        .flat()
+        .filter((c) => chipMatches(c, query))
+        .reduce((a, c) => a + c.count, 0)
+    : 0;
   const protectedPaths = (policy.protected_paths ?? []).filter((p) => matchesQuery(p));
   const parryPaths = (policy.parry_paths ?? []).filter((p) => matchesQuery(p));
+  const shellDefault = shellRule?.default_action ?? policy.default_action;
 
   return (
     <>
-      <PageHeader
-        eyebrow="instrument · 03"
-        title="Charter"
-        sub="your policy.yaml"
-      />
+      <PageHeader eyebrow="instrument · 03" title="Charter" sub="your policy.yaml" />
 
       <input
         className="input policy-search"
@@ -151,58 +114,45 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
         style={{ marginBottom: 18 }}
       />
 
-      <div className="policy-page">
-        <Section title="Defaults" count={2}>
-          <div className="policy-field">
-            <span className="policy-label">Default Action</span>
-            <span className="policy-value">{actionBadge(policy.default_action)}</span>
-          </div>
-          <div className="policy-field">
-            <span className="policy-label">Check-Mode Confirm</span>
-            <span className="policy-value">{actionBadge(policy.check_mode_confirm)}</span>
-          </div>
+      <div className="policy-page charter-flow">
+        <div className="charter-mode-banner">
+          <p>
+            Running in {modeBadge(policy.mode)}
+            {policy.mode === "observe"
+              ? ": every verdict is logged, none are enforced."
+              : ": verdicts are enforced."}{" "}
+            Anything no rule claims falls to {actionBadge(policy.default_action)}. When no notifier
+            can reach you, confirm hardens to {actionBadge(policy.check_mode_confirm)}.
+          </p>
+        </div>
+
+        <Section
+          title="Protected Paths"
+          count={protectedPaths.length}
+          lead="the hard stop: any tool call touching these paths is blocked, no matter what the rules below say"
+        >
+          {protectedPaths.length ? (
+            <ul className="path-list">
+              {protectedPaths.map((p) => (
+                <li key={p}>{highlight(p, query)}</li>
+              ))}
+            </ul>
+          ) : (
+            <span className="muted">none</span>
+          )}
         </Section>
 
-        {policy.rules["shell"] && (
+        {shellRule && clusters && (
           <Section
             title="Shell Rules"
-            count={filteredBindings.shell.reduce((a, b) => a + b.entries.length, 0)}
+            count={shellCount}
+            lead={`every shell command resolves to its most specific rule, strictest on ties; compound commands take the strictest stage; unmatched commands fall to ${shellDefault}`}
           >
-            <div className="policy-field">
-              <span className="policy-label">Default Action</span>
-              <span className="policy-value">
-                {actionBadge(policy.rules["shell"].default_action ?? policy.default_action)}
-              </span>
-            </div>
-            <table className="policy-table">
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>Rules</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBindings.shell.map(({ action, entries }) => (
-                  <tr key={action}>
-                    <td>{actionBadge(action)}</td>
-                    <td>
-                      {entries.map((e, i) => (
-                        <Fragment key={`${e.binary}-${i}`}>
-                          {i > 0 && ", "}
-                          <button className="cell-link mono" onClick={() => goBinary(e.binary)}>
-                            {highlight(formatEntry(e), query)}
-                          </button>
-                        </Fragment>
-                      ))}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <ShellRulesBoard clusters={clusters} query={query} onOpenBinary={setOpenBinary} />
           </Section>
         )}
 
-        <Section title="File Rules">
+        <Section title="File Rules" lead="file edits and reads outside the protected paths above">
           <div className="policy-field">
             <span className="policy-label">file_edit default</span>
             <span className="policy-value">
@@ -217,7 +167,10 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
           </div>
         </Section>
 
-        <Section title="Rate Limit">
+        <Section
+          title="Rate Limit"
+          lead="a sliding window per session; even allowed commands count toward it"
+        >
           {policy.rate_limit ? (
             <>
               <div className="policy-field">
@@ -240,19 +193,12 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
           )}
         </Section>
 
-        <Section title="Protected Paths" count={protectedPaths.length}>
-          {protectedPaths.length ? (
-            <ul className="path-list">
-              {protectedPaths.map((p) => (
-                <li key={p}>{highlight(p, query)}</li>
-              ))}
-            </ul>
-          ) : (
-            <span className="muted">none</span>
-          )}
-        </Section>
-
-        <Section title="Parry Paths" count={parryPaths.length}>
+        <Section
+          title="Parry Paths"
+          count={parryPaths.length}
+          lead="parry's own files, shielded so an agent cannot rewrite the rules"
+          defaultOpen={false}
+        >
           {parryPaths.length ? (
             <ul className="path-list">
               {parryPaths.map((p) => (
@@ -264,6 +210,14 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
           )}
         </Section>
       </div>
+
+      <RuleDrawer
+        binary={openBinary}
+        rule={shellRule}
+        globalDefault={policy.default_action}
+        onClose={() => setOpenBinary(null)}
+        onViewLogbook={goBinary}
+      />
     </>
   );
 }

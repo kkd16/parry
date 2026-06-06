@@ -1,19 +1,26 @@
 package dashboard
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/kkd16/parry/internal/store"
+)
 
 func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	limit := intParam(q.Get("limit"), 100, 1, 1000)
-	offset := intParam(q.Get("offset"), 0, 0, 1_000_000)
-	action := q.Get("action")
-	tool := q.Get("tool")
-	sort := q.Get("sort")
-	order := q.Get("order")
-	search := q.Get("search")
-	sinceID := intParam(q.Get("since_id"), 0, 0, 1_000_000_000)
+	query := store.EventQuery{
+		Limit:     intParam(q.Get("limit"), 100, 1, 1000),
+		Offset:    intParam(q.Get("offset"), 0, 0, 1_000_000),
+		SinceID:   intParam(q.Get("since_id"), 0, 0, 1_000_000_000),
+		Action:    q.Get("action"),
+		Tool:      q.Get("tool"),
+		Binary:    q.Get("binary"),
+		SortCol:   q.Get("sort"),
+		SortOrder: q.Get("order"),
+		Search:    q.Get("search"),
+	}
 
-	events, total, err := s.store.ListEvents(limit, offset, sinceID, action, tool, sort, order, search)
+	events, total, err := s.store.ListEvents(query)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -22,7 +29,7 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"events": events,
 		"total":  total,
-		"limit":  limit,
-		"offset": offset,
+		"limit":  query.Limit,
+		"offset": query.Offset,
 	})
 }

@@ -120,14 +120,7 @@ func TestListEvents_Filters(t *testing.T) {
 		name     string
 		seed     []eventOpt
 		seedMore [][]eventOpt
-		limit    int
-		offset   int
-		sinceID  int
-		action   string
-		tool     string
-		sortCol  string
-		sortDir  string
-		search   string
+		query    store.EventQuery
 		wantLen  int
 		wantTot  int
 		assert   func(t *testing.T, rows []store.EventRow)
@@ -135,7 +128,7 @@ func TestListEvents_Filters(t *testing.T) {
 		{
 			name:     "no filter",
 			seedMore: [][]eventOpt{nil, nil, nil},
-			limit:    100,
+			query:    store.EventQuery{Limit: 100},
 			wantLen:  3,
 			wantTot:  3,
 		},
@@ -146,8 +139,7 @@ func TestListEvents_Filters(t *testing.T) {
 				{withAction("block")},
 				{withAction("block")},
 			},
-			limit:   100,
-			action:  "block",
+			query:   store.EventQuery{Limit: 100, Action: "block"},
 			wantLen: 2,
 			wantTot: 2,
 			assert: func(t *testing.T, rows []store.EventRow) {
@@ -162,8 +154,7 @@ func TestListEvents_Filters(t *testing.T) {
 				{withToolName("shell")},
 				{withToolName("file_read")},
 			},
-			limit:   100,
-			tool:    "shell",
+			query:   store.EventQuery{Limit: 100, Tool: "shell"},
 			wantLen: 1,
 			wantTot: 1,
 			assert: func(t *testing.T, rows []store.EventRow) {
@@ -171,10 +162,25 @@ func TestListEvents_Filters(t *testing.T) {
 			},
 		},
 		{
+			name: "filter by binary",
+			seedMore: [][]eventOpt{
+				{withBinary("rm")},
+				{withBinary("git")},
+				{withBinary("rm")},
+			},
+			query:   store.EventQuery{Limit: 100, Binary: "rm"},
+			wantLen: 2,
+			wantTot: 2,
+			assert: func(t *testing.T, rows []store.EventRow) {
+				for _, r := range rows {
+					require.Equal(t, "rm", r.Binary)
+				}
+			},
+		},
+		{
 			name:     "sinceID skips earlier rows",
 			seedMore: [][]eventOpt{nil, nil, nil, nil, nil},
-			limit:    100,
-			sinceID:  2,
+			query:    store.EventQuery{Limit: 100, SinceID: 2},
 			wantLen:  3,
 			wantTot:  3,
 			assert: func(t *testing.T, rows []store.EventRow) {
@@ -186,15 +192,14 @@ func TestListEvents_Filters(t *testing.T) {
 		{
 			name:     "limit caps result count",
 			seedMore: [][]eventOpt{nil, nil, nil, nil, nil},
-			limit:    2,
+			query:    store.EventQuery{Limit: 2},
 			wantLen:  2,
 			wantTot:  5,
 		},
 		{
 			name:     "offset skips first rows",
 			seedMore: [][]eventOpt{nil, nil, nil, nil, nil},
-			limit:    2,
-			offset:   2,
+			query:    store.EventQuery{Limit: 2, Offset: 2},
 			wantLen:  2,
 			wantTot:  5,
 		},
@@ -204,8 +209,7 @@ func TestListEvents_Filters(t *testing.T) {
 				{withToolInput(map[string]any{"command": "rm /tmp/x"})},
 				{withToolInput(map[string]any{"command": "ls -la"})},
 			},
-			limit:   100,
-			search:  "rm",
+			query:   store.EventQuery{Limit: 100, Search: "rm"},
 			wantLen: 1,
 			wantTot: 1,
 		},
@@ -215,17 +219,14 @@ func TestListEvents_Filters(t *testing.T) {
 				{withToolName("shell")},
 				{withToolName("file_read")},
 			},
-			limit:   100,
-			search:  "shell",
+			query:   store.EventQuery{Limit: 100, Search: "shell"},
 			wantLen: 1,
 			wantTot: 1,
 		},
 		{
 			name:     "sort timestamp asc",
 			seedMore: [][]eventOpt{nil, nil, nil},
-			limit:    100,
-			sortCol:  "timestamp",
-			sortDir:  "asc",
+			query:    store.EventQuery{Limit: 100, SortCol: "timestamp", SortOrder: "asc"},
 			wantLen:  3,
 			wantTot:  3,
 			assert: func(t *testing.T, rows []store.EventRow) {
@@ -240,9 +241,7 @@ func TestListEvents_Filters(t *testing.T) {
 				{withBinary("b")},
 				{withBinary("c")},
 			},
-			limit:   100,
-			sortCol: "binary",
-			sortDir: "desc",
+			query:   store.EventQuery{Limit: 100, SortCol: "binary", SortOrder: "desc"},
 			wantLen: 3,
 			wantTot: 3,
 			assert: func(t *testing.T, rows []store.EventRow) {
@@ -254,9 +253,7 @@ func TestListEvents_Filters(t *testing.T) {
 		{
 			name:     "invalid sort col falls back to id desc",
 			seedMore: [][]eventOpt{nil, nil, nil},
-			limit:    100,
-			sortCol:  "garbage",
-			sortDir:  "asc",
+			query:    store.EventQuery{Limit: 100, SortCol: "garbage", SortOrder: "asc"},
 			wantLen:  3,
 			wantTot:  3,
 			assert: func(t *testing.T, rows []store.EventRow) {
@@ -271,9 +268,7 @@ func TestListEvents_Filters(t *testing.T) {
 				{withToolName("shell"), withAction("allow")},
 				{withToolName("file_read"), withAction("block")},
 			},
-			limit:   100,
-			action:  "block",
-			tool:    "shell",
+			query:   store.EventQuery{Limit: 100, Action: "block", Tool: "shell"},
 			wantLen: 1,
 			wantTot: 1,
 			assert: func(t *testing.T, rows []store.EventRow) {
@@ -290,7 +285,7 @@ func TestListEvents_Filters(t *testing.T) {
 				seedEvent(t, s, makeEvent(opts...))
 			}
 
-			rows, total, err := s.ListEvents(tc.limit, tc.offset, tc.sinceID, tc.action, tc.tool, tc.sortCol, tc.sortDir, tc.search)
+			rows, total, err := s.ListEvents(tc.query)
 			require.NoError(t, err)
 			require.Equal(t, tc.wantTot, total)
 			require.Len(t, rows, tc.wantLen)

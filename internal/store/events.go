@@ -139,25 +139,36 @@ func (s *Store) GetEvent(id int) (*EventRow, error) {
 	return &ev, nil
 }
 
-func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, sortOrder, search string) ([]EventRow, int, error) {
+type EventQuery struct {
+	Limit, Offset, SinceID int
+	Action, Tool, Binary   string
+	SortCol, SortOrder     string
+	Search                 string
+}
+
+func (s *Store) ListEvents(q EventQuery) ([]EventRow, int, error) {
 	where := ""
 	var args []any
 
-	if sinceID > 0 {
+	if q.SinceID > 0 {
 		where += " AND id > ?"
-		args = append(args, sinceID)
+		args = append(args, q.SinceID)
 	}
-	if action != "" {
+	if q.Action != "" {
 		where += " AND action = ?"
-		args = append(args, action)
+		args = append(args, q.Action)
 	}
-	if tool != "" {
+	if q.Tool != "" {
 		where += " AND tool_name = ?"
-		args = append(args, tool)
+		args = append(args, q.Tool)
 	}
-	if search != "" {
+	if q.Binary != "" {
+		where += " AND binary = ?"
+		args = append(args, q.Binary)
+	}
+	if q.Search != "" {
 		where += " AND (tool_input LIKE ? OR tool_name LIKE ? OR session LIKE ?)"
-		like := "%" + search + "%"
+		like := "%" + q.Search + "%"
 		args = append(args, like, like, like)
 	}
 
@@ -168,24 +179,24 @@ func (s *Store) ListEvents(limit, offset, sinceID int, action, tool, sortCol, so
 	}
 
 	orderClause := "id DESC"
-	if col, ok := allowedSortCols[sortCol]; ok {
+	if col, ok := allowedSortCols[q.SortCol]; ok {
 		dir := "DESC"
-		if sortOrder == "asc" {
+		if q.SortOrder == "asc" {
 			dir = "ASC"
 		}
 		orderClause = col + " " + dir + ", id " + dir
 	}
 
-	var q string
+	var query string
 	var rowArgs []any
-	if sinceID > 0 {
-		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
-		rowArgs = append(args, limit)
+	if q.SinceID > 0 {
+		query = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY id ASC LIMIT ?"
+		rowArgs = append(args, q.Limit)
 	} else {
-		q = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
-		rowArgs = append(args, limit, offset)
+		query = "SELECT id, timestamp, tool_name, tool_input, action, session, mode, raw_name, binary, file, workdir FROM events WHERE 1=1" + where + " ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
+		rowArgs = append(args, q.Limit, q.Offset)
 	}
-	rows, err := s.db.Query(q, rowArgs...)
+	rows, err := s.db.Query(query, rowArgs...)
 	if err != nil {
 		return nil, 0, fmt.Errorf("querying events: %w", err)
 	}

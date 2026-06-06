@@ -135,7 +135,7 @@ func (s *Store) Overview() (*Overview, error) {
 		return nil, fmt.Errorf("querying top project: %w", err)
 	}
 
-	blocks, _, err := s.ListEvents(5, 0, 0, "block", "", "timestamp", "desc", "")
+	blocks, _, err := s.ListEvents(EventQuery{Limit: 5, Action: "block", SortCol: "timestamp", SortOrder: "desc"})
 	if err != nil {
 		return nil, fmt.Errorf("recent blocks: %w", err)
 	}
