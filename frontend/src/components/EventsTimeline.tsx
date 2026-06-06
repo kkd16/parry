@@ -155,7 +155,7 @@ export default function EventsTimeline({ events }: Props) {
                         className="flex items-center gap-1.5 text-tiny"
                       >
                         <span
-                          className="inline-block h-1.75 w-1.75 rounded-xs"
+                          className="inline-block size-1.75 rounded-xs"
                           style={{ background: ACTION_COLORS[a] }}
                         />
                         <span className="flex-1 text-ink-dim">{a}</span>

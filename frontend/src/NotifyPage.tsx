@@ -84,8 +84,8 @@ interface Props {
 }
 
 const ORB_CLS: Record<string, string> = {
-  ok: "border border-allow bg-allow/12 text-allow shadow-[0_0_28px_rgba(127,196,154,0.2)]",
-  err: "border border-block bg-block/12 text-block shadow-[0_0_28px_rgba(224,90,76,0.2)]",
+  ok: "border border-allow bg-allow/12 text-allow shadow-[0_0_28px_color-mix(in_srgb,var(--color-allow)_20%,transparent)]",
+  err: "border border-block bg-block/12 text-block shadow-[0_0_28px_color-mix(in_srgb,var(--color-block)_20%,transparent)]",
   none: "border border-ink-mute bg-ink-mute/8 text-ink-mute after:animate-none",
 };
 
@@ -209,7 +209,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
         <div className="flex min-w-80 items-center gap-5.5 rounded-md border border-l-3 border-rule border-l-brass bg-bg-raised px-6.5 py-5.5">
           <div
             className={clsx(
-              "relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full after:absolute after:-inset-1.5 after:animate-orb-pulse after:rounded-full after:border after:border-current after:opacity-25 after:content-['']",
+              "relative flex size-16 shrink-0 items-center justify-center rounded-full after:absolute after:-inset-1.5 after:animate-orb-pulse after:rounded-full after:border after:border-current after:opacity-25 after:content-['']",
               ORB_CLS[orbClass],
             )}
           >

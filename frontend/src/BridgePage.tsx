@@ -110,7 +110,7 @@ function Donut({ data }: { data: ActionCount[] }) {
         {data.map((d) => (
           <div key={d.action} className="flex items-center gap-2">
             <span
-              className="h-2 w-2 rounded-xs"
+              className="size-2 rounded-xs"
               style={{
                 background: ACTION_COLORS[d.action] ?? "var(--color-ink-mute)",
               }}
@@ -226,7 +226,7 @@ export default function BridgePage({
                     <tr key={b.binary}>
                       <td>
                         <button
-                          className="cursor-pointer text-ink hover:text-brass"
+                          className="cursor-pointer text-ink focus-ring hover:text-brass"
                           onClick={() => onFilterBinary(b.binary)}
                         >
                           {b.binary}

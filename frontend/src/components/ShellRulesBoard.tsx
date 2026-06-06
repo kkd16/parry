@@ -41,7 +41,7 @@ function Chip({
   return (
     <button
       className={clsx(
-        "cursor-pointer rounded border px-2.75 py-1.25 text-meta transition-[border-color,transform,box-shadow] duration-140 hover:-translate-y-px hover:border-brass hover:shadow-[0_3px_10px_rgba(0,0,0,0.35)] focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass",
+        "cursor-pointer rounded border px-2.75 py-1.25 text-meta focus-ring transition-[border-color,transform,box-shadow] duration-140 hover:-translate-y-px hover:border-brass hover:shadow-[0_3px_10px_rgba(0,0,0,0.35)]",
         CHIP_CLS[action],
       )}
       onClick={onClick}

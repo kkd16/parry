@@ -12,7 +12,7 @@ interface Props {
 }
 
 const itemCls =
-  "block w-full truncate rounded px-2.5 py-1.75 text-left text-meta text-ink hover:bg-bg-hover hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass";
+  "block w-full truncate rounded px-2.5 py-1.75 text-left text-meta text-ink hover:bg-bg-hover hover:text-brass focus-ring";
 
 export default function SearchableSelect({
   label,
@@ -46,7 +46,7 @@ export default function SearchableSelect({
       <button
         className={clsx(
           inputCls,
-          "inline-flex min-w-32.5 cursor-pointer items-center gap-2 text-left focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass [&_svg]:shrink-0 [&_svg]:text-ink-mute",
+          "inline-flex min-w-32.5 cursor-pointer items-center gap-2 text-left focus-ring [&_svg]:shrink-0 [&_svg]:text-ink-mute",
         )}
         onClick={openMenu}
       >

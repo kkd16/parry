@@ -46,7 +46,7 @@ function Stage({
         </span>
       ) : (
         <button
-          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-0.75 text-tiny text-ink-dim transition-colors duration-150 hover:border-brass-dim hover:text-brass"
+          className="cursor-pointer rounded-full border border-rule bg-bg px-2.5 py-0.75 text-tiny text-ink-dim focus-ring transition-colors duration-150 hover:border-brass-dim hover:text-brass"
           title="open this rule"
           onClick={() => onOpenBinary(stage.binary)}
         >
@@ -86,7 +86,7 @@ export default function PolicyDrill({
             <button
               key={id}
               className={clsx(
-                "cursor-pointer bg-bg px-3 py-1.75 text-meta tracking-wider text-ink-dim transition-colors duration-150 not-first:border-l not-first:border-rule hover:text-ink",
+                "cursor-pointer bg-bg px-3 py-1.75 text-meta tracking-wider text-ink-dim focus-ring transition-colors duration-150 not-first:border-l not-first:border-rule hover:text-ink",
                 tool === id && "bg-bg-active text-brass",
               )}
               onClick={() => setTool(id)}

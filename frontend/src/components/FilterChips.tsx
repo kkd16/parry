@@ -21,7 +21,7 @@ export default function FilterChips({ chips, onClearAll }: Props) {
       {chips.map((c) => (
         <button
           key={c.label + c.value}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-brass-dim bg-brass/10 px-2.5 py-0.75 text-meta text-brass-bright hover:border-brass hover:bg-brass/18"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-brass-dim bg-brass/10 px-2.5 py-0.75 text-meta text-brass-bright focus-ring hover:border-brass hover:bg-brass/18"
           onClick={c.onClear}
         >
           <span className="text-eyebrow tracking-label text-ink-mute uppercase">
@@ -32,7 +32,7 @@ export default function FilterChips({ chips, onClearAll }: Props) {
         </button>
       ))}
       <button
-        className="ml-1.5 text-tiny tracking-label text-ink-mute uppercase hover:text-brass"
+        className="ml-1.5 text-tiny tracking-label text-ink-mute uppercase focus-ring hover:text-brass"
         onClick={onClearAll}
       >
         clear all

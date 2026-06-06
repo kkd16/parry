@@ -101,6 +101,13 @@
   }
 }
 
+@utility focus-ring {
+  &:focus-visible {
+    outline: 1px solid var(--color-brass);
+    outline-offset: 2px;
+  }
+}
+
 @layer base {
   :root {
     --sidebar-w: 232px;

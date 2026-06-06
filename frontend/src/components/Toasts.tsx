@@ -89,7 +89,7 @@ export function ToastsProvider({ children }: { children: ReactNode }) {
                 )}
               </div>
               <button
-                className="text-ink-mute hover:text-brass"
+                className="text-ink-mute focus-ring hover:text-brass"
                 onClick={() => remove(t.id)}
               >
                 <X size={12} />

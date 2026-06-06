@@ -25,7 +25,7 @@ export interface ColumnSpec {
 export const MIN_COL_WIDTH = 60;
 
 const cellLinkCls =
-  "cursor-pointer border-b border-dashed border-transparent text-left text-body hover:border-brass-dim hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass";
+  "cursor-pointer border-b border-dashed border-transparent text-left text-body hover:border-brass-dim hover:text-brass focus-ring";
 
 const dash = <Muted />;
 

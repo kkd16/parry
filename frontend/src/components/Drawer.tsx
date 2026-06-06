@@ -99,7 +99,7 @@ export default function Drawer({
                 </h2>
               </div>
               <button
-                className="shrink-0 rounded border border-rule px-2 py-1 text-meta text-ink-dim hover:border-brass hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass"
+                className="shrink-0 rounded border border-rule px-2 py-1 text-meta text-ink-dim focus-ring hover:border-brass hover:text-brass"
                 onClick={onClose}
               >
                 close · esc

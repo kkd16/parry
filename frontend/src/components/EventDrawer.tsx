@@ -88,7 +88,7 @@ function RuleSuggestionPanel({
   const suggestion = api.loading ? null : api.data;
 
   return (
-    <section className="mt-5 rounded border border-rule bg-[linear-gradient(135deg,rgba(212,161,74,0.08),rgba(12,15,20,0.55))] p-4">
+    <section className="mt-5 rounded border border-rule bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-brass)_8%,transparent),rgba(12,15,20,0.55))] p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <div className={clsx("min-w-25 pt-0.75", drawerLabelCls)}>

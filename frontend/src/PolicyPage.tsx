@@ -40,7 +40,7 @@ function Section({
   return (
     <div className="overflow-hidden rounded-md border border-rule bg-bg-raised">
       <button
-        className="flex w-full items-center gap-3 px-5.5 py-4 text-left text-ink hover:bg-bg-hover"
+        className="flex w-full items-center gap-3 px-5.5 py-4 text-left text-ink focus-ring hover:bg-bg-hover"
         onClick={() => setOpen((v) => !v)}
       >
         <ChevronRight

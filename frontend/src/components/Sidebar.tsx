@@ -165,7 +165,7 @@ export default function Sidebar({
           <button
             key={t.id}
             className={clsx(
-              "relative flex items-center gap-3 rounded px-3.5 py-2.5 text-left text-sm font-medium text-ink-dim transition-colors duration-150 hover:bg-bg-hover hover:text-ink focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.8]",
+              "relative flex items-center gap-3 rounded px-3.5 py-2.5 text-left text-sm font-medium text-ink-dim focus-ring transition-colors duration-150 hover:bg-bg-hover hover:text-ink [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:[stroke-width:1.8]",
               tab === t.id &&
                 "bg-bg-hover text-ink before:absolute before:top-1/2 before:-left-3.5 before:h-5.5 before:w-0.5 before:-translate-y-1/2 before:bg-brass-bright before:shadow-[0_0_8px_var(--color-brass)] before:content-['']",
             )}
@@ -232,7 +232,7 @@ export default function Sidebar({
         </FooterRow>
         <button
           className={clsx(
-            "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 text-micro tracking-widest text-ink-dim uppercase transition-colors duration-150 hover:border-brass-dim hover:text-brass focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-brass [&_svg]:size-3.25 [&_svg]:shrink-0",
+            "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 text-micro tracking-widest text-ink-dim uppercase focus-ring transition-colors duration-150 hover:border-brass-dim hover:text-brass [&_svg]:size-3.25 [&_svg]:shrink-0",
             tab === "devdocs" && "border-brass-dim bg-observe/14 text-brass",
           )}
           onClick={() => setTab("devdocs")}
