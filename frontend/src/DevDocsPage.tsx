@@ -22,6 +22,16 @@ const ACCENT_CLS: Record<string, string> = {
   allow: "stroke-allow/55",
 };
 
+const LEGEND: [string, string][] = [
+  ["w-5.5 border-t-2 border-brass-dim", "main flow"],
+  ["w-5.5 border-t-2 border-dashed border-rule", "side tap"],
+  ["h-2.5 w-3.5 rounded-sm border border-rule bg-bg", "shipped"],
+  [
+    "h-2.5 w-3.5 rounded-sm border border-dashed border-brass-dim bg-bg opacity-60",
+    "planned",
+  ],
+];
+
 interface EdgeLabel {
   x: number;
   y: number;
@@ -259,22 +269,12 @@ export default function DevDocsPage() {
         </svg>
 
         <div className="mt-2.5 flex flex-wrap gap-4.5 border-t border-dashed border-rule-soft px-2.5 pt-2 font-mono text-micro tracking-[0.08em] text-ink-dim uppercase">
-          <span className="inline-flex items-center gap-[7px]">
-            <span className="w-5.5 border-t-2 border-brass-dim" />
-            main flow
-          </span>
-          <span className="inline-flex items-center gap-[7px]">
-            <span className="w-5.5 border-t-2 border-dashed border-rule" />
-            side tap
-          </span>
-          <span className="inline-flex items-center gap-[7px]">
-            <span className="h-2.5 w-3.5 rounded-sm border border-rule bg-bg" />
-            shipped
-          </span>
-          <span className="inline-flex items-center gap-[7px]">
-            <span className="h-2.5 w-3.5 rounded-sm border border-dashed border-brass-dim bg-bg opacity-60" />
-            planned
-          </span>
+          {LEGEND.map(([swatch, label]) => (
+            <span key={label} className="inline-flex items-center gap-[7px]">
+              <span className={swatch} />
+              {label}
+            </span>
+          ))}
         </div>
       </div>
 

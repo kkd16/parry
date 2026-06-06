@@ -45,7 +45,7 @@ function AboutContent() {
         <div className={dialogEyebrowCls}>about</div>
         <h2 className={clsx(dialogTitleCls, "flex items-baseline gap-3.5")}>
           Parry
-          <span className="font-mono text-body font-normal tracking-[0.04em] text-brass not-italic">
+          <span className="font-mono text-body tracking-[0.04em] text-brass not-italic">
             v{info?.version ?? "…"}
           </span>
         </h2>
@@ -85,7 +85,11 @@ function AboutContent() {
 
 export default function AboutDialog({ open, onClose }: Props) {
   return (
-    <Dialog open={open} onClose={onClose} className={dialogPanelCls}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      className={clsx("w-[min(640px,92vw)]", dialogPanelCls)}
+    >
       <AboutContent />
     </Dialog>
   );

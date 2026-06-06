@@ -97,12 +97,6 @@ export function HealthDot({
   );
 }
 
-export function FieldRow({ className, ...rest }: ComponentProps<"div">) {
-  return (
-    <div className={clsx("flex items-center gap-3", className)} {...rest} />
-  );
-}
-
 export function FieldLabel({ className, ...rest }: ComponentProps<"div">) {
   return (
     <div

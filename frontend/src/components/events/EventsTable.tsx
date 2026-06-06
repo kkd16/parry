@@ -69,6 +69,10 @@ export default function EventsTable({
     [columnSizing],
   );
   const totalWidth = visibleColumns.reduce((sum, c) => sum + colWidth(c), 0);
+  const tdCls = clsx(
+    "truncate text-ink",
+    tdByDensity[density] ?? tdByDensity.normal,
+  );
 
   const startResize = useCallback(
     (c: ColumnSpec, startX: number) => {
@@ -145,7 +149,7 @@ export default function EventsTable({
             <tr>
               <td
                 colSpan={visibleColumns.length}
-                className="p-[60px] text-center font-display text-[1.4rem] text-ink-dim italic"
+                className="p-15 text-center font-display text-[1.4rem] text-ink-dim italic"
               >
                 the logbook is empty.
               </td>
@@ -166,10 +170,7 @@ export default function EventsTable({
                   <td
                     key={c.id}
                     style={{ width: colWidth(c) }}
-                    className={clsx(
-                      "truncate text-ink",
-                      tdByDensity[density] ?? tdByDensity.normal,
-                    )}
+                    className={tdCls}
                   >
                     {c.render(e, ctx)}
                   </td>

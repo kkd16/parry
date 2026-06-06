@@ -6,7 +6,7 @@ import {
   type NodeStatus,
   type SubComponent,
 } from "../devdocs";
-import Drawer from "./Drawer";
+import Drawer, { drawerLabelCls, drawerSectionCls } from "./Drawer";
 import { Btn } from "./ui";
 
 const BADGE_CLS: Record<NodeStatus, string> = {
@@ -14,10 +14,7 @@ const BADGE_CLS: Record<NodeStatus, string> = {
   planned: "border-dashed border-observe/35 bg-observe/14 text-observe",
 };
 
-const sectionCls = "mt-5.5 border-t border-dashed border-rule-soft pt-4";
-
-const labelCls =
-  "mb-2.5 font-mono text-micro tracking-[0.12em] text-ink-mute uppercase";
+const labelCls = clsx("mb-2.5", drawerLabelCls);
 
 function StatusBadge({ status }: { status: NodeStatus }) {
   return (
@@ -58,7 +55,7 @@ function Block({ block }: { block: DetailBlock }) {
       );
     case "packages":
       return (
-        <section className={sectionCls}>
+        <section className={drawerSectionCls}>
           <div className={labelCls}>{block.label ?? "key packages"}</div>
           <div className="flex flex-wrap gap-1.5">
             {block.paths.map((p) => (
@@ -74,9 +71,9 @@ function Block({ block }: { block: DetailBlock }) {
       );
     case "components":
       return (
-        <section className={sectionCls}>
+        <section className={drawerSectionCls}>
           <div className={labelCls}>{block.label ?? "components"}</div>
-          <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+          <ul className="flex flex-col gap-2.5">
             {block.items.map((item) => (
               <Component key={item.name} item={item} />
             ))}
@@ -133,7 +130,7 @@ export default function DevDocsDrawer({ node, onClose, onNavigate }: Props) {
           ))}
 
           {seeAlso.length > 0 && (
-            <section className={sectionCls}>
+            <section className={drawerSectionCls}>
               <div className={labelCls}>see also</div>
               <div className="flex flex-wrap gap-1.5">
                 {seeAlso.map((target) => (

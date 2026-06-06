@@ -1,10 +1,10 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import clsx from "clsx";
 import { Bell, Copy, Send } from "lucide-react";
 import CopyButton from "./components/CopyButton";
 import PageHeader from "./components/PageHeader";
 import { useToast } from "./components/Toasts";
-import { Btn, Eyebrow, FieldLabel, FieldValue } from "./components/ui";
+import { Btn, Card, Eyebrow, FieldLabel, FieldValue } from "./components/ui";
 import { healthClass } from "./policyBadges";
 import { getEvents, postNotifyTest } from "./api";
 import { useApi } from "./hooks/useApi";
@@ -86,10 +86,25 @@ const STATE_CLS: Record<string, string> = {
   none: "text-ink-mute",
 };
 
+function ConfigRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
+      <FieldLabel className="min-w-[90px]">{label}</FieldLabel>
+      {children}
+    </div>
+  );
+}
+
 function CopyBlock({ text }: { text: string }) {
   return (
     <div className="relative rounded border border-rule bg-bg px-4 py-3.5">
-      <pre className="m-0 font-mono text-[0.74rem] leading-[1.65] whitespace-pre-wrap text-ink">
+      <pre className="font-mono text-[0.74rem] leading-[1.65] whitespace-pre-wrap text-ink">
         {text}
       </pre>
       <CopyButton
@@ -190,6 +205,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
           title="Beacon"
           sub="push approvals for risky tool calls"
           flush
+          className="flex-1"
         />
         <div className="flex min-w-[320px] items-center gap-5.5 rounded-md border border-l-3 border-rule border-l-brass bg-bg-raised px-6.5 py-5.5">
           <div
@@ -230,27 +246,23 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-4">
-        <div className="rounded-md border border-rule bg-bg-raised px-5.5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]">
+        <Card>
           <Eyebrow>active configuration</Eyebrow>
           <div className="flex flex-col gap-2.5 font-mono text-body">
-            <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
-              <FieldLabel className="min-w-[90px]">provider</FieldLabel>
+            <ConfigRow label="provider">
               <FieldValue className="break-all">{providerId || "—"}</FieldValue>
-            </div>
-            <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
-              <FieldLabel className="min-w-[90px]">timeout</FieldLabel>
+            </ConfigRow>
+            <ConfigRow label="timeout">
               <FieldValue className="break-all">{timeout}</FieldValue>
-            </div>
+            </ConfigRow>
             {providerId === "ntfy" && (
               <>
-                <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
-                  <FieldLabel className="min-w-[90px]">topic</FieldLabel>
+                <ConfigRow label="topic">
                   <CopyValue value={topic} />
-                </div>
-                <div className="flex items-center gap-3 border-b border-dashed border-rule-soft pb-2 last:border-b-0 last:pb-0">
-                  <FieldLabel className="min-w-[90px]">server</FieldLabel>
+                </ConfigRow>
+                <ConfigRow label="server">
                   <CopyValue value={server || "https://ntfy.sh"} />
-                </div>
+                </ConfigRow>
               </>
             )}
           </div>
@@ -259,9 +271,9 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
             <span className="font-mono text-[0.75rem]">check_mode_confirm</span>
             .
           </div>
-        </div>
+        </Card>
 
-        <div className="rounded-md border border-rule bg-bg-raised px-5.5 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_1px_0_rgba(0,0,0,0.3)]">
+        <Card>
           <Eyebrow>recent confirmations</Eyebrow>
           {recent.length === 0 ? (
             <div className="px-1 py-4.5 font-display text-[1rem] text-ink-mute italic">
@@ -294,7 +306,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
               </tbody>
             </table>
           )}
-        </div>
+        </Card>
       </div>
 
       <Eyebrow className="flex items-center gap-2.5 after:h-px after:flex-1 after:bg-[linear-gradient(90deg,var(--color-brass)_0%,transparent_100%)] after:opacity-35 after:content-['']">
@@ -312,7 +324,7 @@ export default function NotifyPage({ policyOverview, onGoToEvents }: Props) {
             )}
           >
             <div className="flex items-baseline gap-3">
-              <h3 className="font-display text-[1.7rem] leading-none font-normal text-ink italic">
+              <h3 className="font-display text-[1.7rem] leading-none text-ink italic">
                 {p.name}
               </h3>
               {providerId === p.id && (

@@ -22,6 +22,7 @@ export interface TabSpec {
   icon: ElementType;
   key: string;
   keywords: string[];
+  fullBleed?: boolean;
 }
 
 export const TABS: TabSpec[] = [
@@ -45,6 +46,7 @@ export const TABS: TabSpec[] = [
     icon: Orbit,
     key: "o",
     keywords: ["orrery", "system", "files", "heatmap"],
+    fullBleed: true,
   },
   {
     id: "charter",

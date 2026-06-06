@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import Dialog, {
   dialogEyebrowCls,
   dialogHeaderCls,
@@ -52,7 +53,11 @@ const GROUPS: ShortcutGroup[] = [
 
 export default function ShortcutsHelp({ open, onClose }: Props) {
   return (
-    <Dialog open={open} onClose={onClose} className={dialogPanelCls}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      className={clsx("w-[min(640px,92vw)]", dialogPanelCls)}
+    >
       <div className={dialogHeaderCls}>
         <div className={dialogEyebrowCls}>reference card</div>
         <h2 className={dialogTitleCls}>Keyboard shortcuts</h2>

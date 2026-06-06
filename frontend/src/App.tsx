@@ -237,7 +237,7 @@ function AppShell() {
         <main className="shell-main relative overflow-x-hidden overflow-y-auto">
           <div
             className={
-              tab === "orrery"
+              TABS.find((t) => t.id === tab)?.fullBleed
                 ? "h-screen"
                 : "mx-auto max-w-[1440px] px-14 pt-14 pb-10"
             }

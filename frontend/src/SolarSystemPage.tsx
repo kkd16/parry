@@ -46,14 +46,14 @@ const ORBIT_SPAN = 220;
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 const emptyCls =
-  "p-[60px] text-center font-display text-[1.6rem] text-ink-dim italic [&_code]:font-mono [&_code]:text-[0.9rem] [&_code]:text-brass [&_code]:not-italic";
+  "p-15 text-center font-display text-[1.6rem] text-ink-dim italic [&_code]:font-mono [&_code]:text-[0.9rem] [&_code]:text-brass [&_code]:not-italic";
 
 const overlayCls =
   "absolute z-5 rounded border border-rule bg-[rgba(17,19,28,0.92)] px-4 py-3.5 font-mono text-meta text-ink-dim backdrop-blur-[6px]";
 
 const tallyLabelCls = "text-eyebrow tracking-[0.18em] text-ink-mute uppercase";
 
-const tallyValueCls = "truncate text-[0.92rem] whitespace-nowrap text-ink";
+const tallyValueCls = "truncate text-[0.92rem] text-ink";
 
 function buildSystems(projects: HeatmapProject[]): System[] {
   return projects.map((p, idx) => {
@@ -444,7 +444,7 @@ export default function SolarSystemPage({ heatmap, error }: Props) {
           title="Orrery"
           sub="files orbit their projects · drag to pan · scroll to zoom"
           flush
-          className="bg-[linear-gradient(180deg,rgba(10,11,16,0.7)_0%,transparent_100%)] pt-1 pr-4 pb-4.5"
+          className="flex-1 bg-[linear-gradient(180deg,rgba(10,11,16,0.7)_0%,transparent_100%)] pt-1 pr-4 pb-4.5"
           titleClassName="[text-shadow:0_2px_24px_rgba(0,0,0,0.8)]"
         />
         {stats && (

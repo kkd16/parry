@@ -18,9 +18,7 @@ export default function PageHeader({
   titleClassName,
 }: Props) {
   return (
-    <header
-      className={clsx("animate-fade-up", flush ? "flex-1" : "mb-9", className)}
-    >
+    <header className={clsx("animate-fade-up", !flush && "mb-9", className)}>
       {eyebrow && (
         <div className="mb-2.5 font-mono text-micro tracking-[0.24em] text-brass uppercase">
           {eyebrow}

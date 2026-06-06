@@ -11,7 +11,7 @@ interface Props {
 }
 
 const itemCls =
-  "block w-full truncate rounded-[3px] px-2.5 py-[7px] text-left font-mono text-[0.74rem] whitespace-nowrap text-ink hover:bg-bg-hover hover:text-brass";
+  "block w-full truncate rounded-[3px] px-2.5 py-[7px] text-left font-mono text-[0.74rem] text-ink hover:bg-bg-hover hover:text-brass";
 
 export default function SearchableSelect({
   label,

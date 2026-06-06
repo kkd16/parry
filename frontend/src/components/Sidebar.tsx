@@ -35,6 +35,28 @@ function formatCount(n: number | null): string {
 const navBadgeCls =
   "rounded-lg border border-brass-dim bg-brass/10 px-1.5 py-px font-mono text-eyebrow tracking-[0.04em] text-brass";
 
+function FooterRow({
+  label,
+  title,
+  children,
+}: {
+  label: string;
+  title?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 text-meta">
+      <FieldLabel>{label}</FieldLabel>
+      <span
+        className="max-w-[110px] truncate font-mono text-meta text-ink-dim"
+        title={title}
+      >
+        {children}
+      </span>
+    </div>
+  );
+}
+
 export default function Sidebar({
   tab,
   setTab,
@@ -208,41 +230,17 @@ export default function Sidebar({
       </nav>
 
       <div className="mt-3 flex flex-col gap-2.5 border-t border-rule-soft px-6 pt-4 pb-1">
-        <div className="flex items-center justify-between gap-2 text-meta">
-          <FieldLabel>mode</FieldLabel>
-          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
-            {policy?.mode ?? "—"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-2 text-meta">
-          <FieldLabel>ver</FieldLabel>
-          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
-            {policy?.version ?? "—"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-2 text-meta">
-          <FieldLabel>default</FieldLabel>
-          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
-            {policy?.default_action ?? "—"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-2 text-meta">
-          <FieldLabel>notify</FieldLabel>
-          <span
-            className="max-w-[110px] truncate font-mono text-meta text-ink-dim"
-            title={health?.error ?? ""}
-          >
-            <HealthDot status={health?.status} />
-            {notify?.provider ?? "none"}
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-2 text-meta">
-          <FieldLabel>live</FieldLabel>
-          <span className="max-w-[110px] truncate font-mono text-meta text-ink-dim">
-            <HealthDot status={live ? "ok" : undefined} />
-            {live ? "on" : "off"}
-          </span>
-        </div>
+        <FooterRow label="mode">{policy?.mode ?? "—"}</FooterRow>
+        <FooterRow label="ver">{policy?.version ?? "—"}</FooterRow>
+        <FooterRow label="default">{policy?.default_action ?? "—"}</FooterRow>
+        <FooterRow label="notify" title={health?.error ?? ""}>
+          <HealthDot status={health?.status} />
+          {notify?.provider ?? "none"}
+        </FooterRow>
+        <FooterRow label="live">
+          <HealthDot status={live ? "ok" : undefined} />
+          {live ? "on" : "off"}
+        </FooterRow>
         <button
           className={clsx(
             "mt-1 flex w-full items-center gap-2 rounded border border-rule bg-bg px-2.5 py-2 font-mono text-[0.64rem] tracking-[0.1em] text-ink-dim uppercase transition-colors duration-150 hover:border-brass-dim hover:text-brass [&_svg]:h-[13px] [&_svg]:w-[13px] [&_svg]:shrink-0",

@@ -71,7 +71,7 @@ function Section({
 
 function PathList({ paths, query }: { paths: string[]; query: string }) {
   return (
-    <ul className="list-none font-mono text-[0.76rem] leading-[1.9] text-ink">
+    <ul className="font-mono text-[0.76rem] leading-[1.9] text-ink">
       {paths.map((p) => (
         <li key={p} className="before:text-brass before:content-['·_']">
           {highlight(p, query)}

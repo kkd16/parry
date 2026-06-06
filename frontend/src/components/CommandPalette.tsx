@@ -1,7 +1,8 @@
 import { Command as CmdkCommand } from "cmdk";
 import { useMemo } from "react";
+import clsx from "clsx";
 import { useCommands } from "../commands";
-import Dialog from "./Dialog";
+import Dialog, { dialogPanelCls } from "./Dialog";
 
 interface Props {
   open: boolean;
@@ -25,7 +26,7 @@ export default function CommandPalette({ open, onClose }: Props) {
     <Dialog
       open={open}
       onClose={onClose}
-      className="w-[min(580px,92vw)] overflow-hidden rounded-lg border border-rule bg-bg-raised shadow-[0_40px_120px_rgba(0,0,0,0.65),0_0_0_1px_rgba(212,161,74,0.08)]"
+      className={clsx("w-[min(580px,92vw)]", dialogPanelCls)}
     >
       <CmdkCommand label="Command palette">
         <CmdkCommand.Input

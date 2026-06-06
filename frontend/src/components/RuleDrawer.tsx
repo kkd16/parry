@@ -5,7 +5,12 @@ import { getEvents } from "../api";
 import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
 import CopyButton from "./CopyButton";
-import Drawer, { DrawerActions, yamlBlockCls } from "./Drawer";
+import Drawer, {
+  DrawerActions,
+  drawerLabelCls,
+  drawerSectionCls,
+  yamlBlockCls,
+} from "./Drawer";
 import { Btn, btnCls } from "./ui";
 import { formatRelative, useNowTick } from "../utils/relativeTime";
 import {
@@ -28,11 +33,6 @@ const verdictCls = clsx(
   "mt-0.5 mb-1.5 font-display text-[1.05rem] leading-[1.9] text-ink italic",
   codeCls,
 );
-
-const sectionCls = "mt-5.5 border-t border-dashed border-rule-soft pt-4";
-
-const labelCls =
-  "font-mono text-micro tracking-[0.12em] text-ink-mute uppercase";
 
 const ladderRowCls =
   "relative grid grid-cols-[1fr_auto] items-center gap-y-0.5 border-l-2 border-rule py-[9px] pl-4 before:absolute before:top-4 before:-left-1 before:h-1.5 before:w-1.5 before:rotate-45 before:border before:border-ink-mute before:bg-bg-raised before:content-['']";
@@ -99,8 +99,8 @@ function RecentActivity({
   const events = recentApi.error ? [] : (recentApi.data?.events ?? null);
 
   return (
-    <section className={sectionCls}>
-      <div className={labelCls}>recent activity</div>
+    <section className={drawerSectionCls}>
+      <div className={drawerLabelCls}>recent activity</div>
       {events === null && (
         <div className="mt-2 text-[0.76rem] text-ink-mute italic">loading…</div>
       )}
@@ -110,7 +110,7 @@ function RecentActivity({
         </div>
       )}
       {!!events?.length && (
-        <ul className="mt-2.5 list-none">
+        <ul className="mt-2.5">
           {events.map((e) => {
             const cmd =
               typeof e.tool_input.command === "string"
@@ -174,8 +174,8 @@ export default function RuleDrawer({
         <>
           <Verdict x={x} />
 
-          <section className={sectionCls}>
-            <div className={labelCls}>precedence</div>
+          <section className={drawerSectionCls}>
+            <div className={drawerLabelCls}>precedence</div>
             <div className="mt-3 flex flex-col">
               {x.rows.map((r) => (
                 <div className={ladderRowCls} key={r.label + r.action}>
@@ -210,11 +210,11 @@ export default function RuleDrawer({
             </div>
           </section>
 
-          <section className={sectionCls}>
-            <div className={labelCls}>how matching works</div>
+          <section className={drawerSectionCls}>
+            <div className={drawerLabelCls}>how matching works</div>
             <ul
               className={clsx(
-                "mt-2.5 list-none text-[0.78rem] leading-[1.8] text-ink-dim",
+                "mt-2.5 text-[0.78rem] leading-[1.8] text-ink-dim",
                 codeCls,
               )}
             >
@@ -241,8 +241,8 @@ export default function RuleDrawer({
           </section>
 
           {x.flagForms.length > 0 && (
-            <section className={sectionCls}>
-              <div className={labelCls}>flag equivalents</div>
+            <section className={drawerSectionCls}>
+              <div className={drawerLabelCls}>flag equivalents</div>
               <div className="mt-2.5">
                 {x.flagForms.map((f) => (
                   <div
@@ -261,11 +261,11 @@ export default function RuleDrawer({
             </section>
           )}
 
-          <section className={sectionCls}>
-            <div className={labelCls}>
+          <section className={drawerSectionCls}>
+            <div className={drawerLabelCls}>
               examples — illustrative, not exhaustive
             </div>
-            <ul className="mt-2.5 list-none">
+            <ul className="mt-2.5">
               {x.examples.map((ex) => (
                 <li
                   key={ex.command}
@@ -285,8 +285,8 @@ export default function RuleDrawer({
             </ul>
           </section>
 
-          <section className={sectionCls}>
-            <div className={labelCls}>as written in policy.yaml</div>
+          <section className={drawerSectionCls}>
+            <div className={drawerLabelCls}>as written in policy.yaml</div>
             <pre className={yamlBlockCls}>{x.yaml}</pre>
             <DrawerActions>
               <CopyButton className={btnCls} text={x.yaml} label="copy yaml" />

@@ -5,7 +5,12 @@ import { getRuleSuggestion } from "../api";
 import { useApi } from "../hooks/useApi";
 import { actionBadge } from "../policyBadges";
 import CopyButton from "./CopyButton";
-import Drawer, { DrawerActions, DrawerField, yamlBlockCls } from "./Drawer";
+import Drawer, {
+  DrawerActions,
+  DrawerField,
+  drawerLabelCls,
+  yamlBlockCls,
+} from "./Drawer";
 import { Btn, btnCls, inputCls } from "./ui";
 import { useRegisterCommands, type Command } from "../commands";
 
@@ -93,7 +98,7 @@ function RuleSuggestionPanel({
     <section className="mt-5 rounded border border-rule bg-[linear-gradient(135deg,rgba(212,161,74,0.08),rgba(12,15,20,0.55))] p-4">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="min-w-[100px] pt-[3px] font-mono text-micro tracking-[0.12em] text-ink-mute uppercase">
+          <div className={clsx("min-w-[100px] pt-[3px]", drawerLabelCls)}>
             suggest rule
           </div>
           <div className="mt-1 font-display text-[0.86rem] text-ink-mute italic">

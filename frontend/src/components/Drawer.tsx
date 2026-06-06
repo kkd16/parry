@@ -14,6 +14,12 @@ interface Props {
 export const yamlBlockCls =
   "my-3 rounded border border-rule-soft bg-bg p-3 font-mono text-meta leading-[1.55] whitespace-pre-wrap wrap-break-word text-ink";
 
+export const drawerSectionCls =
+  "mt-5.5 border-t border-dashed border-rule-soft pt-4";
+
+export const drawerLabelCls =
+  "font-mono text-micro tracking-[0.12em] text-ink-mute uppercase";
+
 export function DrawerField({
   label,
   children,
@@ -23,7 +29,7 @@ export function DrawerField({
 }) {
   return (
     <div className="flex gap-3.5 border-b border-dashed border-rule-soft py-2.5 text-body">
-      <div className="min-w-[100px] pt-[3px] font-mono text-micro tracking-[0.12em] text-ink-mute uppercase">
+      <div className={clsx("min-w-[100px] pt-[3px]", drawerLabelCls)}>
         {label}
       </div>
       <div className="flex-1 font-mono text-body break-all text-ink">
