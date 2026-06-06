@@ -1,14 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  type ColumnDef,
-  type ColumnOrderState,
-  type ColumnSizingState,
-  type SortingState,
-  type VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Download, RefreshCw, Columns3, FileJson } from "lucide-react";
 import SearchableSelect from "./components/SearchableSelect";
 import type { Event, EventsResponse } from "./types";
@@ -36,18 +26,18 @@ interface Props {
   registerSearchFocus: (fn: () => void) => void;
 }
 
-const COLUMN_LABELS: Record<string, string> = {
-  timestamp: "Time",
-  raw_name: "Raw",
-  tool_name: "Tool",
-  binary: "Binary",
-  action: "Action",
-  mode: "Mode",
-  workdir: "Directory",
-  session: "Session",
-  file: "File",
-  tool_input: "Input",
-};
+type ColumnSizing = Record<string, number>;
+type ColumnVisibility = Record<string, boolean>;
+
+interface ColumnSpec {
+  id: keyof Event;
+  label: string;
+  defaultSize: number;
+  sortable: boolean;
+  render: (e: Event) => ReactNode;
+}
+
+const MIN_COL_WIDTH = 60;
 
 function shortJson(v: unknown, n = 60): string {
   const s = JSON.stringify(v) ?? "";
@@ -141,53 +131,33 @@ export default function EventsPage({
   const [searchInput, setSearchInput] = useState(search);
   const [sortId, setSortId] = useUrlParam("sort", "timestamp");
   const [sortOrder, setSortOrder] = useUrlParam("order", "desc");
-  const sorting: SortingState = useMemo(
-    () => [{ id: sortId, desc: sortOrder !== "asc" }],
-    [sortId, sortOrder],
-  );
-  const setSorting = useCallback(
-    (updater: SortingState | ((old: SortingState) => SortingState)) => {
-      const next = typeof updater === "function" ? updater(sorting) : updater;
-      const first = next[0];
-      if (!first) {
-        setSortId("timestamp");
+  const toggleSort = useCallback(
+    (id: string) => {
+      if (sortId === id) {
+        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      } else {
+        setSortId(id);
         setSortOrder("desc");
-        return;
       }
-      setSortId(first.id);
-      setSortOrder(first.desc ? "desc" : "asc");
+      setOffset(0);
     },
-    [sorting, setSortId, setSortOrder],
+    [sortId, sortOrder, setSortId, setSortOrder, setOffset],
   );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [colMenuOpen, setColMenuOpen] = useState(false);
   const [selected, setSelected] = useState<Event | null>(null);
   const [freshIds, setFreshIds] = useState<Set<number>>(new Set());
   const tailTimeoutsRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
 
-  const [columnSizing, setColumnSizing] = useLocalStorage<ColumnSizingState>(
-    "parry-col-sizing",
-    {},
-  );
-  const [columnOrder, setColumnOrder] = useLocalStorage<ColumnOrderState>("parry-col-order", [
-    "timestamp",
-    "tool_name",
-    "binary",
-    "file",
-    "action",
-    "mode",
-    "workdir",
-    "tool_input",
-  ]);
-  const [columnVisibility, setColumnVisibility] = useLocalStorage<VisibilityState>(
+  const [columnSizing, setColumnSizing] = useLocalStorage<ColumnSizing>("parry-col-sizing", {});
+  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
     "parry-col-visibility",
     {
       raw_name: false,
       session: false,
     },
   );
+  const [resizingId, setResizingId] = useState<string | null>(null);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -206,9 +176,12 @@ export default function EventsPage({
     consumePendingFilter();
   }, [pendingFilter, consumePendingFilter, setActionFilter, setToolFilter, setTimeFilter, setOffset]);
 
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // loading/error are derived from the last completed fetch instead of set
+  // imperatively, so the fetch effect never calls setState synchronously
+  const [refreshNonce, setRefreshNonce] = useState(0);
+  const refresh = useCallback(() => setRefreshNonce((n) => n + 1), []);
+
+  const eventsQuery = useMemo(() => {
     const params = new URLSearchParams({
       limit: String(PAGE_SIZE),
       offset: String(offset),
@@ -216,28 +189,40 @@ export default function EventsPage({
     if (actionFilter) params.set("action", actionFilter);
     if (toolFilter) params.set("tool", toolFilter);
     if (search) params.set("search", search);
-    const sort = sorting[0];
-    if (sort) {
-      params.set("sort", sort.id);
-      params.set("order", sort.desc ? "desc" : "asc");
-    }
-    try {
-      const res = await fetch(`/api/events?${params}`);
-      if (!res.ok) throw new Error((await res.text()) || res.statusText);
-      const data: EventsResponse = await res.json();
-      setEvents(data.events ?? []);
-      setTotal(data.total);
-      onCountChange(data.total);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "unknown error");
-    } finally {
-      setLoading(false);
-    }
-  }, [offset, actionFilter, toolFilter, search, sorting, onCountChange]);
+    params.set("sort", sortId);
+    params.set("order", sortOrder);
+    return params.toString();
+  }, [offset, actionFilter, toolFilter, search, sortId, sortOrder]);
+
+  const queryKey = `${eventsQuery}#${refreshNonce}`;
+  const [fetched, setFetched] = useState<{ key: string; error: string | null }>({
+    key: "",
+    error: null,
+  });
+  const loading = fetched.key !== queryKey;
+  const error = fetched.key === queryKey ? fetched.error : null;
 
   useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/events?${eventsQuery}`);
+        if (!res.ok) throw new Error((await res.text()) || res.statusText);
+        const data: EventsResponse = await res.json();
+        if (cancelled) return;
+        setEvents(data.events ?? []);
+        setTotal(data.total);
+        onCountChange(data.total);
+        setFetched({ key: queryKey, error: null });
+      } catch (e) {
+        if (cancelled) return;
+        setFetched({ key: queryKey, error: e instanceof Error ? e.message : "unknown error" });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [eventsQuery, queryKey, onCountChange]);
 
   const tailNewEvents = useCallback(async () => {
     const lastSeenId = events.reduce((m, e) => (e.id > m ? e.id : m), 0);
@@ -248,11 +233,8 @@ export default function EventsPage({
     if (actionFilter) params.set("action", actionFilter);
     if (toolFilter) params.set("tool", toolFilter);
     if (search) params.set("search", search);
-    const sort = sorting[0];
-    if (sort) {
-      params.set("sort", sort.id);
-      params.set("order", sort.desc ? "desc" : "asc");
-    }
+    params.set("sort", sortId);
+    params.set("order", sortOrder);
     try {
       const res = await fetch(`/api/events?${params}`);
       if (!res.ok) return;
@@ -290,7 +272,7 @@ export default function EventsPage({
     } catch {
       // swallow tail errors; full fetch will surface them
     }
-  }, [events, actionFilter, toolFilter, search, sorting, onCountChange]);
+  }, [events, actionFilter, toolFilter, search, sortId, sortOrder, onCountChange]);
 
   useEffect(() => {
     onLiveChange(autoRefresh);
@@ -346,125 +328,145 @@ export default function EventsPage({
     [events],
   );
 
-  const columns = useMemo<ColumnDef<Event>[]>(
+  const columns = useMemo<ColumnSpec[]>(
     () => [
       {
-        accessorKey: "timestamp",
-        header: "Time",
-        size: 150,
-        cell: (c) => {
-          const v = c.getValue<string>();
-          return (
-            <span className="mono" title={formatAbsolute(v)}>
-              {formatRelative(v, nowTick)}
-            </span>
-          );
-        },
+        id: "timestamp",
+        label: "Time",
+        defaultSize: 150,
+        sortable: true,
+        render: (e) => (
+          <span className="mono" title={formatAbsolute(e.timestamp)}>
+            {formatRelative(e.timestamp, nowTick)}
+          </span>
+        ),
       },
       {
-        accessorKey: "raw_name",
-        header: "Raw",
-        size: 110,
-        cell: (c) => c.getValue<string>() || <span className="muted">—</span>,
+        id: "tool_name",
+        label: "Tool",
+        defaultSize: 110,
+        sortable: true,
+        render: (e) => e.tool_name,
       },
       {
-        accessorKey: "tool_name",
-        header: "Tool",
-        size: 110,
-      },
-      {
-        accessorKey: "binary",
-        header: "Binary",
-        size: 110,
-        cell: (c) => {
-          const v = c.getValue<string>();
-          if (!v) return <span className="muted">—</span>;
-          return (
+        id: "binary",
+        label: "Binary",
+        defaultSize: 110,
+        sortable: true,
+        render: (e) =>
+          e.binary ? (
             <button
               className="cell-link mono"
-              onClick={(e) => {
-                e.stopPropagation();
-                setBinaryFilter(v);
+              onClick={(ev) => {
+                ev.stopPropagation();
+                setBinaryFilter(e.binary);
                 setOffset(0);
               }}
             >
-              {v}
+              {e.binary}
             </button>
-          );
-        },
+          ) : (
+            <span className="muted">—</span>
+          ),
       },
       {
-        accessorKey: "action",
-        header: "Action",
-        size: 100,
-        cell: (c) => actionBadge(c.getValue<string>()),
+        id: "file",
+        label: "File",
+        defaultSize: 240,
+        sortable: true,
+        render: (e) =>
+          e.file ? <span className="mono">{e.file}</span> : <span className="muted">—</span>,
       },
       {
-        accessorKey: "mode",
-        header: "Mode",
-        size: 90,
+        id: "action",
+        label: "Action",
+        defaultSize: 100,
+        sortable: true,
+        render: (e) => actionBadge(e.action),
       },
       {
-        accessorKey: "workdir",
-        header: "Directory",
-        size: 240,
-        cell: (c) => {
-          const v = c.getValue<string>();
-          if (!v) return <span className="muted">—</span>;
-          return (
+        id: "mode",
+        label: "Mode",
+        defaultSize: 90,
+        sortable: true,
+        render: (e) => e.mode,
+      },
+      {
+        id: "workdir",
+        label: "Directory",
+        defaultSize: 240,
+        sortable: true,
+        render: (e) =>
+          e.workdir ? (
             <button
               className="cell-link mono"
-              onClick={(e) => {
-                e.stopPropagation();
-                setWorkdirFilter(v);
+              onClick={(ev) => {
+                ev.stopPropagation();
+                setWorkdirFilter(e.workdir);
                 setOffset(0);
               }}
             >
-              {v}
+              {e.workdir}
             </button>
-          );
-        },
+          ) : (
+            <span className="muted">—</span>
+          ),
       },
       {
-        accessorKey: "session",
-        header: "Session",
-        size: 100,
-        enableSorting: false,
-        cell: (c) => <span className="mono">{c.getValue<string>().slice(0, 8)}</span>,
+        id: "tool_input",
+        label: "Input",
+        defaultSize: 280,
+        sortable: false,
+        render: (e) => <span className="mono muted">{shortJson(e.tool_input)}</span>,
       },
       {
-        accessorKey: "file",
-        header: "File",
-        size: 240,
-        cell: (c) => {
-          const v = c.getValue<string>();
-          return v ? <span className="mono">{v}</span> : <span className="muted">—</span>;
-        },
+        id: "raw_name",
+        label: "Raw",
+        defaultSize: 110,
+        sortable: true,
+        render: (e) => e.raw_name || <span className="muted">—</span>,
       },
       {
-        accessorKey: "tool_input",
-        header: "Input",
-        size: 280,
-        enableSorting: false,
-        cell: (c) => <span className="mono muted">{shortJson(c.getValue())}</span>,
+        id: "session",
+        label: "Session",
+        defaultSize: 100,
+        sortable: false,
+        render: (e) => <span className="mono">{e.session.slice(0, 8)}</span>,
       },
     ],
     [nowTick, setBinaryFilter, setWorkdirFilter, setOffset],
   );
 
-  const table = useReactTable({
-    data: filteredEvents,
-    columns,
-    state: { sorting, columnSizing, columnOrder, columnVisibility },
-    onSortingChange: setSorting,
-    onColumnSizingChange: setColumnSizing,
-    onColumnOrderChange: setColumnOrder,
-    onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    columnResizeMode: "onChange",
-    manualSorting: true,
-    enableColumnResizing: true,
-  });
+  const visibleColumns = useMemo(
+    () => columns.filter((c) => columnVisibility[c.id] !== false),
+    [columns, columnVisibility],
+  );
+  const colWidth = useCallback(
+    (c: ColumnSpec) => columnSizing[c.id] ?? c.defaultSize,
+    [columnSizing],
+  );
+  const totalWidth = visibleColumns.reduce((sum, c) => sum + colWidth(c), 0);
+
+  const startResize = useCallback(
+    (c: ColumnSpec, startX: number) => {
+      const startWidth = columnSizing[c.id] ?? c.defaultSize;
+      setResizingId(c.id);
+      const onMove = (ev: MouseEvent) => {
+        setColumnSizing((prev) => ({
+          ...prev,
+          [c.id]: Math.max(MIN_COL_WIDTH, startWidth + ev.clientX - startX),
+        }));
+      };
+      const onUp = () => {
+        setResizingId(null);
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    },
+    [columnSizing, setColumnSizing],
+  );
 
   const clientFiltered = !!(workdirFilter || binaryFilter || timeFilter);
   const page = Math.floor(offset / PAGE_SIZE) + 1;
@@ -774,7 +776,7 @@ export default function EventsPage({
                 minWidth: 160,
               }}
             >
-              {table.getAllLeafColumns().map((col) => (
+              {columns.map((col) => (
                 <label
                   key={col.id}
                   style={{
@@ -789,11 +791,16 @@ export default function EventsPage({
                 >
                   <input
                     type="checkbox"
-                    checked={col.getIsVisible()}
-                    onChange={col.getToggleVisibilityHandler()}
+                    checked={columnVisibility[col.id] !== false}
+                    onChange={() =>
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [col.id]: prev[col.id] === false,
+                      }))
+                    }
                     style={{ accentColor: "var(--brass)" }}
                   />
-                  {COLUMN_LABELS[col.id] ?? col.id}
+                  {col.label}
                 </label>
               ))}
             </div>
@@ -805,52 +812,39 @@ export default function EventsPage({
 
       <div className={`table-wrap${loading ? " loading" : ""}`}>
         {loading && <div className="loading-bar" />}
-        <table
-          className="events-table"
-          data-density={density}
-          style={{ width: table.getCenterTotalSize() }}
-        >
+        <table className="events-table" data-density={density} style={{ width: totalWidth }}>
           <thead>
-            {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
-                {hg.headers.map((h) => {
-                  const sortable = h.column.getCanSort();
-                  const sorted = h.column.getIsSorted();
-                  return (
-                    <th
-                      key={h.id}
-                      style={{ width: h.getSize() }}
-                      className={`${sortable ? "sortable" : ""}${sorted ? " sorted" : ""}`}
-                      onClick={
-                        sortable
-                          ? () => {
-                              h.column.toggleSorting(sorted === "asc");
-                              setOffset(0);
-                            }
-                          : undefined
-                      }
-                    >
-                      {flexRender(h.column.columnDef.header, h.getContext())}
-                      {sorted === "asc" ? " ▲" : sorted === "desc" ? " ▼" : ""}
-                      {h.column.getCanResize() && (
-                        <div
-                          onMouseDown={h.getResizeHandler()}
-                          onTouchStart={h.getResizeHandler()}
-                          onClick={(e) => e.stopPropagation()}
-                          className={`col-resizer${h.column.getIsResizing() ? " resizing" : ""}`}
-                        />
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            ))}
+            <tr>
+              {visibleColumns.map((c) => {
+                const sorted = sortId === c.id ? (sortOrder === "asc" ? "asc" : "desc") : "";
+                return (
+                  <th
+                    key={c.id}
+                    style={{ width: colWidth(c) }}
+                    className={`${c.sortable ? "sortable" : ""}${sorted ? " sorted" : ""}`}
+                    onClick={c.sortable ? () => toggleSort(c.id) : undefined}
+                  >
+                    {c.label}
+                    {sorted === "asc" ? " ▲" : sorted === "desc" ? " ▼" : ""}
+                    <div
+                      className={`col-resizer${resizingId === c.id ? " resizing" : ""}`}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        startResize(c, e.clientX);
+                      }}
+                    />
+                  </th>
+                );
+              })}
+            </tr>
           </thead>
           <tbody>
-            {table.getRowModel().rows.length === 0 ? (
+            {filteredEvents.length === 0 ? (
               <tr>
                 <td
-                  colSpan={table.getAllLeafColumns().length}
+                  colSpan={visibleColumns.length}
                   style={{
                     textAlign: "center",
                     padding: 60,
@@ -864,15 +858,15 @@ export default function EventsPage({
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row) => (
+              filteredEvents.map((e) => (
                 <tr
-                  key={row.id}
-                  className={`${selected?.id === row.original.id ? "selected" : ""}${freshIds.has(row.original.id) ? " is-fresh" : ""}`}
-                  onClick={() => setSelected(row.original)}
+                  key={e.id}
+                  className={`${selected?.id === e.id ? "selected" : ""}${freshIds.has(e.id) ? " is-fresh" : ""}`}
+                  onClick={() => setSelected(e)}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} style={{ width: cell.column.getSize() }}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  {visibleColumns.map((c) => (
+                    <td key={c.id} style={{ width: colWidth(c) }}>
+                      {c.render(e)}
                     </td>
                   ))}
                 </tr>
