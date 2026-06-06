@@ -1225,13 +1225,16 @@ a { color: var(--brass); }
   border-left: 3px solid var(--brass);
   border-radius: 6px;
   padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
 }
 
 .charter-mode-banner p {
   font-family: var(--font-display);
   font-style: italic;
   font-size: 1.02rem;
-  line-height: 2;
+  line-height: 1.6;
   color: var(--ink-dim);
   max-width: 64ch;
 }

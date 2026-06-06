@@ -120,9 +120,12 @@ export default function PolicyPage({ policy, loading, error }: PolicyOverviewSta
             Running in {modeBadge(policy.mode)}
             {policy.mode === "observe"
               ? ": every verdict is logged, none are enforced."
-              : ": verdicts are enforced."}{" "}
-            Anything no rule claims falls to {actionBadge(policy.default_action)}. When no notifier
-            can reach you, confirm hardens to {actionBadge(policy.check_mode_confirm)}.
+              : ": verdicts are enforced."}
+          </p>
+          <p>Anything no rule claims falls to {actionBadge(policy.default_action)}.</p>
+          <p>
+            When no notifier can reach you, confirm hardens to{" "}
+            {actionBadge(policy.check_mode_confirm)}.
           </p>
         </div>
 
