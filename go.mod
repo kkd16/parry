@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/mock v0.6.0
-	go.yaml.in/yaml/v4 v4.0.0-rc.4
+	go.yaml.in/yaml/v4 v4.0.0-rc.5
 	golang.org/x/term v0.43.0
 	modernc.org/sqlite v1.52.0
 	mvdan.cc/sh/v3 v3.13.1
